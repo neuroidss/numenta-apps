@@ -18,6 +18,10 @@
 #
 # http://numenta.org/licenses/
 # ----------------------------------------------------------------------
+
+# Note: we don't allow autostacks of SNS, so disable warnings about
+# `getMatchingResources` not being implemented (disable=W0223 comments below)
+
 from boto import sns
 
 from grok.app.adapters.datasource.cloudwatch.aws_base import (
@@ -25,7 +29,7 @@ from grok.app.adapters.datasource.cloudwatch.aws_base import (
 from grok.app.adapters.datasource.cloudwatch.aws_base import ResourceTypeNames
 
 
-@AWSResourceAdapterBase.registerResourceAdapter
+@AWSResourceAdapterBase.registerResourceAdapter #pylint: disable=W0223
 class SNSAdapter(AWSResourceAdapterBase):
   RESOURCE_TYPE = ResourceTypeNames.SNS_TOPIC
 
@@ -86,7 +90,7 @@ class SNSAdapter(AWSResourceAdapterBase):
 
 
 
-@AWSResourceAdapterBase.registerMetricAdapter
+@AWSResourceAdapterBase.registerMetricAdapter #pylint: disable=W0223
 class SNSNumberOfMessagesPublishedMetricAdapter(SNSAdapter):
 
   METRIC_NAME = "NumberOfMessagesPublished"

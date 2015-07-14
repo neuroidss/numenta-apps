@@ -63,6 +63,15 @@ class MessageDeliveryInfo(object):
               self.redelivered, self.exchange, self.routingKey)
 
 
+  def __eq__(self, other):
+    return all(getattr(self, slot) == getattr(other, slot)
+               for slot in self.__slots__)
+
+
+  def __ne__(self, other):
+    return not self.__eq__(other)
+
+
 
 class MessageGetInfo(object):
   """Information about a message received via Basic.Get-Ok"""
@@ -100,6 +109,15 @@ class MessageGetInfo(object):
               self.exchange, self.routingKey, self.messageCount)
 
 
+  def __eq__(self, other):
+    return all(getattr(self, slot) == getattr(other, slot)
+               for slot in self.__slots__)
+
+
+  def __ne__(self, other):
+    return not self.__eq__(other)
+
+
 
 class MessageReturnInfo(object):
   """Information about a message returned via Basic.Return"""
@@ -127,6 +145,14 @@ class MessageReturnInfo(object):
       self.__class__.__name__, self.replyCode, self.replyText, self.exchange,
       self.routingKey)
 
+
+  def __eq__(self, other):
+    return all(getattr(self, slot) == getattr(other, slot)
+               for slot in self.__slots__)
+
+
+  def __ne__(self, other):
+    return not self.__eq__(other)
 
 
 class BasicProperties(object):
@@ -202,7 +228,6 @@ class BasicProperties(object):
     self.clusterId = clusterId
 
 
-
   def __repr__(self):
     args = (
       ("%s=%r" % (attr, getattr(self, attr)))
@@ -210,6 +235,17 @@ class BasicProperties(object):
       if not callable(getattr(self, attr)) and getattr(self, attr) is not None)
 
     return "%s(%s)" % (self.__class__.__name__, ", ".join(args))
+
+
+  def __eq__(self, other):
+    return all(getattr(self, slot) == getattr(other, slot)
+               for slot in self.__slots__)
+
+
+  def __ne__(self, other):
+    return not self.__eq__(other)
+
+
 
 class Message(object):
   """Represents a message to publish; also base class for messages originated
@@ -256,6 +292,15 @@ class ReturnedMessage(Message):
   def __repr__(self):
     return "%s(info=%r, props=%r, body=%.255r)" % (
       self.__class__.__name__, self.methodInfo, self.properties, self.body)
+
+
+  def __eq__(self, other):
+    return all(getattr(self, slot) == getattr(other, slot)
+               for slot in self.__slots__)
+
+
+  def __ne__(self, other):
+    return not self.__eq__(other)
 
 
 

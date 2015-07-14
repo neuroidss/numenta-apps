@@ -19,13 +19,16 @@
 # http://numenta.org/licenses/
 # ----------------------------------------------------------------------
 
+# Note: we don't allow autostacks of ELBs, so disable warnings about
+# `getMatchingResources` not being implemented (disable=W0223 comments below)
+
 from grok.app.adapters.datasource.cloudwatch.aws_base import (
     AWSResourceAdapterBase, ResourceTypeNames)
 from grok.app.aws.elb_utils import getELBInstances
 
 
 
-@AWSResourceAdapterBase.registerResourceAdapter
+@AWSResourceAdapterBase.registerResourceAdapter #pylint: disable=W0223
 class ELBAdapter(AWSResourceAdapterBase):
   RESOURCE_TYPE = ResourceTypeNames.ELB_LOAD_BALANCER
 
@@ -81,7 +84,7 @@ class ELBAdapter(AWSResourceAdapterBase):
 
 
 
-@AWSResourceAdapterBase.registerMetricAdapter
+@AWSResourceAdapterBase.registerMetricAdapter #pylint: disable=W0223
 class ELBLatencyMetricAdapter(ELBAdapter):
 
   METRIC_NAME = "Latency"
@@ -98,7 +101,7 @@ class ELBLatencyMetricAdapter(ELBAdapter):
 
 
 
-@AWSResourceAdapterBase.registerMetricAdapter
+@AWSResourceAdapterBase.registerMetricAdapter #pylint: disable=W0223
 class ELBRequestCountMetricAdapter(ELBAdapter):
 
   METRIC_NAME = "RequestCount"

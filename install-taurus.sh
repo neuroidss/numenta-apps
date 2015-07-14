@@ -30,5 +30,6 @@ function install {
 
 install nta.utils $1 $2
 install htmengine $1 $2
+install infrastructure $1 $2
 ./install-taurus-metric-collectors.sh $1 $2
 install taurus $1 $2

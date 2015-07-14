@@ -20,82 +20,112 @@
   ~
   -->
 
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-              android:id="@+id/tweet_item"
-              android:orientation="vertical"
-              android:layout_width="match_parent"
-              android:layout_height="fill_parent">
+<LinearLayout
+    android:id="@+id/tweet_item"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="fill_parent"
+    android:paddingBottom="5dp"
+    android:orientation="vertical">
 
-    <LinearLayout android:id="@+id/group_header"
-                  android:layout_width="match_parent"
-                  android:layout_height="wrap_content"
-                  android:orientation="horizontal"
-                  android:paddingLeft="5sp"
-                  android:paddingRight="5sp"
-                  android:paddingTop="2sp"
-                  android:paddingBottom="2sp"
-                  android:background="#e0e0e0">
+    <LinearLayout
+        android:id="@+id/group_header"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="#e0e0e0"
+        android:orientation="horizontal"
+        android:paddingBottom="2sp"
+        android:paddingLeft="5sp"
+        android:paddingRight="5sp"
+        android:paddingTop="2sp">
 
-        <TextView android:id="@+id/date"
-                  android:layout_width="0dp"
-                  android:layout_height="wrap_content"
-                  android:layout_gravity="left|center_vertical"
-                  android:textStyle="bold"
-                  android:layout_weight="0.1"
-                  android:textAppearance="@android:style/TextAppearance.Holo.Small"/>
+        <TextView
+            android:id="@+id/date"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_gravity="left|center_vertical"
+            android:layout_weight="0.1"
+            android:textAppearance="@android:style/TextAppearance.Holo.Small"
+            android:textStyle="bold" />
 
-        <TextView android:id="@+id/tweet_count"
-                  android:textStyle="bold"
-                  android:layout_width="wrap_content"
-                  android:layout_height="wrap_content"
-                  android:layout_gravity="left|center_vertical"
-                  android:textAppearance="@android:style/TextAppearance.Holo.Small"/>
+        <TextView
+            android:id="@+id/tweet_count"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="left|center_vertical"
+            android:textAppearance="@android:style/TextAppearance.Holo.Small"
+            android:textStyle="bold" />
     </LinearLayout>
 
-    <LinearLayout android:id="@+id/tweet_header"
-                  android:layout_width="match_parent"
-                  android:orientation="horizontal"
-                  android:paddingLeft="5sp"
-                  android:paddingRight="5sp"
-                  android:layout_height="wrap_content">
+    <LinearLayout
+        android:id="@+id/tweet_header"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:paddingLeft="5sp"
+        android:paddingRight="5sp">
 
-        <TextView android:id="@+id/user"
-                  android:layout_width="0dp"
-                  android:layout_height="wrap_content"
-                  android:layout_gravity="left|center_vertical"
-                  android:layout_weight="0.1"
-                  android:textStyle="bold"
-                  android:textAppearance="@android:style/TextAppearance.Holo.Small"/>
+        <TextView
+            android:id="@+id/user"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_gravity="left|center_vertical"
+            android:layout_weight="0.1"
+            android:textAppearance="@android:style/TextAppearance.Holo.Small"
+            android:textStyle="bold" />
 
-        <TextView android:id="@+id/retweet_total"
-                  android:layout_width="wrap_content"
-                  android:layout_height="wrap_content"
-                  android:layout_gravity="center_vertical"
-                  android:textStyle="bold"
-                  android:textSize="12sp"
-                  android:textAppearance="@android:style/TextAppearance.Holo.Small"/>
+        <TextView
+            android:id="@+id/retweet_total"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:textAppearance="@android:style/TextAppearance.Holo.Small"
+            android:textSize="12sp"
+            android:textStyle="bold" />
 
-        <ImageView android:id="@+id/retweet_icon"
-                android:layout_width="wrap_content"
-                android:layout_height="12sp"
-                android:src="@drawable/ic_retweet"
-                android:layout_gravity="center_vertical"
-                android:paddingLeft="3sp"
-                android:paddingRight="3sp"/>
+        <ImageView
+            android:id="@+id/retweet_icon"
+            android:layout_width="wrap_content"
+            android:layout_height="12sp"
+            android:layout_gravity="center_vertical"
+            android:paddingLeft="3sp"
+            android:paddingRight="3sp"
+            android:src="@drawable/ic_retweet" />
 
-        <TextView android:id="@+id/retweet_count"
-                  android:layout_width="wrap_content"
-                  android:layout_height="wrap_content"
-                  android:layout_gravity="center_vertical"
-                  android:textSize="12sp"
-                  android:textAppearance="@android:style/TextAppearance.Holo.Small"/>
+        <TextView
+            android:id="@+id/retweet_count"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:textAppearance="@android:style/TextAppearance.Holo.Small"
+            android:textSize="12sp" />
     </LinearLayout>
 
-    <TextView android:id="@+id/tweet_text"
-              android:layout_width="match_parent"
-              android:layout_height="wrap_content"
-              android:paddingLeft="5sp"
-              android:paddingRight="5sp"
-              android:textAppearance="@android:style/TextAppearance.Holo.Small"/>
+    <LinearLayout
+        android:id="@+id/tweet_text_layout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:paddingLeft="5sp"
+        android:paddingTop="5sp"
+        android:paddingRight="5sp">
+
+        <TextView
+            android:id="@+id/tweet_text"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="0.1"
+            android:paddingLeft="5sp"
+            android:paddingRight="5sp"
+            android:textAppearance="@android:style/TextAppearance.Holo.Small" />
+
+        <TextView
+            android:id="@+id/retweet_count_condensed"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="top"
+            android:textAppearance="@android:style/TextAppearance.Holo.Small"
+            android:textSize="12sp" />
+    </LinearLayout>
 
 </LinearLayout>

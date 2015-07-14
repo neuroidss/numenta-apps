@@ -158,8 +158,9 @@ unset REMOVE_CP_ALIAS
 unset REMOVE_MV_ALIAS
 unset REMOVE_RM_ALIAS
 
-df -h
-
-echo
-echo "SSH keys:"
-ssh-add -l
+SSHkeylist=$(ssh-add -l 2>&1)
+if [[ $? == "0" ]]; then
+  echo
+  echo "SSH keys:"
+  echo "${SSHkeylist}"
+fi

@@ -17,6 +17,7 @@ msgpack-python | 0.3.0 | [Apache 2.0](https://github.com/msgpack/msgpack-python/
 MySQLdb1 (imported as `mysql-python`) | 1.2.5 | [Python 1.5.2 License](https://docs.python.org/2/license.html) via [MySQLdb-1.2.5/INSTALL](https://github.com/farcepest/MySQLdb1/blob/MySQLdb-1.2.5/INSTALL#L249)
 paste | 1.7.5.1 | [MIT license](http://pythonpaste.org/)
 pytz | 2015.2 | [MIT License](http://pythonhosted.org/pytz/)
+PyYAML | 3.10 | [License](http://pyyaml.org/browser/pyyaml/tags/3.10/LICENSE)
 requests | 2.0.1 | [Apache 2.0 License](https://github.com/kennethreitz/requests/blob/v2.0.1/LICENSE)
 sqlalchemy | 0.9.4 | [MIT License](https://bitbucket.org/zzzeek/sqlalchemy/src/ccc0c44c3a60fc4906e5e3b26cc6d2b7a69d33bf/LICENSE?at=rel_0_9_4)
 uwsgi | 2.0.4 | [GPLv2 with LINKING EXCEPTION](https://github.com/unbit/uwsgi/blob/2.0.4/LICENSE)

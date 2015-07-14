@@ -35,7 +35,7 @@ import org.testng.annotations.Test;
 
 public class TaurusMobileAppTest {
     private WebDriver driver;
-    static int WAIT_TIME = 10000;
+    static int WAIT_TIME = 100;
     static By ALL = By.name("ALL");
     static By FAVORITES = By.name("FAVORITES");
     static By ADD_FAVORITE_POP_UP = By.id("android:id/title");
@@ -92,7 +92,7 @@ public class TaurusMobileAppTest {
     }
 
 
-    @Test(priority = 1)
+    @Test(priority = 1 , dependsOnMethods = {"skipTutorial"})
     public void addFavourites()
         throws InterruptedException {
         // Long press on any company name
@@ -111,7 +111,7 @@ public class TaurusMobileAppTest {
     }
 
 
-    @Test(priority = 2)
+    @Test(priority = 2 , dependsOnMethods = {"addFavourites"})
     public void removeFavourites()
         throws InterruptedException {
             TestUtilities.waitClick(FAVORITES, driver, WAIT_TIME);
@@ -133,7 +133,7 @@ public class TaurusMobileAppTest {
         }
 
 
-    @Test(priority = 3)
+    @Test(priority = 3 , dependsOnMethods = {"removeFavourites"})
     public void clickOnCompanyName() throws InterruptedException {
         TestUtilities.waitClick(ALL, driver, WAIT_TIME);
         TestUtilities.waitClick(EXPECTED_COMPANY_NAME, driver, WAIT_TIME);
@@ -148,7 +148,7 @@ public class TaurusMobileAppTest {
     }
 
 
-    @Test(priority = 4)
+    @Test(priority = 4 , dependsOnMethods = {"clickOnCompanyName"})
     public void settings() throws InterruptedException {
         // Clicking on Settings option
         TestUtilities.clickFeedback(driver, WAIT_TIME);

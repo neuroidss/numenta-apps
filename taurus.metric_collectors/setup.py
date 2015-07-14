@@ -21,6 +21,7 @@ setup(
        "%s.twitterdirect.process_tweet_deletions:main" % name),
       ("taurus-purge-old-tweets = "
        "%s.twitterdirect.purge_old_tweets:main" % name),
+      "taurus-resymbol = %s.resymbol_metrics:main" % name,
       ("taurus-set-collectorsdb-login = "
        "%s.collectorsdb.set_collectorsdb_login:main" % name),
       ("taurus-reset-collectorsdb = "

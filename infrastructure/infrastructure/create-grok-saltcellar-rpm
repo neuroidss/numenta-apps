@@ -21,6 +21,8 @@
 # ----------------------------------------------------------------------
 # Package saltcellar into an RPM for Grok
 
+# Don't quote the $@, we want it burst into separate arguments instead of
+# being treated as a single argument
 ./create-numenta-rpm --debug \
   --artifact srv \
   --description "Grok saltcellar - installs to /srv/salt" \
@@ -28,4 +30,4 @@
   --rpm-flavor saltcellar \
   --rpm-name grok-saltcellar \
   --architecture noarch \
-  --tempdir /tmp/grok-saltcellar-rpm "$@"
+  --tempdir /tmp/grok-saltcellar-rpm $@

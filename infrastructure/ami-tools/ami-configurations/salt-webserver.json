@@ -7,7 +7,7 @@
       "region": "us-west-2",
       "source_ami": "ami-b4254784",
       "ssh_port": 22,
-      "ssh_timeout": "3m",
+      "ssh_timeout": "5m",
       "ssh_username": "root",
       "tags": {
         "OS_Version": "CentOS",

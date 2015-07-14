@@ -91,7 +91,7 @@ if [ -z "${BUILD_NUMBER}" ]; then
   fi
 fi
 
-GROK_RPM_NAME="$1"
+export GROK_RPM_NAME="$1"
 export AMI_NAME="$2"
 
 makeManifest

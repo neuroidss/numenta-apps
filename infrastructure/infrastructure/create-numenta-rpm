@@ -625,7 +625,12 @@ def constructInfrastructureFakeroot(fakeroot):
   infraPath = "%s/infrastructure" % productsPath
   purgeDirectory(path=infraPath,
                  whitelist=["__init__.py",
-                            "utilities"],
+                            "DEPENDENCIES.md",
+                            "infrastructure",
+                            "LICENSE",
+                            "README.md",
+                            "requirements.txt",
+                            "setup.py"],
                  logger=g_logger)
 
   return (iteration, fakerootSHA)

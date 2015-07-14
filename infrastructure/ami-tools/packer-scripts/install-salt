@@ -37,8 +37,8 @@ bootstrap_salt(){
 }
 
 prep_instance_for_salt(){
-  echo "Ensure stale grok.repo removed"
-  rm -fv /etc/yum.repos.d/grok.repo
+  echo "Remove stale grok repo files"
+  rm -fv /etc/yum.repos.d/grok*repo
 
   echo "Updating yum cache..."
   yum clean all

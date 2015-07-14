@@ -398,8 +398,9 @@ class ModelHandler(AuthenticatedBaseHandler):
           if modelSpec["datasource"] == "custom":
             checkQuotaForCustomMetricAndRaise(conn)
           else:
-            instanceName = adapter.getInstanceNameForModelSpec(modelSpec)
-            checkQuotaForInstanceAndRaise(conn, instanceName)
+            checkQuotaForInstanceAndRaise(
+              conn,
+              adapter.getInstanceNameForModelSpec(modelSpec))
 
           try:
             if importing:

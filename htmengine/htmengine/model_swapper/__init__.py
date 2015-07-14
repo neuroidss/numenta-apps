@@ -22,6 +22,7 @@
 import os
 
 from nta.utils.config import Config
+from htmengine import raiseExceptionOnMissingRequiredApplicationConfigPath
 
 
 
@@ -36,8 +37,10 @@ class ModelSwapperConfig(Config):
   CONFIG_NAME = "model-swapper.conf"
 
 
+  @raiseExceptionOnMissingRequiredApplicationConfigPath
   def __init__(self):
     super(ModelSwapperConfig, self).__init__(
       self.CONFIG_NAME,
-      os.environ.get("APPLICATION_CONFIG_PATH"))
+      os.environ["APPLICATION_CONFIG_PATH"]
+    )
 

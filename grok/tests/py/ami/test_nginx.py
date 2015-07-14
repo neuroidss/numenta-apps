@@ -24,12 +24,13 @@ AMI unit tests for nginx support
 """
 
 import agamotto
+import os
 import requests
 import socket
 import unittest
 
 
-CONF_D = "/opt/numenta/grok/conf"
+CONF_D = os.environ.get("APPLICATION_CONFIG_PATH", "/opt/numenta/grok/conf")
 
 def probePort(host="127.0.0.1", port=80, command=None):
   s = socket.socket()
@@ -67,10 +68,6 @@ class TestNginxInstallation(unittest.TestCase):
   def testCheckHttpsContent(self):
     self.assertIn("<title>| Grok</title>", probeHttps(path="/grok"),
                   "port 443 is not returning a Grok title")
-
-
-  def testNginxUserExists(self):
-    self.assertTrue(agamotto.user.exists("www-data"))
 
 
   def testNginxApiConfiguration(self):

@@ -22,6 +22,8 @@
 
 # Create a numenta-infrastructure-python rpm
 
+# Don't quote the $@, we want it burst into separate arguments instead of
+# being treated as a single argument
 ./create-numenta-rpm \
   --artifact opt \
   --description "Numenta infrastructure-common python utility modules" \
@@ -29,4 +31,5 @@
   --rpm-flavor infrastructure \
   --rpm-name numenta-infrastructure-python \
   --architecture noarch \
-  --tempdir /tmp/grok-saltcellar-rpm "$@"
+  --postinstall-script infrastructure-python-postinstall \
+  --tempdir /tmp/grok-saltcellar-rpm $@

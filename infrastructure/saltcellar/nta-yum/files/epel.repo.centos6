@@ -1,9 +1,4 @@
-# To reduce cache misses, use only mirror.pnl.gov if VAGRANT_HTTP_PROXY is set.
-#
-# This is installed by a shell provisioner in the Vagrantfile so that it is
-# already in place when Chef starts, so you won't see it in any of the Chef
-# recipes. Don't delete it without editing the Vagrantfile.
-#
+# This file is installed by Salt; any changes will be overwritten
 #     Enable epel repos for Yum
 #     To be copied to /etc/yum.repos.d/epel.repo
 [epel]

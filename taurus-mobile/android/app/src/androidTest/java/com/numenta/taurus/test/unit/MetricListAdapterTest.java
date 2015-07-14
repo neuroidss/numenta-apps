@@ -29,7 +29,16 @@ import com.numenta.taurus.metric.MetricAnomalyChartData;
 import com.numenta.taurus.metric.MetricListAdapter;
 
 import org.json.JSONObject;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
+import android.app.Instrumentation;
+import android.support.test.InstrumentationRegistry;
+import android.support.test.annotation.UiThreadTest;
+import android.support.test.rule.UiThreadTestRule;
+import android.support.test.runner.AndroidJUnit4;
 import android.test.ApplicationTestCase;
 
 import java.util.concurrent.Executors;
@@ -40,6 +49,7 @@ import java.util.concurrent.Executors;
  * Metric has a Json specifying Metric type name
  * MetricAnomalyChartData are sorted by MetricType name.
  */
+@RunWith(AndroidJUnit4.class)
 public class MetricListAdapterTest extends ApplicationTestCase<TaurusApplication> {
 
     private MetricListAdapter adapter;
@@ -54,10 +64,14 @@ public class MetricListAdapterTest extends ApplicationTestCase<TaurusApplication
         super(TaurusApplication.class);
     }
 
+    @Rule public final UiThreadTestRule uiThread = new UiThreadTestRule();
+
+    @Before
     public void setUp() throws Exception {
         super.setUp();
+        setContext(InstrumentationRegistry.getTargetContext());
         createApplication();
-        TaurusApplication.setDefaultThreadPoolForUnitTestsOnly(Executors.newCachedThreadPool());
+        TaurusApplication.setStaticInstanceForUnitTestsOnly(getApplication());
         CoreDataFactory factory = TaurusApplication.getDatabase().getDataFactory();
 
         adapter = new MetricListAdapter(getContext());
@@ -120,6 +134,7 @@ public class MetricListAdapterTest extends ApplicationTestCase<TaurusApplication
         dataNullJson2 = new MetricAnomalyChartData(metricNullJson2, 5L);
     }
 
+    @Test
     public void testAddNull() throws Exception {
         //noinspection EmptyCatchBlock
         try {
@@ -129,6 +144,7 @@ public class MetricListAdapterTest extends ApplicationTestCase<TaurusApplication
         assertEquals(0, adapter.getCount());
     }
 
+    @Test @UiThreadTest
     public void testSortNullMetric() throws Exception {
         MetricAnomalyChartData dataNull1 = new MetricAnomalyChartData(null, 10L);
         MetricAnomalyChartData dataNull2 = new MetricAnomalyChartData(null, 20L);
@@ -155,6 +171,7 @@ public class MetricListAdapterTest extends ApplicationTestCase<TaurusApplication
         assertEquals(dataNull2, adapter.getItem(2));
     }
 
+    @Test @UiThreadTest
     public void testSortDiffMetrics() throws Exception {
         //add data with non-null metrics
         adapter.add(data1);
@@ -169,6 +186,7 @@ public class MetricListAdapterTest extends ApplicationTestCase<TaurusApplication
         assertEquals(data1, adapter.getItem(2));
     }
 
+    @Test @UiThreadTest
     public void testSortDiffMetrics2() throws Exception {
         //add data1 and data3 with type 'twitter volume'
         adapter.add(data3);
@@ -185,6 +203,7 @@ public class MetricListAdapterTest extends ApplicationTestCase<TaurusApplication
         assertEquals(data1, adapter.getItem(3));
     }
 
+    @Test @UiThreadTest
     public void testSortMetricNullJson() throws Exception {
         //add data with a null Json for the metric type
         adapter.add(dataNullJson2);

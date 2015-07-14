@@ -24,7 +24,8 @@ if os.path.exists("grok/__version__.py"):
 else:
   exec(marshal.loads(open("grok/__init__.pyc").read()[8:]), {}, version)
 
-requirements = []
+setup_requirements = ["PyYAML", "psutil"]
+install_requirements = []
 dependency_links = []
 
 with open("requirements.txt", "r") as inp:
@@ -34,14 +35,15 @@ with open("requirements.txt", "r") as inp:
       dependency_links.append(lhs.partition("-e")[2].strip() + delim + package)
       (pkg_name, _, pkg_version) = package.partition("-")
       package = pkg_name + "==" + pkg_version
-
-    requirements.append(package)
+    if package.startswith("numpy"):
+      setup_requirements.append(package)
+    install_requirements.append(package)
 
 setup(
   description="Project Grok",
   dependency_links=dependency_links,
-  install_requires=requirements,
-  setup_requires=["PyYAML", "psutil"],
+  install_requires=install_requirements,
+  setup_requires=setup_requirements,
   name="grok",
   packages=find_packages(),
   include_package_data=True,

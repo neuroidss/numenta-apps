@@ -27,7 +27,8 @@ include:
 
 {% if grains['os_family'] == 'RedHat' %}
 
-mysql-community-client:
-  pkg.latest
+install-mysql-client:
+  pkg.latest:
+    - name: mysql-community-client
 
 {% endif %}

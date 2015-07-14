@@ -33,11 +33,14 @@ from sqlalchemy import (BLOB,
                         VARCHAR)
 from sqlalchemy.dialects.mysql import TINYINT
 
+# We use several of these in downstream functions, so disable W0611
+#pylint: disable=W0611
 from htmengine.repository.schema import (instance_status_history,
                                          lock,
                                          metadata,
                                          metric,
                                          metric_data)
+#pylint: enable=W0611
 
 
 annotation = Table("annotation",

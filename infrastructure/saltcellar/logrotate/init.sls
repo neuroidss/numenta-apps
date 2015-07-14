@@ -28,7 +28,7 @@ logrotate-directory:
     - name: /etc/logrotate.d
     - user: root
     - group: root
-    - mode: 755
+    - mode: 0755
 
 # Install our syslog logrotate config
 /etc/logrotate.d/syslog:
@@ -36,6 +36,16 @@ logrotate-directory:
     - source: salt://logrotate/files/syslog.logrotate
     - user: root
     - group: root
-    - mode: 644
+    - mode: 0644
+    - require:
+      - file: logrotate-directory
+
+install-groklog_rotator:
+  file.managed:
+    - name: /usr/local/sbin/groklog_rotator
+    - source: salt://logrotate/files/groklog_rotator
+    - user: root
+    - group: root
+    - mode: 0755
     - require:
       - file: logrotate-directory

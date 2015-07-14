@@ -5,9 +5,9 @@
       "ami_name": "grok-plumbing-saltstack-32GB-{{isotime | clean_ami_name}}",
       "instance_type": "m3.large",
       "region": "us-west-2",
-      "source_ami": "ami-ef4e6adf",
+      "source_ami": "ami-5b447f6b",
       "ssh_port": 22,
-      "ssh_timeout": "3m",
+      "ssh_timeout": "5m",
       "ssh_username": "root",
       "tags": {
         "OS_Version": "CentOS",
@@ -57,16 +57,6 @@
     {
       "destination": "/tmp/bootstrap-salt.sh",
       "source": "bootstrap-salt.sh",
-      "type": "file"
-    },
-    {
-      "destination": "/tmp/epel.repo",
-      "source": "repos/epel.repo",
-      "type": "file"
-    },
-    {
-      "destination": "/tmp/RPM-GPG-KEY-EPEL-6",
-      "source": "repos/RPM-GPG-KEY-EPEL-6",
       "type": "file"
     },
     {

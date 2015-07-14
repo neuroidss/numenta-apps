@@ -18,6 +18,10 @@
 #
 # http://numenta.org/licenses/
 # ----------------------------------------------------------------------
+
+# Note: we don't allow autostacks of RDS, so disable warnings about
+# `getMatchingResources` not being implemented (disable=W0223 comments below)
+
 import boto.rds
 import boto.exception
 
@@ -27,7 +31,7 @@ from grok.app.adapters.datasource.cloudwatch.aws_base import ResourceTypeNames
 from grok.app.aws.rds_utils import getRDSInstances, retryOnRDSTransientError
 
 
-@AWSResourceAdapterBase.registerResourceAdapter
+@AWSResourceAdapterBase.registerResourceAdapter #pylint: disable=W0223
 class RDSAdapter(AWSResourceAdapterBase):
   RESOURCE_TYPE = ResourceTypeNames.RDS_DBINSTANCE
 
@@ -114,7 +118,7 @@ class RDSAdapter(AWSResourceAdapterBase):
 
 
 
-@AWSResourceAdapterBase.registerMetricAdapter
+@AWSResourceAdapterBase.registerMetricAdapter #pylint: disable=W0223
 class RDSCPUUtilizationMetricAdapter(RDSAdapter):
 
   METRIC_NAME = "CPUUtilization"
@@ -130,7 +134,7 @@ class RDSCPUUtilizationMetricAdapter(RDSAdapter):
 
 
 
-@AWSResourceAdapterBase.registerMetricAdapter
+@AWSResourceAdapterBase.registerMetricAdapter #pylint: disable=W0223
 class RDSDatabaseConnectionsMetricAdapter(RDSAdapter):
 
   METRIC_NAME = "DatabaseConnections"
@@ -146,7 +150,7 @@ class RDSDatabaseConnectionsMetricAdapter(RDSAdapter):
 
 
 
-@AWSResourceAdapterBase.registerMetricAdapter
+@AWSResourceAdapterBase.registerMetricAdapter #pylint: disable=W0223
 class RDSDiskQueueDepthMetricAdapter(RDSAdapter):
 
   METRIC_NAME = "DiskQueueDepth"
@@ -160,7 +164,7 @@ class RDSDiskQueueDepthMetricAdapter(RDSAdapter):
 
 
 
-@AWSResourceAdapterBase.registerMetricAdapter
+@AWSResourceAdapterBase.registerMetricAdapter #pylint: disable=W0223
 class RDSFreeableMemoryMetricAdapter(RDSAdapter):
 
   METRIC_NAME = "FreeableMemory"
@@ -174,7 +178,7 @@ class RDSFreeableMemoryMetricAdapter(RDSAdapter):
 
 
 
-@AWSResourceAdapterBase.registerMetricAdapter
+@AWSResourceAdapterBase.registerMetricAdapter #pylint: disable=W0223
 class RDSReadIOPSMetricAdapter(RDSAdapter):
 
   METRIC_NAME = "ReadIOPS"
@@ -188,7 +192,7 @@ class RDSReadIOPSMetricAdapter(RDSAdapter):
 
 
 
-@AWSResourceAdapterBase.registerMetricAdapter
+@AWSResourceAdapterBase.registerMetricAdapter #pylint: disable=W0223
 class RDSReadLatencyMetricAdapter(RDSAdapter):
 
   METRIC_NAME = "ReadLatency"
@@ -202,7 +206,7 @@ class RDSReadLatencyMetricAdapter(RDSAdapter):
 
 
 
-@AWSResourceAdapterBase.registerMetricAdapter
+@AWSResourceAdapterBase.registerMetricAdapter #pylint: disable=W0223
 class RDSReadThroughputMetricAdapter(RDSAdapter):
 
   METRIC_NAME = "ReadThroughput"
@@ -216,7 +220,7 @@ class RDSReadThroughputMetricAdapter(RDSAdapter):
 
 
 
-@AWSResourceAdapterBase.registerMetricAdapter
+@AWSResourceAdapterBase.registerMetricAdapter #pylint: disable=W0223
 class RDSSwapUsageMetricAdapter(RDSAdapter):
 
   METRIC_NAME = "SwapUsage"
@@ -230,7 +234,7 @@ class RDSSwapUsageMetricAdapter(RDSAdapter):
 
 
 
-@AWSResourceAdapterBase.registerMetricAdapter
+@AWSResourceAdapterBase.registerMetricAdapter #pylint: disable=W0223
 class RDSWriteIOPSMetricAdapter(RDSAdapter):
 
   METRIC_NAME = "WriteIOPS"
@@ -244,7 +248,7 @@ class RDSWriteIOPSMetricAdapter(RDSAdapter):
 
 
 
-@AWSResourceAdapterBase.registerMetricAdapter
+@AWSResourceAdapterBase.registerMetricAdapter #pylint: disable=W0223
 class RDSWriteLatencyMetricAdapter(RDSAdapter):
 
   METRIC_NAME = "WriteLatency"
@@ -258,7 +262,7 @@ class RDSWriteLatencyMetricAdapter(RDSAdapter):
 
 
 
-@AWSResourceAdapterBase.registerMetricAdapter
+@AWSResourceAdapterBase.registerMetricAdapter #pylint: disable=W0223
 class RDSWWriteThroughputMetricAdapter(RDSAdapter):
 
   METRIC_NAME = "WriteThroughput"

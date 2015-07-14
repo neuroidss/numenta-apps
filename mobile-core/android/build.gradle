@@ -31,7 +31,7 @@ repositories {
 buildDir = "${rootProject.buildDir}/mobile-core"
 
 dependencies {
-    compile 'com.android.support:support-v4:22.0.0'
+    compile 'com.android.support:support-v4:22.2.0'
     compile 'com.google.android.gms:play-services-base:6.5.87'
 }
 

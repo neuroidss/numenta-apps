@@ -41,7 +41,8 @@ from htmengine import htmengineerrno
 from htmengine.exceptions import (ObjectNotFoundError,
                                   MetricNotActiveError,
                                   MetricNotMonitoredError)
-from htmengine import repository
+from htmengine import (raiseExceptionOnMissingRequiredApplicationConfigPath,
+                       repository)
 from htmengine.repository import retryOnTransientErrors, schema
 from htmengine.repository.queries import MetricStatus
 from htmengine.model_swapper.model_swapper_interface import (
@@ -57,7 +58,9 @@ from nta.utils.config import Config
 
 
 
-config = Config("application.conf", os.environ.get("APPLICATION_CONFIG_PATH"))
+
+config = raiseExceptionOnMissingRequiredApplicationConfigPath(Config)(
+  "application.conf", os.environ["APPLICATION_CONFIG_PATH"])
 
 
 

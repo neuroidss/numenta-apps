@@ -131,9 +131,9 @@ def parseArgs():
                                                 "and test against the given "
                                                 "taurus server."))
   parser.add_argument("--server", dest="server", type=str,
-                      default="https://tauruspoc.numenta.com",
-                      help=("A running instance of taurus server to run tests "
-                            "against. Default https://tauruspoc.numenta.com"))
+                      default="http://10.0.2.2:8000",
+                      help=("The dynamodb local server to run tests "
+                      "against. Default http://10.0.2.2:8000"))
   parser.add_argument("--log", dest="logLevel", type=str, default="info",
                       help="Logging level, optional parameter and defaulted "
                       "to level info")

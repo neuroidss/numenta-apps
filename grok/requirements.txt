@@ -22,6 +22,12 @@ web.py==0.37
 sqlalchemy==0.9.4
 alembic==0.6.7
 
+# Required by helper scripts and pipeline
+PyYAML==3.10
+
+# Required by tests
+mock==1.0.1
+
 # Other numenta projects
 nta.utils>=0.0.0
 htmengine>=0.0.0

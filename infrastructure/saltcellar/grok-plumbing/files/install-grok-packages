@@ -38,7 +38,7 @@ from infrastructure.utilities.path import rmrf
 g_config = None
 g_logger = None
 
-S3_BUCKET="s3://yum.groksolutions.com"
+S3_BUCKET="s3://public.numenta.com"
 INSTALLER_BASE="/opt/numenta/updater"
 
 PYTHON_WHEEL_S3_DIR="%s/python" % S3_BUCKET
@@ -355,7 +355,7 @@ def installGrokPackages():
   g_logger = log.initPipelineLogger(name="create-saltcellar-rpm",
                                     logLevel=g_config.logLevel)
 
-  RPM_S3_DIR="%s/s3/%s" % (S3_BUCKET, g_config.repository)
+  RPM_S3_DIR="%s/yum/%s" % (S3_BUCKET, g_config.repository)
 
   manifest = loadManifest(g_config.configuration_file)
   downloadManifest(manifest)

@@ -19,6 +19,9 @@
 # http://numenta.org/licenses/
 # ----------------------------------------------------------------------
 
+# Note: we don't allow autostacks of Opsworks, so disable warnings about
+# `getMatchingResources` not being implemented (disable=W0223 comments below)
+
 from boto.opsworks import layer1
 
 from grok.app.adapters.datasource.cloudwatch.aws_base import (
@@ -28,7 +31,7 @@ from grok.app.aws.opsworks_utils import retryOnOpsworksTransientError
 
 
 
-@AWSResourceAdapterBase.registerResourceAdapter
+@AWSResourceAdapterBase.registerResourceAdapter #pylint: disable=W0223
 class OpsWorksAdapter(AWSResourceAdapterBase):
   RESOURCE_TYPE = ResourceTypeNames.OPSWORKS_STACK
 
@@ -97,14 +100,14 @@ class OpsWorksAdapter(AWSResourceAdapterBase):
     return stackList
 
 
-  def _queryCloudWatchMetricStats(self, period, start, end, stats):
+  def _queryCloudWatchMetricStats(period, start, end, stats):
     """Override to hard-code us-east-1 region."""
     return super(OpsWorksAdapter, self)._queryCloudWatchMetricStats(
         period, start, end, stats, "us-east-1")
 
 
 
-@AWSResourceAdapterBase.registerMetricAdapter
+@AWSResourceAdapterBase.registerMetricAdapter #pylint: disable=W0223
 class OPSCPUIdleMetricAdapter(OpsWorksAdapter):
 
   METRIC_NAME = "cpu_idle"
@@ -132,7 +135,7 @@ class OPSCPUIdleMetricAdapter(OpsWorksAdapter):
 
 
 
-@AWSResourceAdapterBase.registerMetricAdapter
+@AWSResourceAdapterBase.registerMetricAdapter #pylint: disable=W0223
 class OPSCPUNiceMetricAdapter(OpsWorksAdapter):
 
   METRIC_NAME = "cpu_nice"
@@ -159,7 +162,7 @@ class OPSCPUNiceMetricAdapter(OpsWorksAdapter):
 
 
 
-@AWSResourceAdapterBase.registerMetricAdapter
+@AWSResourceAdapterBase.registerMetricAdapter #pylint: disable=W0223
 class OPSCPUSystemMetricAdapter(OpsWorksAdapter):
 
   METRIC_NAME = "cpu_system"
@@ -187,7 +190,7 @@ class OPSCPUSystemMetricAdapter(OpsWorksAdapter):
 
 
 
-@AWSResourceAdapterBase.registerMetricAdapter
+@AWSResourceAdapterBase.registerMetricAdapter #pylint: disable=W0223
 class OPSCPUUserMetricAdapter(OpsWorksAdapter):
 
   METRIC_NAME = "cpu_user"
@@ -215,7 +218,7 @@ class OPSCPUUserMetricAdapter(OpsWorksAdapter):
 
 
 
-@AWSResourceAdapterBase.registerMetricAdapter
+@AWSResourceAdapterBase.registerMetricAdapter #pylint: disable=W0223
 class OPSCPUWaitioMetricAdapter(OpsWorksAdapter):
 
   METRIC_NAME = "cpu_waitio"
@@ -242,7 +245,7 @@ class OPSCPUWaitioMetricAdapter(OpsWorksAdapter):
 
 
 
-@AWSResourceAdapterBase.registerMetricAdapter
+@AWSResourceAdapterBase.registerMetricAdapter #pylint: disable=W0223
 class OPSLoad5MetricAdapter(OpsWorksAdapter):
 
   METRIC_NAME = "load_5"
@@ -270,7 +273,7 @@ class OPSLoad5MetricAdapter(OpsWorksAdapter):
 
 
 
-@AWSResourceAdapterBase.registerMetricAdapter
+@AWSResourceAdapterBase.registerMetricAdapter #pylint: disable=W0223
 class OPSMemoryBuffersMetricAdapter(OpsWorksAdapter):
 
   METRIC_NAME = "memory_buffers"
@@ -296,7 +299,7 @@ class OPSMemoryBuffersMetricAdapter(OpsWorksAdapter):
 
 
 
-@AWSResourceAdapterBase.registerMetricAdapter
+@AWSResourceAdapterBase.registerMetricAdapter #pylint: disable=W0223
 class OPSMemoryCachedMetricAdapter(OpsWorksAdapter):
 
   METRIC_NAME = "memory_cached"
@@ -322,7 +325,7 @@ class OPSMemoryCachedMetricAdapter(OpsWorksAdapter):
 
 
 
-@AWSResourceAdapterBase.registerMetricAdapter
+@AWSResourceAdapterBase.registerMetricAdapter #pylint: disable=W0223
 class OPSMemoryFreeMetricAdapter(OpsWorksAdapter):
 
   METRIC_NAME = "memory_free"
@@ -350,7 +353,7 @@ class OPSMemoryFreeMetricAdapter(OpsWorksAdapter):
 
 
 
-@AWSResourceAdapterBase.registerMetricAdapter
+@AWSResourceAdapterBase.registerMetricAdapter #pylint: disable=W0223
 class OPSMemorySwapMetricAdapter(OpsWorksAdapter):
 
   METRIC_NAME = "memory_swap"
@@ -378,7 +381,7 @@ class OPSMemorySwapMetricAdapter(OpsWorksAdapter):
 
 
 
-@AWSResourceAdapterBase.registerMetricAdapter
+@AWSResourceAdapterBase.registerMetricAdapter #pylint: disable=W0223
 class OPSMemoryTotalMetricAdapter(OpsWorksAdapter):
 
   METRIC_NAME = "memory_total"
@@ -404,7 +407,7 @@ class OPSMemoryTotalMetricAdapter(OpsWorksAdapter):
 
 
 
-@AWSResourceAdapterBase.registerMetricAdapter
+@AWSResourceAdapterBase.registerMetricAdapter #pylint: disable=W0223
 class OPSMemoryUsedMetricAdapter(OpsWorksAdapter):
 
   METRIC_NAME = "memory_used"
@@ -430,7 +433,7 @@ class OPSMemoryUsedMetricAdapter(OpsWorksAdapter):
 
 
 
-@AWSResourceAdapterBase.registerMetricAdapter
+@AWSResourceAdapterBase.registerMetricAdapter #pylint: disable=W0223
 class OPSProcsMetricAdapter(OpsWorksAdapter):
 
   METRIC_NAME = "procs"

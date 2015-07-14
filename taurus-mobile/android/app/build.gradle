@@ -53,11 +53,13 @@ android {
         resValue "string", "feedback_email_address", System.getProperty('FEEDBACK_EMAIL')
         // AWS Cognito Identity Pool
         buildConfigField 'String', 'COGNITO_POOL_ID',  System.getProperty("COGNITO_POOL_ID")
+
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
     buildTypes {
         debug {
-            // DynamoDB Server. Use 'http://10.0.2.2:8300' for local server or null for AWS
-            buildConfigField 'String', 'SERVER_URL', 'null' //''"http://10.0.2.2:8300"'
+            // DynamoDB Server. Use 'http://10.0.2.2:8000' for local server or null for AWS
+            buildConfigField 'String', 'SERVER_URL', System.getProperty("SERVER_URL") != null ? "\"${System.getProperty("SERVER_URL")}\"" : 'null'
             // Select DynamoDB tables to use. Use ".production" or your user name as suffix.
             // Should match server configuration in "$/products/taurus/conf/application.conf"
             buildConfigField 'String', 'TABLE_SUFFIX', '".staging"' //'".' + System.getProperty("user.name") + '"'
@@ -67,7 +69,6 @@ android {
             versionNameSuffix '-' + defaultConfig.versionCode + '-' + gitCommitSHA + '-debug'
         }
         release {
-            // DynamoDB Server. Use "http://10.0.2.2:8300" for local server or null for AWS
             buildConfigField 'String', 'SERVER_URL', 'null'
             // Use production DynamoDB tables
             // Should match server configuration in "$/products/taurus/conf/application.conf"
@@ -122,7 +123,20 @@ dependencies {
     compile project(':mobile-core')
     testCompile 'junit:junit:4.12'
     testCompile 'org.mockito:mockito-core:1.9.5'
-    compile files('libs/aws-android-sdk-core-2.2.1.jar')
-    compile files('libs/aws-android-sdk-ddb-2.2.1.jar')
-    compile 'com.google.code.gson:gson:2.2.4'
+
+    androidTestCompile 'com.android.support.test:runner:0.3'
+    androidTestCompile 'com.android.support.test:rules:0.3'
+    androidTestCompile "com.google.dexmaker:dexmaker:1.2"
+    androidTestCompile "com.google.dexmaker:dexmaker-mockito:1.2"
+
+    androidTestCompile 'junit:junit:4.12'
+    androidTestCompile 'org.mockito:mockito-core:1.9.5'
+
+    compile('com.amazonaws:aws-android-sdk-core:2.2.2') {
+        exclude group: 'commons-logging', module: 'commons-logging'
+    }
+    compile('com.amazonaws:aws-android-sdk-ddb:2.2.2') {
+        exclude group: 'commons-logging', module: 'commons-logging'
+    }
 }
+

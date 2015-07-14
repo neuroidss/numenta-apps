@@ -52,17 +52,6 @@ supervisord-helper:
       - pip: anaconda-supervisor
       - pkg: nginx
 
-# supervisord.vars is sourced from several support scripts so we can set
-# PYTHONPATH, PATH, etc as needed by Grok and only have to make changes to
-# one file.
-supervisord.vars:
-  file.managed:
-    - name: /etc/grok/supervisord.vars
-    - source: salt://grok-plumbing/files/supervisor-tooling/supervisord.vars
-    - user: ec2-user
-    - group: ec2-user
-    - mode: 0644
-
 # Disable the standard-issue supervisord init script since we use our own.
 supervisord:
   service.disabled:
@@ -106,7 +95,6 @@ firstboot-root-helper:
     - require:
       - file: set-mysql-root-password
       - file: set-rabbitmq-root-password
-      - file: supervisord.vars
 
 firstboot-helper:
   file.managed:
@@ -118,7 +106,6 @@ firstboot-helper:
     - require:
       - file: set-mysql-root-password
       - file: set-rabbitmq-root-password
-      - file: supervisord.vars
 
 # Password helpers
 set-mysql-root-password:

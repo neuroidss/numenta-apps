@@ -204,7 +204,7 @@ def main(argv):
   # Parse command line options
   helpString = (
     "%prog [options]\n"
-    "This script runs the Grok Model Scheduler service.")
+    "This script runs the htmengine Model Scheduler service.")
   parser = OptionParser(helpString)
 
   parser.add_option("--concurrency", action="store", type="int", default=None,

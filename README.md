@@ -55,18 +55,24 @@ Server-side code for Taurus.
 
 **Languages**: Python
 
-#### [`/taurus.metric_collectors`](taurus.metric_collectors)
-
-Custom metric collectors for Grok for Stocks data providers.
-
-**Languages**: Python
-
 #### [`/taurus-mobile`](taurus-mobile)
 
 Grok for Stocks mobile client.
 
 **Languages**: Java
 
+#### [`/taurus.metric_collectors`](taurus.metric_collectors)
+
+Custom metric collectors for Grok for Stocks data providers.
+
+**Languages**: Python
+
+#### [`/taurus.monitoring`](taurus.monitoring)
+
+Monitoring scripts and related utilities for monitoring Grok for Stocks 
+(Code name: Taurus).
+
+**Languages**: Python
 
 ## Support Code
 

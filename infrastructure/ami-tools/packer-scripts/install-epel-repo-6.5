@@ -26,8 +26,19 @@ complain() {
   logger -t ami-bake "$@"
 }
 
-cp /tmp/epel.repo /etc/yum.repos.d
-cp /tmp/RPM-GPG-KEY-EPEL-6 /etc/pki/rpm-gpg
+if [ -f /etc/yum.repos.d/epel.repo ]; then
+  rm -f /etc/yum.repos.d/epel.repo
+fi
+yum remove -y epel-release
+
+# Make sure the ca-certificates on the machine are current
+yum install -y ca-certificates
+
+# Now that our certificates are current, we can reinstall epel
+yum install -y http://download.fedoraproject.org/pub/epel/6/x86_64/epel-release-6-8.noarch.rpm
+
+# We don't want testing rpms on Grok servers
 rm -f /etc/yum.repos.d/epel-testing.repo
 
+# Confirm our repo list
 yum repolist

@@ -27,7 +27,6 @@ import yaml
 
 from pkg_resources import resource_stream
 
-from fabric.api import local
 from infrastructure.utilities.cli import runWithOutput
 from infrastructure.utilities.exceptions import (
   MissingAWSKeysInEnvironment,
@@ -47,7 +46,7 @@ from infrastructure.utilities.s3 import (downloadFileFromS3,
 g_config = yaml.load(resource_stream(__name__, "../conf/config.yaml"))
 
 
-S3_YUM_BUCKET = "yum.groksolutions.com"
+S3_YUM_BUCKET = "public.numenta.com"
 
 
 
@@ -186,31 +185,6 @@ def addAndParseArgs(jsonArgs):
 
 
 
-def downloadGrokRPM(grokSHA, workDir):
-  """
-  Download the grok rpm for a given SHA
-
-  :param grokSHA - SHA we need a Grok RPM for
-  :param workDir - Where to store the downloaded RPM
-
-  :returns full path to the Grok RPM
-
-  :rtype string
-  """
-  grokRpmName = getMappingsFromShaToRpm(
-                  repo="grok",
-                  sha=grokSHA,
-                  s3MappingBucket=g_config["S3_MAPPING_BUCKET"],
-                  logger=g_logger)
-  g_logger.debug("Found grok RPM name %s, downloading", grokRpmName)
-  with changeToWorkingDir(workDir):
-    downloadFileFromS3(bucketName=S3_YUM_BUCKET,
-                       path="s3/x86_64/%s" % grokRpmName,
-                       logger=g_logger)
-  return "%s/%s" % (workDir, grokRpmName)
-
-
-
 def main(jsonArgs=None):
   """
     Creates an AMI using a Grok RPM for a given SHA.
@@ -241,8 +215,6 @@ def main(jsonArgs=None):
 
     artifactsDir = createOrReplaceArtifactsDir()
 
-    grokRPMPath = downloadGrokRPM(grokSHA=grokSha, workDir=artifactsDir)
-
     # Write RPM details for later use by the promote-marketplace pipeline
     if os.environ.get("JENKINS_HOME"):
       writeRpmDetails(nameOfFile="grok",
@@ -255,7 +227,6 @@ def main(jsonArgs=None):
                                "pipeline", "src")
     with changeToWorkingDir(pipeLineSrc):
       g_logger.info("\n\n########## Baking AMI ##########")
-      g_logger.debug("########## Grok RPM: %s ##########", grokRPMPath)
       g_logger.debug("########## AMI Name: %s ##########", amiName)
 
       # Baking AMI takes around 15 mins, so print as it runs so we see
@@ -273,8 +244,6 @@ def main(jsonArgs=None):
     buildNumber = getBuildNumber()
     artifactAmiIdPath = os.path.join(artifactsDir, "ami_%s.txt" % buildNumber)
     shutil.copy(amiIDPath, artifactAmiIdPath)
-    local("pip install PyYAML")
-    local("pip install prettytable")
     print "#############################################################"
     print "Running the AMI Tests"
     runIntegrationTestScriptPath = os.path.join(os.environ["PRODUCTS"], "grok",

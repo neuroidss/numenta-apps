@@ -480,13 +480,29 @@ class _AutostackDatasourceAdapter(DatasourceAdapterIface):
   def getInstanceNameForModelSpec(self, spec):
     """ Get canonical instance name from a model spec
 
-    :param modelSpec: Datasource-specific model specification
+    :param modelSpec: Model specification or import model specification
     :type modelSpec: JSONifiable dict
 
-    :returns: Canonical instance name
-    :rtype: str
+    :returns: Canonical instance name; None if autostack doesn't exist
+    :rtype: str or None
     """
-    metricSpec = spec["metricSpec"]
-    autostackId = metricSpec["autostackId"]
+    if "metricSpec" in spec:
+      autostackId = spec["metricSpec"]["autostackId"]
+    else:
+      # Proceed as if for an import-model-spec
+      stackSpec = spec["stackSpec"]
+      aggSpec = stackSpec["aggSpec"]
+
+      try:
+        with self.connectionFactory() as conn:
+          autostackObj = repository.getAutostackForNameAndRegion(
+            conn,
+            stackSpec["name"],
+            aggSpec["region"])
+      except grok.app.exceptions.ObjectNotFoundError:
+        return None
+      else:
+        autostackId = autostackObj.uid
+
     return self._getCanonicalResourceName(autostackId)
 

@@ -43,12 +43,21 @@ rabbitmq-server:
   service.running:
     - enable: true
     - require:
+      - file: /etc/rabbitmq
       - pkg: rabbitmq-server
 
 enable-rabbitmq-management:
   cmd.run:
     - name: /usr/lib/rabbitmq/bin/rabbitmq-plugins enable rabbitmq_management
     - require:
+      - service: rabbitmq-server
+    - unless: grep rabbitmq_management /etc/rabbitmq/enabled_plugins
+    - watch_in:
+      - cmd: restart-rabbit-service
+
+restart-rabbit-service:
+  cmd.wait:
+    - name: service rabbitmq-server restart
+    - require:
       - pkg: rabbitmq-server
       - service: rabbitmq-server
-

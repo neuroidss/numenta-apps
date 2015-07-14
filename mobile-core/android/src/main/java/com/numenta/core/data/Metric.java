@@ -29,6 +29,7 @@ import android.content.ContentValues;
 import android.database.Cursor;
 import android.util.Log;
 
+import java.io.IOException;
 import java.io.Serializable;
 
 /**
@@ -51,7 +52,10 @@ public final class Metric implements Serializable {
 
     private final String _serverName;
 
-    private final JSONObject _parameters;
+    private final String _parameters;
+
+    /** Holds parsed parameters */
+    private transient JSONObject _parametersJson;
 
     private long _lastTimestamp;
 
@@ -59,7 +63,6 @@ public final class Metric implements Serializable {
      * Create a {@link com.numenta.core.data.Metric} object using the contents of the given
      * {@link android.database.Cursor}. The {@link android.database.Cursor} must contain all
      * columns required to initialize the {@link com.numenta.core.data.Metric} object.
-     *
      */
     protected Metric(Cursor cursor) {
         this._metricId = cursor.getString(cursor.getColumnIndex("metric_id"));
@@ -70,17 +73,15 @@ public final class Metric implements Serializable {
         this._lastTimestamp = cursor.getLong(cursor.getColumnIndex("last_timestamp"));
 
         // Get metric JSON Parameters from the database
-        JSONObject params = null;
-        String json = cursor.getString(cursor.getColumnIndex("parameters"));
-        if (json != null && !json.trim().isEmpty()) {
+        _parameters = cursor.getString(cursor.getColumnIndex("parameters"));
+        if (_parameters != null && !_parameters.trim().isEmpty()) {
             try {
-                params = new JSONObject(json);
+                _parametersJson = new JSONObject(_parameters);
             } catch (JSONException e) {
-                params = null;
+                _parametersJson = null;
                 Log.e(Metric.class.getSimpleName(), "Failed to parse metric parameters", e);
             }
         }
-        this._parameters = params;
     }
 
     /**
@@ -93,7 +94,8 @@ public final class Metric implements Serializable {
         this._instanceId = instanceId;
         this._serverName = serverName;
         this._lastRowId = lastRowId;
-        this._parameters = parameters;
+        this._parametersJson = parameters;
+        this._parameters = parameters != null ? parameters.toString() : null;
 
         // Should be updated with the the last timestamp available in the
         // metric_data table
@@ -113,7 +115,7 @@ public final class Metric implements Serializable {
         values.put("server_name", this._serverName);
         values.put("last_timestamp", this._lastTimestamp);
         if (this._parameters != null) {
-            values.put("parameters", this._parameters.toString());
+            values.put("parameters", this._parameters);
         }
         return values;
     }
@@ -125,8 +127,8 @@ public final class Metric implements Serializable {
      * @return The parameter value or {@code null} if the parameter does not exist
      */
     public String getParameter(String name) {
-        if (_parameters != null) {
-            return _parameters.optString(name, null);
+        if (_parametersJson != null) {
+            return _parametersJson.optString(name, null);
         }
         return null;
     }
@@ -138,8 +140,8 @@ public final class Metric implements Serializable {
      * @return The parameter value or {@code null} if the parameter does not exist
      */
     public String getMetricSpec(String name) {
-        if (_parameters != null) {
-            JSONObject spec = _parameters.optJSONObject("metricSpec");
+        if (_parametersJson != null) {
+            JSONObject spec = _parametersJson.optJSONObject("metricSpec");
             if (spec != null) {
                 return spec.optString(name, null);
             }
@@ -154,8 +156,8 @@ public final class Metric implements Serializable {
      * @return The parameter value or {@code null} if the parameter does not exist
      */
     public String getUserInfo(String name) {
-        if (_parameters != null) {
-            JSONObject spec = _parameters.optJSONObject("metricSpec");
+        if (_parametersJson != null) {
+            JSONObject spec = _parametersJson.optJSONObject("metricSpec");
             if (spec != null) {
                 JSONObject info = spec.optJSONObject("userInfo");
                 if (info != null) {
@@ -265,6 +267,26 @@ public final class Metric implements Serializable {
      * Get metric parameters
      */
     public JSONObject getParameters() {
-        return _parameters;
+        return _parametersJson;
+    }
+
+    /**
+     * Process custom deserialization
+     */
+    private void readObject(java.io.ObjectInputStream in)
+            throws IOException, ClassNotFoundException {
+        // Deserialize serializable fields
+        in.defaultReadObject();
+
+        // "JSONObject" is not serializable and marked as "tansient" therefore we have to parse the
+        // JSON parameters once the object is de-serialized
+        if (_parameters != null && !_parameters.trim().isEmpty()) {
+            try {
+                _parametersJson = new JSONObject(_parameters);
+            } catch (JSONException e) {
+                _parametersJson = null;
+                Log.e(Metric.class.getSimpleName(), "Failed to parse metric parameters", e);
+            }
+        }
     }
 }

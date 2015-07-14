@@ -37,7 +37,8 @@ import logging
 import os
 import time
 
-from htmengine import repository
+from htmengine import (raiseExceptionOnMissingRequiredApplicationConfigPath,
+                       repository)
 from htmengine.adapters.datasource import createCustomDatasourceAdapter
 import htmengine.exceptions
 from htmengine.htmengine_logging import getExtendedLogger
@@ -207,11 +208,11 @@ def _trimMetricCache():
       del gCustomMetrics[name]
 
 
-
+@raiseExceptionOnMissingRequiredApplicationConfigPath
 def runServer():
   # Get the current list of custom metrics
   appConfig = Config("application.conf",
-                     os.environ.get("APPLICATION_CONFIG_PATH"))
+                     os.environ["APPLICATION_CONFIG_PATH"])
 
   engine = repository.engineFactory(appConfig)
   global gCustomMetrics

@@ -87,38 +87,45 @@ In order to run the pipeline, you need to ensure a couple things are setup prope
 your Java installation.
 
 
-### Docker setup
+## Docker setup
 
-- **Docker container**
-    - Install `VirtualBox` from https://www.virtualbox.org/wiki/Downloads
-    - Install `vagrant` from http://www.vagrantup.com/downloads.html or **homebrew**:
+### Install dependencies
 
-            brew install vagrant
+- Install **VirtualBox** 4.3.10 or greater from https://www.virtualbox.org/wiki/Downloads
+- Install **vagrant 1.6** or greater from http://www.vagrantup.com/downloads.html or **homebrew**:
 
-    - Install `docker` client from http://docs.docker.com/installation or **homebrew**:
+        brew install vagrant
 
-            brew install docker
+- Install `docker` client from http://docs.docker.com/installation or **homebrew**:
 
-    - Start `docker` container:
+        brew install docker
 
-            vagrant up
+### Startup
 
-- **Docker image**
+From within the `infrastructure/coreos/` directory relative to `numenta-apps` root:
 
-    - Copy your **Application Signing** keystore file to `.keys/grok.keystore` directory:
+        vagrant up
+        source env
 
-            mkdir .keys
-            cp /etc/numenta/products/keys/grok.keystore .key/grok.keystore
+`vagrant up` triggers vagrant to download the CoreOS image (if necessary) and (re)launch the instance
 
-    - Build docker image:
 
-            docker build -t taurus-mobile .
+### Build **taurus-mobile** and run tests using docker
 
-    - Run default build on docker mapping your repository **root** directory to `/opt/numenta/products`, for example:
+- Copy your **Application Signing** keystore file to `.keys/grok.keystore` directory:
 
-            docker run --name taurus-mobile --rm -v `pwd`/..:/opt/numenta/products taurus-mobile
+        mkdir .keys
+        cp /etc/numenta/products/keys/grok.keystore .key/grok.keystore
 
-    - Run custom build on docker:
+- From `numenta-apps/taurus-mobile`:
 
-            docker run --name taurus-mobile --rm -v `pwd`/..:/opt/numenta/products taurus-mobile ./gradlew clean assembleQa
+        docker build -t taurus-mobile .
+
+- Run default build command on docker mapping the root of `numenta-apps/` to `/opt/numenta/products`, for example:
+
+        docker run --name taurus-mobile --rm -v `pwd`/..:/opt/numenta/products taurus-mobile
+
+- Run custom build on docker:
+
+        docker run --name taurus-mobile --rm -v `pwd`/..:/opt/numenta/products taurus-mobile ./gradlew clean assembleQa
 

@@ -168,8 +168,7 @@ def syncRepoWithS3(repoName, logger):
                 key_filename=g_serverKey, user=g_config["USER"],
                 connection_attempts=10, warn_only=True):
     logger.info("+++++++++++++ Synchronizing repository with S3 +++++++++++++")
-    result = run("cd %s && ./update-individual-repo %s" %
-                 (g_config["YUM_REPO_TOOLS_PATH"], repoName))
+    result = run("update-individual-repo %s" % repoName)
     if result.return_code:
       raise exceptions.RPMSyncError("Failed to sync repo %s" % repoName)
 

@@ -65,7 +65,7 @@ reset_mysql_and_rabbit_passwords() {
       exit 1
     fi
   fi
-  sed -i.bak "s/passwd.*$/passwd\ =\ ${default_mysql_password}/g" "${NUMENTA_D}"/grok/conf/grok-app.tpl
+  sed -i.bak "s/passwd.*$/passwd\ =\ ${default_mysql_password}/g" "${CONF_D}/application.tpl"
 
   echo "Resetting rabbitmq password for user guest"
   rabbitmqctl change_password guest ${default_rabbit_password}
@@ -74,8 +74,7 @@ reset_mysql_and_rabbit_passwords() {
     exit 1
   fi
 
-  # TODO: Find the new rabbit tpl file and reset it
-  # sed -i.bak "s/password.*$/password\ =\  ${default_rabbit_password}/g" "${NUMENTA_D}"/grok/conf/rabbitmq.tpl
+  sed -i.bak "s/password.*$/password\ =\  ${default_rabbit_password}/g" "${PRODUCTS_D}/nta.utils/conf/rabbitmq.conf"
 
   echo "Purging stale mysql_password and rabbit_password files post reset"
   rm -f /etc/grok/mysql_password /etc/grok/rabbit_password

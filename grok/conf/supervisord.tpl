@@ -59,7 +59,7 @@ redirect_stderr=true
 
 ;*************** GROK-API **************
 [program:grok-api]
-command=uwsgi --enable-threads --socket 0.0.0.0:19002 --master --vacuum --idle 300 --processes 8 --threads 4 --listen 1024 --env GROK_CONFIG_PATH=%(GROK_CONFIG_PATH)s --module grok.app.webservices.webapp
+command=uwsgi --enable-threads --socket 0.0.0.0:19002 --master --vacuum --idle 300 --processes 8 --threads 4 --listen 1024 --module grok.app.webservices.webapp
 process_name=%%(program_name)s_%%(process_num)02d
 directory=%%(here)s/..
 ;user=vagrant

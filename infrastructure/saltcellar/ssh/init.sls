@@ -29,22 +29,13 @@ sshd:
     - enable: True
     - watch:
       - file: reset-password-in-sshd-config
-      - file: add-password-disable-if-missing
 
 # Reconfigure SSH to only allow access using key-based authentication
 
 # If password auth has been enabled, turn it off.
 reset-password-in-sshd-config:
-  file.sed:
+  file.replace:
     - name: /etc/ssh/sshd_config
-    - before: "PasswordAuthentication yes"
-    - after: "PasswordAuthentication no"
-
-# Explicitly disable password authentication if the command is missing.
-add-password-disable-if-missing:
-  file.append:
-    - name: /etc/ssh/sshd_config
-    - require:
-      - file: reset-password-in-sshd-config
-    - text:
-      - "PasswordAuthentication no"
+    - pattern: "PasswordAuthentication yes"
+    - repl: "PasswordAuthentication no"
+    - append_if_not_found: True

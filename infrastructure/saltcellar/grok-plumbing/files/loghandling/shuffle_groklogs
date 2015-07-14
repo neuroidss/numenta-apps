@@ -32,8 +32,6 @@ LOG_D="${NUMENTA}/grok/logs"
 UPLOADER="${NUMENTA}/grok/bin/upload_logs.py"
 STAMPFILE=/etc/grok/firstboot.run
 
-source /etc/grok/nupic-linux64/bin/activate
-
 if [ -f "${STAMPFILE}" ]; then
   /usr/local/sbin/groklog_rotator "${LOG_D}"
   rotate_result=$?

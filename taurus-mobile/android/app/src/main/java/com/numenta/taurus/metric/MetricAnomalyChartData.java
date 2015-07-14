@@ -174,7 +174,8 @@ public class MetricAnomalyChartData implements AnomalyChartData, Serializable {
 
         // Calculate end date index
         long idx = Math.max(size - (_lastTimestamp - _endDate) / BAR_INTERVAL - bars, 0);
-        _data = _allAnomalies.subList((int) idx, (int) Math.min(idx + bars, size));
+        _data = new ArrayList<Pair<Long, Float>>(
+                _allAnomalies.subList((int) idx, (int) Math.min(idx + bars, size)));
 
         // Compute raw data returned by #getRawData()
         size = (int) (bars * BAR_INTERVAL / METRIC_DATA_INTERVAL);

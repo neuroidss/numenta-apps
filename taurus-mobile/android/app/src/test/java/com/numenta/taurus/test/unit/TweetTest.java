@@ -62,34 +62,67 @@ public class TweetTest {
                 "userId2", "userName2", "text", 10);
         Assert.assertEquals(_tweet.getCanonicalText(), actual.getCanonicalText());
 
-        // RT in text. Same text
+        // Remove Links
         actual = new Tweet("id2", SERVER_AGGREGATED_TS, CREATED_TS,
-                "userId", "userName", "RT text", 10);
+                "userId", "userName", "http://t.co/blah text https://t.co/blah", 10);
         Assert.assertEquals(_tweet.getCanonicalText(), actual.getCanonicalText());
 
-        // Link in text. Same text
+        // Remove '...' from the end
         actual = new Tweet("id2", SERVER_AGGREGATED_TS, CREATED_TS,
-                "userId", "userName", "text https://t.co/blah", 10);
+                "userId", "userName", "text ...", 10);
         Assert.assertEquals(_tweet.getCanonicalText(), actual.getCanonicalText());
 
+        // Remove "RT tags" from the beginning of the text
         actual = new Tweet("id2", SERVER_AGGREGATED_TS, CREATED_TS,
-                "userId", "userName", "text\nhttps://t.co/blah", 10);
+                "userId", "userName", "RT @blah  text", 10);
         Assert.assertEquals(_tweet.getCanonicalText(), actual.getCanonicalText());
 
-        // RT and Link in text. Same text
+        // RT from the beginning of the text up to colon in text
         actual = new Tweet("id2", SERVER_AGGREGATED_TS, CREATED_TS,
-                "userId", "userName", "RT text https://t.co/blah", 10);
+                "userId", "userName", "RT @blah @blah #blah $blah:  text", 10);
         Assert.assertEquals(_tweet.getCanonicalText(), actual.getCanonicalText());
 
-        // RT and Link in text with whitespace at the end. Same text
+        // Do not remove RT in the middle of the text
         actual = new Tweet("id2", SERVER_AGGREGATED_TS, CREATED_TS,
-                "userId", "userName", "RT text https://t.co/blah \n\t\r ", 10);
-        Assert.assertEquals(_tweet.getCanonicalText(), actual.getCanonicalText());
-
-        // RT but Link not at the end of text. Not the same
-        actual = new Tweet("id2", SERVER_AGGREGATED_TS, CREATED_TS,
-                "userId", "userName", "RT text https://t.co/blah blah", 10);
+                "userId", "userName", "Blah RT @blah  text", 10);
         Assert.assertNotEquals(_tweet.getCanonicalText(), actual.getCanonicalText());
+
+        // From left side – Remove @, #, $ tags up to last one
+        actual = new Tweet("id2", SERVER_AGGREGATED_TS, CREATED_TS,
+                "userId", "userName", "@tag1 @tag2 @tag text", 10);
+        Assert.assertEquals("@tag text", actual.getCanonicalText());
+        actual = new Tweet("id2", SERVER_AGGREGATED_TS, CREATED_TS,
+                "userId", "userName", "#tag1 #tag2 #tag text", 10);
+        Assert.assertEquals("#tag text", actual.getCanonicalText());
+        actual = new Tweet("id2", SERVER_AGGREGATED_TS, CREATED_TS,
+                "userId", "userName", "$tag1 $tag2 $tag text", 10);
+        Assert.assertEquals("$tag text", actual.getCanonicalText());
+        actual = new Tweet("id2", SERVER_AGGREGATED_TS, CREATED_TS,
+                "userId", "userName", "#tag1 @tag2 $tag text", 10);
+        Assert.assertEquals("$tag text", actual.getCanonicalText());
+
+        // From right side – Remove @, #, $ when followed by letter, not a number
+        actual = new Tweet("id2", SERVER_AGGREGATED_TS, CREATED_TS,
+                "userId", "userName", "text @tag1 @tag2 @tag", 10);
+        Assert.assertEquals("text", actual.getCanonicalText());
+        actual = new Tweet("id2", SERVER_AGGREGATED_TS, CREATED_TS,
+                "userId", "userName", "text #tag1 #tag2 #tag", 10);
+        Assert.assertEquals("text", actual.getCanonicalText());
+        actual = new Tweet("id2", SERVER_AGGREGATED_TS, CREATED_TS,
+                "userId", "userName", "text $tag1 $tag2 $tag", 10);
+        Assert.assertEquals("text", actual.getCanonicalText());
+        actual = new Tweet("id2", SERVER_AGGREGATED_TS, CREATED_TS,
+                "userId", "userName", "text #tag1 @tag2 $tag", 10);
+        Assert.assertEquals("text", actual.getCanonicalText());
+        actual = new Tweet("id2", SERVER_AGGREGATED_TS, CREATED_TS,
+                "userId", "userName", "text $123.12 #tag1 @tag2 $tag", 10);
+        Assert.assertEquals("text $123.12", actual.getCanonicalText());
+
+        // All together
+        actual = new Tweet("id2", SERVER_AGGREGATED_TS, CREATED_TS,
+                "userId", "userName", "RT @blah #blah @tag2 @tag1 @tag text http://t.co/blah $123.12 #tag1 @tag2 $tag...", 10);
+        Assert.assertEquals("@tag text $123.12", actual.getCanonicalText());
+
     }
 
     @Test

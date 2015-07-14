@@ -27,7 +27,7 @@ Downloads the Grok support public keys and dumps them to stdout. Used
 by other scripts to pull the grok keys when needed.
 """
 
-BUCKET = "yum.groksolutions.com"
+BUCKET = "public.numenta.com"
 
 import boto
 from boto.s3.key import Key
@@ -38,7 +38,7 @@ def printGrokSupportPubkey(conn):
   bucket = conn.get_bucket(BUCKET, validate=False)
   k = Key(bucket)
 
-  k.key = "/s3/public/GrokSupport.pubkeys"
+  k.key = "/resources/GrokSupport.pubkeys"
   print k.get_contents_as_string()
 
 

@@ -209,12 +209,20 @@ public class MetricListAdapter extends AnomalyListAdapter<MetricAnomalyChartData
             @Override
             protected void onPreExecute() {
                 super.onPreExecute();
+                if (isCancelled()) {
+                    return;
+                }
+
                 _handler = new Handler() {
                     ProgressDialog _progress = new ProgressDialog(getContext(),
                             R.style.SpinningCircleTheme);
 
                     @Override
                     public void handleMessage(Message msg) {
+                        if (isCancelled()) {
+                            return;
+                        }
+
                         switch (msg.what) {
                             case MESSAGE_SHOW_PROGRESS:
                                 if (_progress != null) {
@@ -236,12 +244,19 @@ public class MetricListAdapter extends AnomalyListAdapter<MetricAnomalyChartData
 
             @Override
             protected void onPostExecute(Boolean modified) {
+                if (isCancelled()) {
+                    return;
+                }
                 hideProgress();
                 super.onPostExecute(modified);
             }
 
             @Override
             protected Boolean doInBackground(AnomalyChartData... args) {
+                if (isCancelled()) {
+                    return false;
+                }
+
                 // Show progress after 2 seconds as we start to load all metrics
                 showProgress();
 
@@ -289,8 +304,8 @@ public class MetricListAdapter extends AnomalyListAdapter<MetricAnomalyChartData
             }
 
             void showProgress() {
-                // Show progress after 2 seconds if the task is still active
-                _handler.sendEmptyMessageDelayed(MESSAGE_SHOW_PROGRESS, 2000);
+                // Show progress after 3 seconds if the task is still active
+                _handler.sendEmptyMessageDelayed(MESSAGE_SHOW_PROGRESS, 3000);
             }
         };
     }

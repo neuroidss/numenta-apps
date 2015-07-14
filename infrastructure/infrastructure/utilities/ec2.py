@@ -31,6 +31,7 @@ import boto.ec2
 from infrastructure.utilities import jenkins
 from infrastructure.utilities.exceptions import (CommandFailedError,
                                                  InstanceLaunchError,
+                                                 InstanceNotFoundError,
                                                  InvalidParametersError)
 from infrastructure.utilities.ssh import runCommandBySSH
 

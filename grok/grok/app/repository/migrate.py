@@ -24,7 +24,6 @@
 
 import optparse
 import os
-import sys
 
 import alembic
 import alembic.config

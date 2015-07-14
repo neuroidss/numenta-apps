@@ -26,22 +26,22 @@
 # Cope for both C6 and C7
 {% if grains['osmajorrelease'][0] == '6' %}
 
-# Install EPEL from files if we're on CentOS 6
+# On CentOS 6, we need to make sure we have the latest ca-certificates package
+# or installing the epel repo will make yum start choking with SSL errors.
+update-ca-certificates:
+  pkg.latest:
+    - name: ca-certificates
 
-# Install EPEL repo key
-/etc/pki/rpm-gpg/RPM-GPG-KEY-EPEL-6:
-  file.managed:
-    - source: salt://nta-yum/files/epel.key.centos6
-    - mode: 644
-
-# Install EPEL repo file
-/etc/yum.repos.d/epel.repo:
-  file.managed:
-    - source: salt://nta-yum/files/epel.repo.centos6
-    - mode: 644
+# On CentOS 6, we have to install EPEL from a URL
+install-epel-repo:
+  cmd.run:
+    - name: yum install -y http://download.fedoraproject.org/pub/epel/6/x86_64/epel-release-6-8.noarch.rpm
+    - creates: /etc/yum.repos.d/epel.repo
+    - require:
+      - pkg: update-ca-certificates
     - watch_in:
-      - cmd: epel-installed
       - cmd: reload-yum-database
+      - cmd: epel-installed
 
 {% elif grains['osmajorrelease'][0] == '7' %}
 # CentOS 7 supports installing EPEL directly via yum!

@@ -27,14 +27,14 @@
 CENTOS6_CONFIG="ami-configurations/centos6.json"
 GROK_PIPELINE_CONFIG="ami-configurations/grok-pipeline.json"
 GROK_PLUMBING_CONFIG="ami-configurations/grok-plumbing.json"
-INFRASTRUCTURE_128GB_CONFIG="ami-configurations/infrastructure-base-128gb.json"
+INFRASTRUCTURE_256GB_CONFIG="ami-configurations/infrastructure-base-256gb.json"
 INFRASTRUCTURE_CONFIG="ami-configurations/infrastructure-base.json"
 WEB_CONFIG="ami-configurations/salt-webserver.json"
 
 epel_rpm = "epel-release-6-8.noarch.rpm"
 epel_rpm_url = "http://dl.fedoraproject.org/pub/epel/6/x86_64/epel-release-6-8.noarch.rpm"
 s3_yum_plugin_rpm = "yum-s3-0.2.4-1.noarch.rpm"
-s3_yum_plugin_url = "https://s3-us-west-2.amazonaws.com/yum.groksolutions.com/s3/thirdparty/yum-s3-0.2.4-1.noarch.rpm"
+s3_yum_plugin_url = "https://s3-us-west-2.amazonaws.com/public.numenta.com/yum/thirdparty/yum-s3-0.2.4-1.noarch.rpm"
 secretsauce_repo_f = "repos/secretsauce.repo"
 
 task :help do
@@ -85,17 +85,18 @@ end
 desc "Validate Infrastructure configuration"
 task :validate_infrastructure => [:products_sha,
                                   :grok_repos,
+                                  :infrastructure_minion_id,
                                   :salt_bootstrap,
                                   :yum_plugin] do
   sh %{ packer validate #{INFRASTRUCTURE_CONFIG} }
 end
 
-desc "Validate Infrastructure 128GB configuration"
-task :validate_infrastructure_128gb => [:products_sha,
+desc "Validate Infrastructure 256GB configuration"
+task :validate_infrastructure_256gb => [:products_sha,
                                         :grok_repos,
                                         :salt_bootstrap,
                                         :yum_plugin] do
-  sh %{ packer validate #{INFRASTRUCTURE_128GB_CONFIG} }
+  sh %{ packer validate #{INFRASTRUCTURE_256GB_CONFIG} }
 end
 
 desc "Validate Webserver packer configuration"
@@ -122,7 +123,7 @@ task :bake_grok_pipeline => [:products_sha,
                              :epel_repo,
                              :grok_repos,
                              :validate_grok_pipeline ] do
-  sh %{ packer build -var 'grok_install_manifest=#{ENV["GROK_INSTALL_MANIFEST"]}' \
+  sh %{ packer build -var 'grok_rpm_name=#{ENV["GROK_RPM_NAME"]}' \
        -var 'ami_name=#{ENV["AMI_NAME"]}' #{GROK_PIPELINE_CONFIG} }
 end
 
@@ -136,24 +137,43 @@ task :bake_grok_plumbing => [:products_sha,
   sh %{ packer build #{GROK_PLUMBING_CONFIG} }
 end
 
+task :revoke_infrastructure_bake_id do
+  minion_id=File.read("infrastructure_minion_id").strip()
+  sh %{ revoke-salt-key #{minion_id} }
+end
+
+task :sign_infrastructure_bake_id => [:infrastructure_minion_id] do
+  minion_id=File.read("infrastructure_minion_id").strip()
+  sh %{ sign-salt-key #{minion_id} }
+end
+
 desc "Bake a new Infrastructure AMI"
-task :bake_infrastructure => [:grok_repos,
+task :bake_infrastructure => [:devtools_repo,
+                              :grok_repos,
+                              :infrastructure_minion_id,
                               :products_sha,
                               :salt_bootstrap,
                               :secretsauce_repo,
                               :validate_infrastructure,
                               :yum_plugin ] do
+  minion_id=File.read("infrastructure_minion_id").strip()
+  sh %{ sign-salt-key #{minion_id} }
   sh %{ packer build #{INFRASTRUCTURE_CONFIG} }
+  sh %{ revoke-salt-key #{minion_id} }
 end
 
-desc "Bake a new 128GB Infrastructure AMI"
-task :bake_infrastructure_128gb => [:grok_repos,
+desc "Bake a new 256GB Infrastructure AMI"
+task :bake_infrastructure_256gb => [:devtools_repo,
+                                    :grok_repos,
+                                    :infrastructure_minion_id,
                                     :products_sha,
                                     :salt_bootstrap,
                                     :secretsauce_repo,
-                                    :validate_infrastructure_128gb,
+                                    :sign_infrastructure_bake_id,
+                                    :validate_infrastructure_256gb,
                                     :yum_plugin ] do
-  sh %{ packer build #{INFRASTRUCTURE_128GB_CONFIG} }
+  sh %{ packer build #{INFRASTRUCTURE_256GB_CONFIG} }
+  sh %{ rake revoke_infrastructure_bake_id }
 end
 
 desc "Bake a new HVM webserver AMI"
@@ -167,6 +187,11 @@ task :bake_webserver => [:products_sha,
 end
 
 # Utility stanzas
+desc "Set a minion_id for infrastructure baking"
+task :infrastructure_minion_id do
+  datestamp=`date +%Y.%m.%d.%H.%M.%S`
+  File.write("infrastructure_minion_id", "infrabake-#{datestamp}")
+end
 
 # Get the s3 yum plugin
 file s3_yum_plugin_rpm do
@@ -227,6 +252,18 @@ end
 desc "Clone AMI keys from /etc/numenta/ami"
 task :get_ami_keypairs do
   sh %{ rsync -a /etc/numenta/ami/sshkeys . }
+end
+
+# Copy the devtools-2 repo from the saltcellar so we aren't maintaining it
+# in two places
+desc "Copy the devtools-2 repo from the saltcellar"
+task :devtools_repo do
+  unless File.exist?("repos/devtools-2.repo")
+    sh %{ rsync ../saltcellar/devtools/files/devtools-2.repo repos/devtools-2.repo }
+  end
+  unless File.exist?("repos/devtools-pathaddition.sh")
+    sh %{ rsync ../saltcellar/devtools/files/00-add-devtools-to-path.sh repos/devtools-pathaddition.sh }
+  end
 end
 
 # Copy the secretsauce repo from the saltcellar so we aren't maintaining it

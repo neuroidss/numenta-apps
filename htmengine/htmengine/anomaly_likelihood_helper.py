@@ -48,9 +48,9 @@ class AnomalyLikelihoodHelper(object):
   """
   def __init__(self, log, config):
     """
-    :param log: Grok log
+    :param log: htmengine log
     :type log: logging.Logger
-    :param config: Grok config
+    :param config: htmengine config
     :type config: nta.utils.config.Config
     """
     # Make sure we have the latest version of configuration

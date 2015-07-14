@@ -35,7 +35,6 @@ import json
 import logging
 import optparse
 import os
-import select
 import socket
 import SocketServer
 import threading
@@ -45,6 +44,7 @@ from nta.utils.config import Config
 from nta.utils.logging_support_raw import LoggingSupport
 from nta.utils import threading_utils
 
+from htmengine import raiseExceptionOnMissingRequiredApplicationConfigPath
 from htmengine.htmengine_logging import getExtendedLogger
 from htmengine.model_swapper.model_swapper_interface import (
   MessageBusConnector)
@@ -83,7 +83,7 @@ class Protocol(object):
   def getDefaultPort(cls, protocol):
     if protocol == cls.PLAIN:
       return int((Config("application.conf",
-                         os.environ.get("APPLICATION_CONFIG_PATH"))
+                         os.environ["APPLICATION_CONFIG_PATH"])
                   .get("metric_listener", "plaintext_port")))
     raise ValueError("Unknown protocol %r" % protocol)
 
@@ -214,13 +214,13 @@ class _TimeoutSafeBufferedLineReader(object):
           if self._lineBuf:
             line = str(self._lineBuf)
             del self._lineBuf[:]
-  
+
             # Yield remaining buffer content (without newline)
             yield line
 
           # Exit generator
           break
-        
+
         # Append the new data to our line buffer and loop to scan for a line
         self._lineBuf.extend(itertools.islice(self._recvBuf, 0, nbytes))
         continue
@@ -278,7 +278,7 @@ class TCPHandler(SocketServer.StreamRequestHandler):
             LOGGER.debug("got line=%r; batchLen=%d", line, len(batch))
           else:
             LOGGER.debug("got data break; batchLen=%d", len(batch))
-  
+
           if (line is None and batch) or len(batch) >= _MAX_BATCH_SIZE:
             _forwardBatch(messageBus, batch)
             batch = []
@@ -303,7 +303,7 @@ class TCPHandler(SocketServer.StreamRequestHandler):
       self.connection.settimeout(timeout)
 
       reader = _TimeoutSafeBufferedLineReader(self.connection)
-  
+
       for line in reader.readlinesWithTimeout():
         if line is None:
           # Signal break in data flow
@@ -321,7 +321,7 @@ class TCPHandler(SocketServer.StreamRequestHandler):
           LOGGER.debug("lowering timeout")
           timeout = 0.0001
           self.connection.settimeout(timeout)
-        
+
         # Yield the line
         yield line
     finally:
@@ -343,6 +343,7 @@ class ThreadedTCPServer(SocketServer.ThreadingMixIn,
 
 
 
+@raiseExceptionOnMissingRequiredApplicationConfigPath
 def runServer(host="0.0.0.0", port=None, protocol=Protocol.PLAIN,
               transport=Transport.TCP):
   Protocol.current = protocol
@@ -358,7 +359,8 @@ def runServer(host="0.0.0.0", port=None, protocol=Protocol.PLAIN,
     server = ThreadedTCPServer((host, port), TCPHandler)
 
   config = Config("application.conf",
-                  os.environ.get("APPLICATION_CONFIG_PATH"))
+                  os.environ["APPLICATION_CONFIG_PATH"])
+
   global gQueueName
   gQueueName = config.get("metric_listener", "queue_name")
 

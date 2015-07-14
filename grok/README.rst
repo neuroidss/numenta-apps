@@ -17,7 +17,7 @@ Dependencies:
 
 ::
 
-    cd ~/nta/grok
+    cd ~/nta/numenta-apps
 
 **NOTE:** Do not use sudo with pip.
 
@@ -26,15 +26,11 @@ automatically with grok.
 
 ::
 
-    python setup.py develop --install-dir="$HOME/Library/Python/2.7/lib/python/site-packages"
+    ./install-grok.sh <site-packages in $PYTHONPATH> <somewhere in $PATH>
 
-The install directory can be any directory on your `PYTHONPATH`.
+The first directory can be any directory on your `PYTHONPATH`. The second directory can be any directory on your `PATH`.
 
-If the above does not work for you, try the older steps (pip 1.4.1 required):
-
-::
-
-    pip install --install-option="--prefix=$NUPIC_ENV" -e .
+- e.g., `./install-grok.sh /opt/numenta/anaconda/lib/python2.7/site-packages/ /opt/numenta/anaconda/bin/`
 
 
 Config
@@ -47,7 +43,7 @@ Bootstrap your Grok configuration files and initialize the database:
 generated Grok configuration files should be stored by `python setup.py init`. If not set,
 it presently defaults to the location of Grok configuraiton template files (e.g., `grok/conf/`)
 
-You'll need to install/start MySQL server prior to running setup.
+You'll need to install/start MySQL server and RabbitMQ server prior to running `setup.py init`
 
 ::
 
@@ -55,16 +51,6 @@ You'll need to install/start MySQL server prior to running setup.
 
 
 Review your grok configuration file and make changes as necessary.
-
-
-Delete old checkpoints:
-~~~~~~~~~~~~~~~~~~~~~~~
-
-If you have an old copy of grok then you need to clean up the old model checkpoints.
-
-::
-
-    rm -fr ~/grok_model_checkpoints/
 
 
 Common Grok Environment Variables

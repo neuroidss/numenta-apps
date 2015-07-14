@@ -58,7 +58,7 @@ from nta.utils.logging_support_raw import LoggingSupport
 
 
 g_logger = logging.getLogger(
-  "grok.tests.py.unit.engine.model_swapper.swap_controller_test")
+  "htmengine.tests.unit.model_swapper.swap_controller_test")
 
 
 def setUpModule():
@@ -168,7 +168,7 @@ class _DummySlotAgent(object):
   """ A dummy SlotAgent implementation for testing; API-compatible with
   model_swapper.slot_agent.SlotAgent.
 
-  See API documentation in grok.engine.model_swapper.slot_agent.SlotAgent
+  See API documentation in htmengine.model_swapper.slot_agent.SlotAgent
   """
 
   def __init__(self, slotID, getModelInputDescriptor=None):

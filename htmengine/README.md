@@ -7,7 +7,7 @@ built.
 Installation
 ------------
 
-First, install `nta.utils`.  Then, to install `htmengine`:
+First, install [`nta.utils`](../nta.utils).  Then, to install `htmengine`:
 
     python setup.py develop --install-dir=<site-packages in $PYTHONPATH>
 
@@ -15,12 +15,16 @@ First, install `nta.utils`.  Then, to install `htmengine`:
   something that ends with "site-packages".  If not specified, system default
   is used.
 
+### Requirements
+
+- [MySQL](https://www.mysql.com/)
+- [RabbitMQ](https://www.rabbitmq.com/)
 
 Environment Variables
 ---------------------
 
-`APPLICATION_CONFIG_PATH`: directory path where active application configuration
-files are located
+`APPLICATION_CONFIG_PATH` **(REQUIRED)**: Directory path where active
+application-specific configuration files are located.
 
 
 Usage

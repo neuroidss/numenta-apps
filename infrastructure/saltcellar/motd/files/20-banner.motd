@@ -43,6 +43,9 @@ if [ -n "${salt_sha}" ]; then
   echo "Salt configuration SHA: ${salt_sha}"
 fi
 
+# Display Kernel version
+echo "Kernel version: $(uname -r)"
+
 # Display CentOS version
 centos_version=$(cat /etc/redhat-release)
 echo "CentOS version: ${centos_version}"

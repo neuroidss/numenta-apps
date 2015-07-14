@@ -18,6 +18,10 @@
 #
 # http://numenta.org/licenses/
 # ----------------------------------------------------------------------
+
+# Note: we don't allow autostacks of SQS, so disable warnings about
+# `getMatchingResources` not being implemented (disable=W0223 comments below)
+
 from boto import sqs
 
 from grok.app.adapters.datasource.cloudwatch.aws_base import (
@@ -26,7 +30,7 @@ from grok.app.adapters.datasource.cloudwatch.aws_base import ResourceTypeNames
 
 
 
-@AWSResourceAdapterBase.registerResourceAdapter
+@AWSResourceAdapterBase.registerResourceAdapter #pylint: disable=W0223
 class SQSAdapter(AWSResourceAdapterBase):
   RESOURCE_TYPE = ResourceTypeNames.SQS_QUEUE
 
@@ -86,7 +90,7 @@ class SQSAdapter(AWSResourceAdapterBase):
 
 
 
-@AWSResourceAdapterBase.registerMetricAdapter
+@AWSResourceAdapterBase.registerMetricAdapter #pylint: disable=W0223
 class SQSNumberOfEmptyReceivesMetricAdapter(SQSAdapter):
 
   METRIC_NAME = "NumberOfEmptyReceives"
@@ -99,7 +103,7 @@ class SQSNumberOfEmptyReceivesMetricAdapter(SQSAdapter):
 
 
 
-@AWSResourceAdapterBase.registerMetricAdapter
+@AWSResourceAdapterBase.registerMetricAdapter #pylint: disable=W0223
 class SQSNumberOfMessagesDeletedMetricAdapter(SQSAdapter):
 
   METRIC_NAME = "NumberOfMessagesDeleted"
@@ -112,7 +116,7 @@ class SQSNumberOfMessagesDeletedMetricAdapter(SQSAdapter):
 
 
 
-@AWSResourceAdapterBase.registerMetricAdapter
+@AWSResourceAdapterBase.registerMetricAdapter #pylint: disable=W0223
 class SQSNumberOfMessagesSentMetricAdapter(SQSAdapter):
 
   METRIC_NAME = "NumberOfMessagesSent"
@@ -127,7 +131,7 @@ class SQSNumberOfMessagesSentMetricAdapter(SQSAdapter):
 
 
 
-@AWSResourceAdapterBase.registerMetricAdapter
+@AWSResourceAdapterBase.registerMetricAdapter #pylint: disable=W0223
 class SQSNumberOfMessagesReceivedMetricAdapter(SQSAdapter):
 
   METRIC_NAME = "NumberOfMessagesReceived"
@@ -142,7 +146,7 @@ class SQSNumberOfMessagesReceivedMetricAdapter(SQSAdapter):
 
 
 
-@AWSResourceAdapterBase.registerMetricAdapter
+@AWSResourceAdapterBase.registerMetricAdapter #pylint: disable=W0223
 class SQSSentMessageSizeMetricAdapter(SQSAdapter):
 
   METRIC_NAME = "SentMessageSize"

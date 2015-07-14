@@ -50,6 +50,7 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.res.Resources;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
@@ -61,7 +62,6 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.util.Date;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -98,7 +98,8 @@ public class GrokApplication extends Application {
 
     public static final long MAX_DURATION = MILLISECONDS.convert(5, MINUTES);
 
-    private static ExecutorService _defaultThreadPool;
+    private static ExecutorService _defaultThreadPool
+            = (ExecutorService) AsyncTask.THREAD_POOL_EXECUTOR;
 
     /** Maximum number of days to sync. */
     public int _numberOfDaysToSync;
@@ -173,17 +174,6 @@ public class GrokApplication extends Application {
     public static void setStaticInstanceForUnitTestsOnly(GrokApplication testApplicationObject) {
         _instance = testApplicationObject;
     }
-
-    /**
-     * Set default thread pool used by unit tests.
-     * This method should only be called from unit tests. In a normal android runtime environment
-     * the application will reuse the background service thread pools
-     * @param testThreadPool
-     */
-    public static void setDefaultThreadPoolForUnitTestsOnly(ExecutorService testThreadPool) {
-        _defaultThreadPool = testThreadPool;
-    }
-
 
     /**
      * Subscribes {@code listener} to change notifications for the property

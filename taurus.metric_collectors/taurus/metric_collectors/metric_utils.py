@@ -20,6 +20,7 @@
 # ----------------------------------------------------------------------
 
 import contextlib
+from collections import namedtuple
 from datetime import datetime, timedelta
 import json
 import logging
@@ -60,6 +61,14 @@ class ModelMonitorRequestError(Exception):
 
 class ModelUnmonitorRequestError(Exception):
   """ Generic exception for non-specific error while attempting to unmonitor a
+  metric
+  """
+  pass
+
+
+
+class MetricDeleteRequestError(Exception):
+  """ Generic exception for non-specific error while attempting to delete a
   metric
   """
   pass
@@ -288,8 +297,38 @@ def unmonitorMetric(host, apiKey, modelId):
       g_log.exception("Assuming transient error while unmonitoring model=%s",
                       modelId)
       time.sleep(0.2)
-    else:
-      break
+  else:
+    raise RetriesExceededError("Unmonitor-metric retries exceeded")
+
+
+def deleteMetric(host, apiKey, metricName):
+  """ Delete a metric
+
+  :param host: API server's hostname or IP address
+  :param apiKey: API server's API Key
+  :param modelId: id of the metric to be deleted
+
+  :raises: RetriesExceededError
+  :raises: MetricDeleteRequestError
+  """
+  for _retries in xrange(20):
+    try:
+      g_log.debug("Deleting metric=%s", metricName)
+      response = requests.delete(
+        "https://%s/_metrics/custom/%s" % (host, metricName,),
+        auth=(apiKey, ""), verify=False)
+
+      if response.status_code == 200:
+        g_log.debug("Deleteted metric=%s", metricName)
+        return
+
+      raise MetricDeleteRequestError(
+        "Unable to delete metric=%s: %s (%s)" % (
+          metricName, response, response.text))
+    except Exception:  # pylint: disable=W0703
+      g_log.exception("Assuming transient error while deleting metric=%s",
+                      metricName)
+      time.sleep(0.2)
   else:
     raise RetriesExceededError("Unmonitor-metric retries exceeded")
 
@@ -382,6 +421,44 @@ def getAllModelIds(host, apiKey):
   :raises: RetriesExceededError
   """
   return tuple(obj["uid"] for obj in getAllModels(host, apiKey))
+
+
+
+def getSymbolModels(host, apiKey, symbol):
+  """ Retrieve IDs of all models associated with a particular symbol
+
+  :param host: API server's hostname or IP address
+  :param apiKey: API server's API Key
+  :param symbol: Stock symbol to look up
+
+  :returns: a sequence of namedtuples containing information about the model
+      modelResult.uid = uid of the model
+      modelResult.name = name of the model
+
+  :raises: GetModelsRequestError
+  :raises: RetriesExceededError
+  """
+  modelResult = namedtuple("modelResult", "uid name")
+  return tuple(modelResult(obj["uid"], obj["name"])
+               for obj in getAllModels(host, apiKey)
+               if ".{symbol}.".format(symbol=symbol) in obj["name"])
+
+
+
+def getSymbolModelNames(host, apiKey, symbol):
+  """ Retrieve IDs of all models associated with a particular symbol
+
+  :param host: API server's hostname or IP address
+  :param apiKey: API server's API Key
+  :param symbol: Stock symbol to look up
+
+  :returns: a sequence of unique model id strings
+
+  :raises: GetModelsRequestError
+  :raises: RetriesExceededError
+  """
+  return tuple(obj["uid"] for obj in getAllModels(host, apiKey)
+               if ".%s." % symbol in obj["name"])
 
 
 

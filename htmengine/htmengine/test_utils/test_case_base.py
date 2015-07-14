@@ -76,7 +76,7 @@ def retry(duration=15, delay=0.5, exceptionTypes=(AssertionError,)):
 class TestCaseBase(unittest.TestCase):
   """
   This class adds additional methods useful for specific testing scenarios
-  in Grok App test suites.
+  in htmengine test suites.
   """
 
   # NOTE: Derived class must override this with the valid config before
@@ -241,9 +241,6 @@ class TestCaseBase(unittest.TestCase):
   @retry(duration=30)
   def checkMetricCreated(self, metricName, numRecords=None):
     """Check that the new metrics show up in custom metrics list.
-
-    TODO: since this is specific to Grok Custom metrics, rename to
-      checkGrokCustomMetricCreated
 
     :param metricName: metric name to check
     :param numRecords: optional number of records to wait for

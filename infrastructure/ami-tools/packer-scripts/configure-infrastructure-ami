@@ -32,26 +32,48 @@ complain() {
   logger -t ami-bake "$@"
 }
 
-echo "Installing repos..."
-mv /tmp/*.repo /etc/yum.repos.d
+echo "Installing Numenta repositories..."
+mv /tmp/nta-carbonite.repo /etc/yum.repos.d
+mv /tmp/nta-thirdparty.repo /etc/yum.repos.d
+mv /tmp/secretsauce.repo /etc/yum.repos.d
 
 echo "Cleaning yum..."
 yum clean all
-
-echo "Installing minion formulas..."
-yum install -y minion-saltcellar
 
 # Ensure we have the latest glibc to protect against the GHOST vulnerability
 echo "Updating glibc"
 yum install -y glibc
 
+echo
+echo "**********"
+echo "Updating yum"
+time yum update -y
+
+echo "Old minion_id"
+cat /etc/salt/minion_id
+
 echo "Stopping Salt..."
 service salt-minion stop
 
+echo "Setting search list in /etc/resolv.conf to numenta.com"
+sed 's/^search .*/search numenta.com/g' /etc/resolv.conf -i''
+cat /etc/resolv.conf
+host salt.numenta.com
+
 echo "Configuring Salt minion_id"
 echo
-echo "Setting Salt minion_id to role-infrastructure"
-echo role-infrastructure-ami > /etc/salt/minion_id
+echo "Setting Salt minion_id: $(cat /tmp/infrastructure_minion_id)"
+cat /tmp/infrastructure_minion_id > /etc/salt/minion_id
+
+echo "Setting salt master name"
+sed 's/^#master:/master: salt.numenta.com/g' /etc/salt/minion -i''
+grep ^master: /etc/salt/minion
+retcode="$?"
+if [ "${retcode}" != "0" ]; then
+  echo "Failed to set salt master name"
+  echo "Check for changes to default /etc/salt/minion"
+  exit "${retcode}"
+fi
 
 echo "Purging salt minion key data..."
 rm -fr /etc/salt/pki/minion/*
@@ -59,9 +81,25 @@ rm -fr /etc/salt/pki/minion/*
 echo "Restarting salt minion..."
 service salt-minion restart
 
+echo "Wait for master to sign key..."
+sleep 10
+
+# echo
+# echo "Test salt config"
+# salt-call state.highstate test=True
+
+echo
 echo "Running Salt..."
-salt-call --local state.highstate -l debug
+salt-call state.highstate
 saltcode=$?
+
+if [ "${saltcode}" != 0 ]; then
+  sleep 15
+  echo "RETRY FAILED SALT RUN"
+  salt-call state.highstate
+  saltcode=$?
+fi
+
 echo
 echo "Salt run return code: ${saltcode}"
 exit "${saltcode}"

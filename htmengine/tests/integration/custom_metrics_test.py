@@ -52,7 +52,7 @@ g_config = Config("application.conf",
 
 
 class CustomMetricsTest(TestCaseBase):
-  """Integration tests for Grok custom metrics."""
+  """Integration tests for htmengine custom metrics."""
 
 
   @classmethod
@@ -92,7 +92,7 @@ class CustomMetricsTest(TestCaseBase):
 
   def testUnevenTimestamps(self):
     """ Tests that a custom metric with uneven timestamps is still properly
-    fed into grok and no data goes missing.
+    fed into htmengine and no data goes missing.
     """
     metricName = "testUnevenTimestamps.%i" % int(time.time())
     LOGGER.info("Running test with metric name: %s", metricName)

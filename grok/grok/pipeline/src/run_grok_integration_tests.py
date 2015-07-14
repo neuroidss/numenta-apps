@@ -55,7 +55,7 @@ g_dirname = os.path.abspath(os.path.dirname(__file__))
 g_remotePath = "/opt/numenta/grok/tests/results/py2/xunit/jenkins/results.xml"
 g_rpmBuilder = "rpmbuild.groksolutions.com"
 g_s3RepoPath = "/opt/numenta/s3repo/s3/x86_64"
-s3Bucket = "yum.groksolutions.com"
+s3Bucket = "public.numenta.com"
 
 FIRST_BOOT_RUN_TRIES = 18
 GROK_SERVICES_TRIES = 6

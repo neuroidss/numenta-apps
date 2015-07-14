@@ -64,9 +64,9 @@ class TestTransientErrorHandling(unittest.TestCase):
                             * numErrors + [DEFAULT]
 
       if 3000 > errorCode >= 2000:
-        #The error is client side. Return one operationalError, then pass
+        # The error is client side. Return one operationalError, then pass
         with patch.object(Engine,
-                          'execute',
+                          "execute",
                           spec_set=Engine.execute,
                           side_effect=clientSideEffects) \
             as mockExecute:
@@ -74,9 +74,9 @@ class TestTransientErrorHandling(unittest.TestCase):
           self.assertEqual(mockExecute.call_count, numErrors + 1)
 
       elif errorCode >= 1000:
-        #The error is server side. Return one internalError, then pass
+        # The error is server side. Return one internalError, then pass
         with patch.object(Engine,
-                          'execute',
+                          "execute",
                           spec_set=Engine.execute,
                           side_effect=serverSideEffects) \
             as mockExecute:
@@ -100,7 +100,7 @@ class TestTransientErrorHandling(unittest.TestCase):
     errorCode = 1005
     #The error is client side. Return an operationalError
     with patch.object(Engine,
-                      'execute',
+                      "execute",
                       spec_set=Engine.execute,
                       side_effect=[sqlalchemy.exc.OperationalError(
                         orig=MySQLdb.OperationalError(errorCode),
@@ -111,5 +111,5 @@ class TestTransientErrorHandling(unittest.TestCase):
                         retryOnTransientErrors(mockExecute))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
   unittest.main()

@@ -878,9 +878,8 @@
         }, 
         "provider": "twitter", 
         "screenNames": [
-          "appstore", 
-          "itunes", 
-          "iTunesMusic"
+          "apple", 
+          "tim_cook"
         ]
       }, 
       "XIGNITE.AAPL.CLOSINGPRICE": {

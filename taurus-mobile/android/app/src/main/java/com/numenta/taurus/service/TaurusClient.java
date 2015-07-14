@@ -193,6 +193,21 @@ public class TaurusClient implements GrokClient {
      */
     public void getTweets(String metricName, Date from, Date to,
             DataCallback<Tweet> callback) throws GrokException, IOException {
+        getTweets(metricName, from, to, -1, callback);
+    }
+
+    /**
+     * Get list of tweets for the given metric filtered by the given time range returning the
+     * results as they become available asynchronously.
+     *
+     * @param metricName The metric name to retrieve the tweets from
+     * @param from       The start time (aggregated) inclusive.
+     * @param to         The end time (aggregated) inclusive.
+     * @param limit      Maximum number of items to return. -1 for unlimited.
+     * @param callback   Callback for asynchronous call. It will be called on every {@link Tweet}
+     */
+    public void getTweets(String metricName, Date from, Date to, int limit,
+            DataCallback<Tweet> callback) throws GrokException, IOException {
         if (metricName == null) {
             throw new ObjectNotFoundException("Cannot get tweets without metric name");
         }
@@ -244,6 +259,9 @@ public class TaurusClient implements GrokClient {
                 .withKeyConditions(keyConditions)
                 .withScanIndexForward(false)
                 .withIndexName("taurus.metric_data-metric_name_index");
+        if (limit != -1) {
+            query.setLimit(limit);
+        }
 
         QueryResult result;
         String tweetId;

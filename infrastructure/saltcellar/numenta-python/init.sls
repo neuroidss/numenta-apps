@@ -31,6 +31,8 @@ anaconda-python:
     - installed
     - pkgs:
       - gs-anaconda
+    - require:
+      - pkg: compiler-toolchain
     - watch_in:
       - cmd: enforce-anaconda-permissions
 
@@ -47,7 +49,7 @@ anaconda-paver:
 
 anaconda-pip:
   pip.installed:
-    - name: pip == 6.0.8
+    - name: pip == 7.1.0
     - bin_env: /opt/numenta/anaconda/bin/pip
     - watch_in:
       - cmd: enforce-anaconda-permissions
@@ -56,9 +58,9 @@ anaconda-pip:
 
 # Install this from an S3 wheel so we don't need devtools on everything
 anaconda-psutil:
-  cmd.run:
-    - name: /opt/numenta/anaconda/bin/pip install https://s3-us-west-2.amazonaws.com/yum.groksolutions.com/eggs/psutil-3.0.0-cp27-none-linux_x86_64.whl
-    - creates: /opt/numenta/anaconda/lib/python2.7/site-packages/psutil-3.0.0.dist-info/WHEEL
+  pip.installed:
+    - name: psutil == 1.0.1
+    - bin_env: /opt/numenta/anaconda/bin/pip
     - watch_in:
       - cmd: enforce-anaconda-permissions
     - require:
@@ -66,7 +68,7 @@ anaconda-psutil:
 
 anaconda-setuptools:
   pip.installed:
-    - name: setuptools == 4.0.1
+    - name: setuptools == 18.0.1
     - bin_env: /opt/numenta/anaconda/bin/pip
     - watch_in:
       - cmd: enforce-anaconda-permissions
@@ -93,7 +95,7 @@ anaconda-wheel:
 
 anaconda-yaml:
   pip.installed:
-    - name: pyyaml == 3.11
+    - name: PyYAML == 3.10
     - bin_env: /opt/numenta/anaconda/bin/pip
     - watch_in:
       - cmd: enforce-anaconda-permissions

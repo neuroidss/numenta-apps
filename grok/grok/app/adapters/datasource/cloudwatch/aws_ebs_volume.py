@@ -18,6 +18,10 @@
 #
 # http://numenta.org/licenses/
 # ----------------------------------------------------------------------
+
+# Note: we don't allow autostacks of EBS volumes, so disable warnings about
+# `getMatchingResources` not being implemented (disable=W0223 comments below)
+
 from boto import ec2
 
 from grok.app.adapters.datasource.cloudwatch.aws_base import (
@@ -26,7 +30,7 @@ from grok.app.adapters.datasource.cloudwatch.aws_base import ResourceTypeNames
 
 
 
-@AWSResourceAdapterBase.registerResourceAdapter
+@AWSResourceAdapterBase.registerResourceAdapter #pylint: disable=W0223
 class EBSAdapter(AWSResourceAdapterBase):
   RESOURCE_TYPE = ResourceTypeNames.EBS_VOLUME
 
@@ -82,7 +86,7 @@ class EBSAdapter(AWSResourceAdapterBase):
 
 
 
-@AWSResourceAdapterBase.registerMetricAdapter
+@AWSResourceAdapterBase.registerMetricAdapter #pylint: disable=W0223
 class EBSVolumeQueueLengthMetricAdapter(EBSAdapter):
 
   METRIC_NAME = "VolumeQueueLength"
@@ -97,7 +101,7 @@ class EBSVolumeQueueLengthMetricAdapter(EBSAdapter):
 
 
 
-@AWSResourceAdapterBase.registerMetricAdapter
+@AWSResourceAdapterBase.registerMetricAdapter #pylint: disable=W0223
 class EBSVolumeReadBytesMetricAdapter(EBSAdapter):
 
   METRIC_NAME = "VolumeReadBytes"
@@ -114,7 +118,7 @@ class EBSVolumeReadBytesMetricAdapter(EBSAdapter):
 
 
 
-@AWSResourceAdapterBase.registerMetricAdapter
+@AWSResourceAdapterBase.registerMetricAdapter #pylint: disable=W0223
 class EBSVolumeTotalReadTimeMetricAdapter(EBSAdapter):
 
   METRIC_NAME = "VolumeTotalReadTime"
@@ -129,7 +133,7 @@ class EBSVolumeTotalReadTimeMetricAdapter(EBSAdapter):
 
 
 
-@AWSResourceAdapterBase.registerMetricAdapter
+@AWSResourceAdapterBase.registerMetricAdapter #pylint: disable=W0223
 class EBSVolumeTotalWriteTimeMetricAdapter(EBSAdapter):
 
   METRIC_NAME = "VolumeTotalWriteTime"
@@ -144,7 +148,7 @@ class EBSVolumeTotalWriteTimeMetricAdapter(EBSAdapter):
 
 
 
-@AWSResourceAdapterBase.registerMetricAdapter
+@AWSResourceAdapterBase.registerMetricAdapter #pylint: disable=W0223
 class EBSVolumeWriteBytesMetricAdapter(EBSAdapter):
 
   METRIC_NAME = "VolumeWriteBytes"

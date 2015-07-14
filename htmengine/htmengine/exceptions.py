@@ -28,6 +28,11 @@ class ObjectNotFoundError(HTMEngineError):
 
 
 
+class ApplicationNotConfiguredError(HTMEngineError, KeyError):
+  pass
+
+
+
 class ObjectAlreadyExistsBase(HTMEngineError):
   """ Base exception class for reporting metric/models that
   already exist; the `uid` attribute is used to report the unique id of the

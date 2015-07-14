@@ -80,7 +80,7 @@ class ConfigAttributePatch(object):
   def __init__(self, configName, baseConfigDir, values):
     """
     configName: target configuration; see configName definition in
-      grok.engine.utils.config
+      nta.utils.config
     values: a sequence of overrides, where each element is a three-tuple:
       (<section name>, <attribute name>, <new value>) and <new value> is a string
     """

@@ -93,6 +93,10 @@ def runCommandBySSH(dnsName,
   if sshKeyFile:
     kwargs["key_filename"] = sshKeyFile
 
+  # Force fabric not to abort if the command fails or we won't be able
+  # to retry
+  kwargs["warn_only"] = True
+
   with settings(**kwargs):
     logger.debug("Running %s on %s as %s", command, dnsName, user)
     tries = 0

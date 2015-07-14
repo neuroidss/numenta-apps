@@ -27,6 +27,7 @@ import string  # pylint: disable=W0402
 import web
 
 from datetime import datetime
+from subprocess import check_output, CalledProcessError
 from urlparse import urlparse
 
 from grok import __version__, logging_support
@@ -99,7 +100,10 @@ messageManager = messagemanager.MessageManager(
 try:
   buildSha = open(os.path.join(grok.app.GROK_HOME, "static/grok.sha")).read()
 except IOError:
-  buildSha = '0'
+  try:
+    buildSha = check_output(["git", "rev-parse", "--verify", "HEAD"])
+  except CalledProcessError:
+    buildSha = "0"
 
 
 def _getInstanceMetadata():
@@ -133,15 +137,15 @@ class GrokHandler(object):
     grok.app.product.loadConfig()
 
     # prep data
-    apiKey = grok.app.config.get('security', 'apikey')
+    apiKey = grok.app.config.get("security", "apikey")
     hostname = socket.gethostname()
-    isEmbed = path and ('embed/' in path)
-    params = web.input(hash='', width=720, height=480)
+    isEmbed = path and ("embed/" in path)
+    params = web.input(hash="", width=720, height=480)
     paramHash = params.hash
     paramHeight = params.height
     paramWidth = params.width
-    refererUri = web.ctx.env.get('HTTP_REFERER', '')
-    referer = urlparse(refererUri).hostname or ''
+    refererUri = web.ctx.env.get("HTTP_REFERER", "")
+    referer = urlparse(refererUri).hostname or ""
     sha1 = hashlib.sha1()
     render = web.template.render(os.path.join(grok.app.GROK_HOME,
                                               "resources/templates"))
@@ -171,10 +175,10 @@ class GrokHandler(object):
 
       # embed not authorized
       if paramHash != newHash:
-        raise web.badrequest('Hashes did not match.')
+        raise web.badrequest("Hashes did not match.")
 
       # embed authorized - render simple embed template
-      data['apiKey'] = apiKey
+      data["apiKey"] = apiKey
       return render.embed(data)
 
     # not embed - render web ui page
@@ -230,7 +234,7 @@ class AWSAuthHandler(object):
   @staticmethod
   def generateAPIKey(
       size=5,
-      chars="".join(set(string.letters + string.digits) - set('1iLl0Oo'))):
+      chars="".join(set(string.letters + string.digits) - set("1iLl0Oo"))):
     return "".join(random.choice(chars) for _ in xrange(size))
 
 

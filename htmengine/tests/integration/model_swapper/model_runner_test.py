@@ -54,10 +54,9 @@ from htmengine.model_swapper.model_swapper_interface import (
 
 from nta.utils.message_bus_connector import MessageBusConnector
 
-# TODO: Remove reference to grok (TAUR-708)
-from grok.test_utils.engine.model_swapper_test_utils import (
+from htmengine.model_swapper.model_swapper_test_utils import (
     ModelSwapperIsolationPatch)
-from grok.test_utils import ManagedSubprocessTerminator
+from nta.utils.test_utils import ManagedSubprocessTerminator
 
 from nta.utils.logging_support_raw import LoggingSupport
 

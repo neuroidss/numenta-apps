@@ -38,4 +38,5 @@ function install {
 }
 
 install nta.utils $1 $2
+install infrastructure $1 $2
 install taurus.metric_collectors $1 $2

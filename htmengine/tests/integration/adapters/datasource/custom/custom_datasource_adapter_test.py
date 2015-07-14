@@ -29,8 +29,7 @@ import pkg_resources
 import unittest
 import uuid
 
-# TODO: Remove reference to grok (TAUR-708)
-from grok.grok_logging import getExtendedLogger
+from htmengine.htmengine_logging import getExtendedLogger
 
 from nta.utils.config import Config
 import htmengine.adapters.datasource as datasource_adapter_factory
@@ -110,7 +109,7 @@ class CustomDatasourceAdapterTest(TestCaseBase):
 
     adapter = datasource_adapter_factory.createCustomDatasourceAdapter()
 
-    g_log.info("Creating grok custom metric; name=%s", metricName)
+    g_log.info("Creating htmengine custom metric; name=%s", metricName)
     metricId = adapter.createMetric(metricName)
     self.addCleanup(adapter.deleteMetricByName, metricName)
 
@@ -132,7 +131,7 @@ class CustomDatasourceAdapterTest(TestCaseBase):
 
     adapter = datasource_adapter_factory.createCustomDatasourceAdapter()
 
-    g_log.info("Creating grok custom metric; name=%s", metricName)
+    g_log.info("Creating htmengine custom metric; name=%s", metricName)
     metricId = adapter.createMetric(metricName)
     self.addCleanup(adapter.deleteMetricByName, metricName)
 
@@ -148,10 +147,11 @@ class CustomDatasourceAdapterTest(TestCaseBase):
 
     adapter = datasource_adapter_factory.createCustomDatasourceAdapter()
 
-    g_log.info("Creating grok custom metric; name=%s", metricName)
+    g_log.info("Creating htmengine custom metric; name=%s", metricName)
     metricId = adapter.createMetric(metricName)
 
-    g_log.info("Deleteing unmonitored grok custom metric; name=%s", metricName)
+    g_log.info("Deleteing unmonitored htmengine custom metric; name=%s",
+               metricName)
     adapter.deleteMetricByName(metricName)
     g_log.info("Waiting for model to complete deletion")
     self.checkModelDeleted(metricId)
@@ -163,7 +163,7 @@ class CustomDatasourceAdapterTest(TestCaseBase):
 
     adapter = datasource_adapter_factory.createCustomDatasourceAdapter()
 
-    g_log.info("Creating grok custom metric: name=%s", metricName)
+    g_log.info("Creating htmengine custom metric: name=%s", metricName)
     metricId = adapter.createMetric(metricName)
     try:
       # Turn on monitoring
@@ -185,7 +185,8 @@ class CustomDatasourceAdapterTest(TestCaseBase):
       g_log.info("Waiting for model to become active")
       self.checkModelIsActive(metricId)
 
-      g_log.info("Deleteing grok custom metric with active model: name=%s",
+      g_log.info("Deleteing htmengine custom metric with active model: "
+                 "name=%s",
                  metricName)
       adapter.deleteMetricByName(metricName)
       g_log.info("Waiting for model to complete deletion")
@@ -202,7 +203,7 @@ class CustomDatasourceAdapterTest(TestCaseBase):
 
     adapter = datasource_adapter_factory.createCustomDatasourceAdapter()
 
-    g_log.info("Creating grok custom metric; name=%s", metricName)
+    g_log.info("Creating htmengine custom metric; name=%s", metricName)
     metricId = adapter.createMetric(metricName)
     self.addCleanup(adapter.deleteMetricByName, metricName)
 
@@ -236,7 +237,7 @@ class CustomDatasourceAdapterTest(TestCaseBase):
 
     adapter = datasource_adapter_factory.createCustomDatasourceAdapter()
 
-    g_log.info("Creating grok custom metric; name=%s", metricName)
+    g_log.info("Creating htmengine custom metric; name=%s", metricName)
     metricId = adapter.createMetric(metricName)
     self.addCleanup(adapter.deleteMetricByName, metricName)
 
@@ -277,7 +278,7 @@ class CustomDatasourceAdapterTest(TestCaseBase):
 
     adapter = datasource_adapter_factory.createCustomDatasourceAdapter()
 
-    g_log.info("Creating grok custom metric; name=%s", metricName)
+    g_log.info("Creating htmengine custom metric; name=%s", metricName)
     metricId = adapter.createMetric(metricName)
     self.addCleanup(adapter.deleteMetricByName, metricName)
 
@@ -312,7 +313,7 @@ class CustomDatasourceAdapterTest(TestCaseBase):
 
     adapter = datasource_adapter_factory.createCustomDatasourceAdapter()
 
-    g_log.info("Creating grok custom metric; name=%s", metricName)
+    g_log.info("Creating htmengine custom metric; name=%s", metricName)
     metricId = adapter.createMetric(metricName)
     self.addCleanup(adapter.deleteMetricByName, metricName)
 
@@ -362,7 +363,7 @@ class CustomDatasourceAdapterTest(TestCaseBase):
 
     adapter = datasource_adapter_factory.createCustomDatasourceAdapter()
 
-    g_log.info("Creating grok custom metric; name=%s", metricName)
+    g_log.info("Creating htmengine custom metric; name=%s", metricName)
     metricId = adapter.createMetric(metricName)
     self.addCleanup(adapter.deleteMetricByName, metricName)
 
@@ -408,7 +409,7 @@ class CustomDatasourceAdapterTest(TestCaseBase):
 
     adapter = datasource_adapter_factory.createCustomDatasourceAdapter()
 
-    g_log.info("Creating grok custom metric; name=%s", metricName)
+    g_log.info("Creating htmengine custom metric; name=%s", metricName)
     metricId = adapter.createMetric(metricName)
     self.addCleanup(adapter.deleteMetricByName, metricName)
 
@@ -452,7 +453,7 @@ class CustomDatasourceAdapterTest(TestCaseBase):
 
     adapter = datasource_adapter_factory.createCustomDatasourceAdapter()
 
-    g_log.info("Creating grok custom metric; name=%s", metricName)
+    g_log.info("Creating htmengine custom metric; name=%s", metricName)
     adapter.createMetric(metricName)
     self.addCleanup(adapter.deleteMetricByName, metricName)
 
@@ -479,7 +480,7 @@ class CustomDatasourceAdapterTest(TestCaseBase):
 
     adapter = datasource_adapter_factory.createCustomDatasourceAdapter()
 
-    g_log.info("Creating grok custom metric; name=%s", metricName)
+    g_log.info("Creating htmengine custom metric; name=%s", metricName)
     metricId = adapter.createMetric(metricName)
     self.addCleanup(adapter.deleteMetricByName, metricName)
 
@@ -531,7 +532,7 @@ class CustomDatasourceAdapterTest(TestCaseBase):
 
     adapter = datasource_adapter_factory.createCustomDatasourceAdapter()
 
-    g_log.info("Creating grok custom metric; name=%s", metricName)
+    g_log.info("Creating htmengine custom metric; name=%s", metricName)
     metricId = adapter.createMetric(metricName)
     self.addCleanup(adapter.deleteMetricByName, metricName)
 
@@ -568,7 +569,7 @@ class CustomDatasourceAdapterTest(TestCaseBase):
 
     adapter = datasource_adapter_factory.createCustomDatasourceAdapter()
 
-    g_log.info("Creating grok custom metric: name=%s", metricName)
+    g_log.info("Creating htmengine custom metric: name=%s", metricName)
     metricId = adapter.createMetric(metricName)
     self.addCleanup(adapter.deleteMetricByName, metricName)
 
@@ -592,7 +593,8 @@ class CustomDatasourceAdapterTest(TestCaseBase):
     self.checkModelIsActive(metricId)
 
     # Turn off monitoring
-    g_log.info("Unmonitoring grok custom metric with active model: name=%s",
+    g_log.info("Unmonitoring htmengine custom metric with active model: "
+               "name=%s",
                metricName)
     adapter.unmonitorMetric(metricId)
     self.checkMetricUnmonitoredById(metricId)
@@ -603,7 +605,7 @@ class CustomDatasourceAdapterTest(TestCaseBase):
 
     adapter = datasource_adapter_factory.createCustomDatasourceAdapter()
 
-    g_log.info("Creating grok custom metric; name=%s", metricName)
+    g_log.info("Creating htmengine custom metric; name=%s", metricName)
     metricId = adapter.createMetric(metricName)
     self.addCleanup(adapter.deleteMetricByName, metricName)
 

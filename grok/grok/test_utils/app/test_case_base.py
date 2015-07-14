@@ -193,7 +193,7 @@ class TestCaseBase(unittest.TestCase):
     self.assertIn(uid, uidSet)
 
 
-  @retry(duration=25)
+  @retry(duration=60)
   def checkModelDeleted(self, uid):
     """Check that the model has been deleted"""
 

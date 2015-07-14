@@ -128,7 +128,7 @@ def _parseArgs():
   usage = (
     "%prog [options]\n\n"
     "Collects statistics from a RabbitMQ server and emits them "
-    "as metrics to the destination Grok server.\n"
+    "as metrics to the destination htmengine app server.\n"
     "\n"
     "The following metrics are collected and emitted by default, where\n"
     "<prefix> is the value of the --metric-prefix command-line option.\n"
@@ -210,8 +210,8 @@ def _parseArgs():
     type="string",
     dest="metricDestAddr",
     help=("Destination address for metrics as host:port; typically address of "
-          "Grok's custom metrics listener; Grok's default metric listener port "
-          "is 2003"))
+          "htmengine custom metrics listener; htmengine default metric "
+          "listener port is 2003"))
 
   parser.add_option(
     "--metric-prefix",

@@ -66,14 +66,6 @@ numenta-log-directory:
     - group: root
     - mode: 0755
 
-# Set a symlink so we don't break things that expect the old path.
-opt-numenta-grok-symlink:
-  file.symlink:
-    - target: /opt/numenta/products/grok
-    - name: /opt/numenta/grok
-    - require:
-      - file: grok-directory
-
 # Pull in the other formulas required for a grok server
 include:
   - nta-nucleus

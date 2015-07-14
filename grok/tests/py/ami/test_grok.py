@@ -27,38 +27,28 @@ import os
 import unittest
 
 
-GROK_PACKAGES = [
-  "grok-saltcellar",
-  "nta-git",
-  "nta-products-grok",
-  "numenta-infrastructure-python"
-]
+APPLICATION_CONFIG_PATH = os.environ.get("APPLICATION_CONFIG_PATH",
 
 GROK_SCRIPTS = [
   "/usr/local/bin/run-grok-tests",
+  "/usr/local/sbin/groklog_rotator",
   "/usr/local/sbin/update-motd"
 ]
 
 GROK_CONFIG_FILES = [
-  "/opt/numenta/products/grok/conf/grok-api.conf",
-  "/opt/numenta/products/grok/conf/application.conf",
-  "/opt/numenta/products/nta.utils/conf/logging.conf",
-  "/opt/numenta/products/grok/conf/model-swapper.conf",
-  "/opt/numenta/products/grok/conf/nginx-maint.conf",
-  "/opt/numenta/products/grok/conf/product.conf",
-  "/opt/numenta/products/grok/conf/quota.conf",
-  "/opt/numenta/products/nta.utils/conf/rabbitmq.conf",
-  "/opt/numenta/products/grok/conf/supervisord.conf"
+  "%s/grok-api.conf" % APPLICATION_CONFIG_PATH,
+  "%s/application.conf" % APPLICATION_CONFIG_PATH,
+  "%s/../../nta.utils/conf/logging.conf" % APPLICATION_CONFIG_PATH,
+  "%s/model-swapper.conf" % APPLICATION_CONFIG_PATH,
+  "%s/nginx-maint.conf" % APPLICATION_CONFIG_PATH,
+  "%s/product.conf" % APPLICATION_CONFIG_PATH,
+  "%s/quota.conf" % APPLICATION_CONFIG_PATH,
+  "%s/../../nta.utils/conf/rabbitmq.conf" % APPLICATION_CONFIG_PATH,
+  "%s/supervisord.conf" % APPLICATION_CONFIG_PATH
 ]
 
-GROK_PYDIR_BASE = "/opt/numenta/products/grok/grok"
 
 class TestGrokInstallation(unittest.TestCase):
-
-
-  def testNoGitInOptNumenta(self):
-    self.assertFalse(agamotto.file.isDirectory("/opt/numenta/products/.git"),
-                     "git directory found in /opt/numenta/products/.git!")
 
 
   def testGrokConfigurationFilesPresent(self):
@@ -66,19 +56,9 @@ class TestGrokInstallation(unittest.TestCase):
       self.assertTrue(agamotto.file.exists(confFile), "%s missing" % confFile)
 
 
-  def testGrokDirectories(self):
-    self.assertTrue(agamotto.file.isDirectory("/etc/grok"))
-
-
   def testGrokCronjobs(self):
     self.assertTrue(agamotto.cron.entry(
       "7 * * * * /usr/local/sbin/lockrun --lockfile=/var/lock/shuffle_groklogs -- /usr/local/sbin/shuffle_groklogs 2>&1 | logger -t gs-shuffle-groklogs"))
-
-
-  def testGrokPackagesAreInstalled(self):
-    for packageName in GROK_PACKAGES:
-      self.assertTrue(agamotto.package.installed(packageName),
-                      "Package %s not installed" % packageName)
 
 
   def testMetricCollectorIsRunning(self):
@@ -94,13 +74,6 @@ class TestGrokInstallation(unittest.TestCase):
   def testModelSchedulerIsRunning(self):
     self.assertTrue(agamotto.process.running(
       "python -m htmengine.model_swapper.model_scheduler_service"))
-
-
-  def testGrokScriptsAreInstalled(self):
-    for scriptName in GROK_SCRIPTS:
-      self.assertTrue(agamotto.file.exists(scriptName),
-                      "%s is missing" % scriptName)
-      self.assertTrue(agamotto.file.mode(scriptName) == "755")
 
 
   def testNginxServiceEnabled(self):

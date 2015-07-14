@@ -49,10 +49,10 @@ def createDatasourceAdapter(datasource):
 
 
 def createCustomDatasourceAdapter():
-  """ Convenience function for creating a datasource adapter for Grok Custom
-  Metrics
+  """ Convenience function for creating a datasource adapter for htmengine
+  Custom Metrics
 
-  :returns: datasource adapter for Grok Custom Metrics
+  :returns: datasource adapter for htmengine Custom Metrics
   :rtype: htmengine.adapters.datasource.custom._CustomDatasourceAdapter
   """
   return createDatasourceAdapter("custom")

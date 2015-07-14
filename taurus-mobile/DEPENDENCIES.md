@@ -10,5 +10,4 @@ This file declares the third party open source dependencies this program has apa
 
 Package              | Version | License
 -------------------- | ------- | -------
-aws-sdk-android      | 2.2.1   | [Apache 2.0](https://github.com/aws/aws-sdk-android/blob/release_v2.2.1/LICENSE.txt)
-com.google.code.gson | 2.2.4   | [Apache 2.0](https://github.com/google/gson/blob/gson-2.2.4/LICENSE)
+aws-sdk-android      | 2.2.2   | [Apache 2.0](https://github.com/aws/aws-sdk-android/blob/release_v2.2.2/LICENSE.txt)

@@ -30,4 +30,7 @@
 
     <style name="TwitterDetail.Header" parent="InstanceDetail.Header">
     </style>
+
+    <color name="twitter_links">#a0a0a0</color>
+
 </resources>

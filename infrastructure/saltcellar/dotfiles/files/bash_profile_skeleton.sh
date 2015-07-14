@@ -114,8 +114,9 @@ if [ -f ~/.sh_aliases ]; then
   source ~/.sh_aliases
 fi
 
-df -h
-
-echo
-echo "SSH keys:"
-ssh-add -l
+SSHkeylist=$(ssh-add -l 2>&1)
+if [[ $? == "0" ]]; then
+  echo
+  echo "SSH keys:"
+  echo "${SSHkeylist}"
+fi

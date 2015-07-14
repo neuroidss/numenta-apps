@@ -166,8 +166,7 @@ def invokeTaurusMobileBuild(gitRemote, branch, buildSha):
   """
   params = {"GIT_REMOTE": gitRemote,
             "BRANCH": branch,
-            "COMMIT_SHA": buildSha,
-            "SERVER_URL": "https://tauruspoc.numenta.com"}
+            "COMMIT_SHA": buildSha}
   invokeBuild("taurus-mobile-product-pipeline", params)
   g_logger.info("Invoking Taurus Mobile Build")
 

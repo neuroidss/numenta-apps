@@ -1,2 +1,0 @@
-jenkinsapi==0.2.25
-PyYAML==3.10

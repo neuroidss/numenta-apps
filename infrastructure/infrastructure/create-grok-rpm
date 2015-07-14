@@ -29,10 +29,11 @@
 
 reporoot=$(git rev-parse --show-toplevel)
 
+# Don't quote the $@, we want it burst into separate arguments instead of
+# being treated as a single argument
 time ./create-numenta-rpm --rpm-flavor grok \
   --description "Grok installed from products rpm - ends up in /opt/numenta/products/grok" \
   --rpm-name nta-products-grok \
-  --postinstall-script "${reporoot}/grok/grok/pipeline/scripts/rpm-creator/post_install_grok" \
   --cleanup-script grok/grok/pipeline/scripts/rpm-creator/clean-grok-tree-for-packaging \
   --whitelist grok \
   --whitelist htmengine \
@@ -43,4 +44,4 @@ time ./create-numenta-rpm --rpm-flavor grok \
   --setup-py-dir htmengine \
   --setup-py-dir grok \
   --extend-pythonpath ./grok/lib/python2.7/site-packages \
-  --artifact opt "$@" 2>&1
+  --artifact opt $@ 2>&1

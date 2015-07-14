@@ -81,7 +81,7 @@ class AutostackMetricAdapterBase(object):
     Decorator for registering derived Autostack Metric Adapter classes
     with the base
     """
-    key = clientCls._DATASOURCE
+    key = clientCls._DATASOURCE #pylint: disable=W0212
     assert key not in cls._adapterRegistry, (
       clientCls, key, cls._adapterRegistry[key])
 

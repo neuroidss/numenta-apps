@@ -98,3 +98,5 @@ echo
 echo "Confirming AMI root volume size..."
 df -h /
 echo
+
+echo "CentOS version: $(cat /etc/centos-release)"
