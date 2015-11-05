@@ -5,15 +5,15 @@
 # following terms and conditions apply:
 #
 # This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License version 3 as
+# it under the terms of the GNU Affero Public License version 3 as
 # published by the Free Software Foundation.
 #
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-# See the GNU General Public License for more details.
+# See the GNU Affero Public License for more details.
 #
-# You should have received a copy of the GNU General Public License
+# You should have received a copy of the GNU Affero Public License
 # along with this program.  If not, see http://www.gnu.org/licenses.
 #
 # http://numenta.org/licenses/
@@ -41,7 +41,8 @@ class ConfigAttributePatch(object):
   Context Manager Example::
 
       with ConfigAttributePatch(
-          grok.app.config.CONFIG_NAME,
+          htm.it.app.config.CONFIG_NAME,
+          htm.it.app.config.CONFIG_DIR,
           (("aws", "aws_access_key_id",
             os.environ["AWS_ACCESS_KEY_ID"]),
            ("aws", "aws_secret_access_key",
@@ -53,7 +54,8 @@ class ConfigAttributePatch(object):
   Function Decorator Example::
 
       @ConfigAttributePatch(
-        grok.app.config.CONFIG_NAME,
+        htm.it.app.config.CONFIG_NAME,
+        htm.it.app.config.CONFIG_DIR,
         (("aws", "aws_access_key_id", os.environ["AWS_ACCESS_KEY_ID"]),
          ("aws", "aws_secret_access_key", os.environ["AWS_SECRET_ACCESS_KEY"])))
       def testSomething(self):
@@ -64,7 +66,8 @@ class ConfigAttributePatch(object):
   Class Decorator Example::
 
       @ConfigAttributePatch(
-        grok.app.config.CONFIG_NAME,
+        htm.it.app.config.CONFIG_NAME,
+        htm.it.app.config.CONFIG_DIR,
         (("aws", "aws_access_key_id", os.environ["AWS_ACCESS_KEY_ID"]),
          ("aws", "aws_secret_access_key", os.environ["AWS_SECRET_ACCESS_KEY"])))
       class MyTestCase(unittest.TestCase):

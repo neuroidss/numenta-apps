@@ -5,31 +5,32 @@
 # following terms and conditions apply:
 #
 # This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License version 3 as
+# it under the terms of the GNU Affero Public License version 3 as
 # published by the Free Software Foundation.
 #
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-# See the GNU General Public License for more details.
+# See the GNU Affero Public License for more details.
 #
-# You should have received a copy of the GNU General Public License
+# You should have received a copy of the GNU Affero Public License
 # along with this program.  If not, see http://www.gnu.org/licenses.
 #
 # http://numenta.org/licenses/
 # ----------------------------------------------------------------------
+# TODO: TAUR-1363 - Clean up the logger=None throughout this file.
 
 import os
 import time
 
 from subprocess import CalledProcessError, check_call, check_output
 
-from infrastructure.utilities import logger as log
+from infrastructure.utilities import diagnostics
 from infrastructure.utilities.exceptions import CommandFailedError
 
 
 
-def executeCommand(command, env=os.environ, logger=None):
+def executeCommand(command, env=None, logger=None):
   """
   Execute a command and return the raw output
 
@@ -37,6 +38,8 @@ def executeCommand(command, env=os.environ, logger=None):
 
   @param env: The environment required to execute the command which is passed.
               By default use os.environ
+
+  @param printEnv: whether or not to print the environment passed to command
 
   @param logger: logger for additional debug info if desired
 
@@ -49,18 +52,20 @@ def executeCommand(command, env=os.environ, logger=None):
   @rtype: string
   """
   try:
-    if logger:
-      log.printEnv(env, logger)
-      logger.debug(command)
+    if env is None:
+      env = os.environ
+    if logger is not None:
+      diagnostics.printEnv(env, logger)
+      logger.debug("**********> %s", command)
     if isinstance(command, basestring):
       command = command.strip().split(" ")
     return check_output(command, env=env).strip()
-  except CalledProcessError:
-    raise CommandFailedError("Failed to execute command: %s", command)
+  except CalledProcessError as e:
+    errMessage = "Failed to execute: %s; original=%r" % (command, e,)
+    raise CommandFailedError(errMessage)
 
 
-
-def runWithRetries(command, retries=1, delay=1, logger=None):
+def runWithRetries(command, retries=1, delay=1, logger=None, env=None):
   """
   Run a command up to retries times until it succeeds.
 
@@ -70,25 +75,32 @@ def runWithRetries(command, retries=1, delay=1, logger=None):
 
   @param delay: delay in seconds between retries
 
+  @param printEnv: whether or not to print the environment passed to command
+
+  @param logger: logger for additional debug info if desired
+
   @raises infrastructure.utilities.exceptions.CommandFailedError
   if the command doesn't succeed after trying retries times
   """
+  if env is None:
+    env = os.environ
   attempts = 0
   while attempts < retries:
     attempts = attempts + 1
     try:
-      runWithOutput(command)
+      runWithOutput(command=command, env=env, logger=logger)
       return
     except CommandFailedError:
-      if logger:
+      if logger is not None:
         logger.debug("Attempt %s to '%s' failed, retrying in %s seconds...",
                      attempts, command, delay)
       time.sleep(delay)
-  raise CommandFailedError("%s failed after %s attempts" % (command, retries))
+
+  errMessage = "%s failed after %s attempts" % (command, retries)
+  raise CommandFailedError(errMessage)
 
 
-
-def runWithOutput(command, env=os.environ, logger=None):
+def runWithOutput(command, env=None, logger=None):
   """
   Run a command, printing as the command executes.
 
@@ -96,14 +108,25 @@ def runWithOutput(command, env=os.environ, logger=None):
 
   @param env: environment variables to use while running command
 
+  @param printEnv: Whether or not to print the environment passed to command
+
   @param logger: optional logger for additional debug info if desired
   """
   try:
-    if logger:
-      log.printEnv(env, logger)
-      logger.debug(command)
+    if env is None:
+      env = os.environ
+    if logger is not None:
+      diagnostics.printEnv(env, logger)
+      logger.debug("**********> %s", command)
     if isinstance(command, basestring):
       command = command.strip().split(" ")
     check_call(command, env=env)
-  except CalledProcessError:
-    raise CommandFailedError("Failed to execute command: %s" % command)
+  except CalledProcessError as e:
+    errMessage = "Failed to execute: %s; original=%r" % (command, e,)
+    raise CommandFailedError(errMessage)
+  # Catch other exceptions, add info about what command triggered them
+  except Exception as e:
+    errMessage = "Failed to execute: %s; original=%r" % (command, e,)
+    if logger is not None:
+      logger.exception(errMessage)
+    raise

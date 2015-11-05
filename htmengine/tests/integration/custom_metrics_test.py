@@ -6,15 +6,15 @@
 # following terms and conditions apply:
 #
 # This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License version 3 as
+# it under the terms of the GNU Affero Public License version 3 as
 # published by the Free Software Foundation.
 #
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-# See the GNU General Public License for more details.
+# See the GNU Affero Public License for more details.
 #
-# You should have received a copy of the GNU General Public License
+# You should have received a copy of the GNU Affero Public License
 # along with this program.  If not, see http://www.gnu.org/licenses.
 #
 # http://numenta.org/licenses/
@@ -32,8 +32,7 @@ import time
 import unittest
 
 from htmengine import repository
-from htmengine.exceptions import (MetricAlreadyMonitored,
-                                  MetricStatisticsNotReadyError)
+from htmengine.exceptions import MetricStatisticsNotReadyError
 from htmengine.repository.queries import MetricStatus
 from htmengine.runtime.scalar_metric_utils import (
   MODEL_CREATION_RECORD_THRESHOLD)
@@ -64,30 +63,6 @@ class CustomMetricsTest(TestCaseBase):
     self.config = g_config
     self.plaintextPort = self.config.getint("metric_listener",
                                             "plaintext_port")
-
-
-  def _deleteMetric(self, metricName):
-    adapter = createDatasourceAdapter("custom")
-    adapter.deleteMetricByName(metricName)
-
-
-  def _deleteModel(self, metricId):
-    adapter = createDatasourceAdapter("custom")
-    adapter.unmonitorMetric(metricId)
-
-
-  def _createModel(self, nativeMetric):
-    adapter = createDatasourceAdapter("custom")
-    try:
-      metricId = adapter.monitorMetric(nativeMetric)
-    except MetricAlreadyMonitored as e:
-      metricId = e.uid
-
-    engine = repository.engineFactory(config=self.config)
-
-    with engine.begin() as conn:
-      return repository.getMetric(conn, metricId)
-
 
 
   def testUnevenTimestamps(self):

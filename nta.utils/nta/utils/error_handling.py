@@ -5,15 +5,15 @@
 # following terms and conditions apply:
 #
 # This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License version 3 as
+# it under the terms of the GNU Affero Public License version 3 as
 # published by the Free Software Foundation.
 #
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-# See the GNU General Public License for more details.
+# See the GNU Affero Public License for more details.
 #
-# You should have received a copy of the GNU General Public License
+# You should have received a copy of the GNU Affero Public License
 # along with this program.  If not, see http://www.gnu.org/licenses.
 #
 # http://numenta.org/licenses/
@@ -124,22 +124,23 @@ def retry(timeoutSec, initialRetryDelaySec, maxRetryDelaySec,
           logger=None, clientLabel=""):
   """ Returns a closure suitable for use as function/method decorator for
   retrying a function being decorated.
-  
-  timeoutSec:           How many seconds from time of initial call to stop 
+
+  timeoutSec:           How many seconds from time of initial call to stop
                         retrying (floating point); 0 = no retries
   initialRetryDelaySec: Number of seconds to wait for first retry.
-                        Subsequent retries will be at the lesser of twice
-                        this amount or maxRetryDelaySec (floating point)
+                        Subsequent retries will occur at geometrically
+                        doubling intervals up to a maximum interval of
+                        maxRetryDelaySec (floating point)
   maxRetryDelaySec:     Maximum amount of seconds to wait between retries
                         (floating point)
   retryExceptions:      A tuple (must be a tuple) of exception classes that,
                         including their subclasses, should trigger retries;
-                        Default: any Exception-based exception will trigger 
+                        Default: any Exception-based exception will trigger
                         retries
   retryFilter:          Optional filter function used to further filter the
                         exceptions in the retryExceptions tuple; called if the
-                        current exception meets the retryExceptions criteria: 
-                        takes the current exception instance, args, and kwargs 
+                        current exception meets the retryExceptions criteria:
+                        takes the current exception instance, args, and kwargs
                         that were passed to the decorated function, and returns
                         True to retry, False to allow the exception to be
                         re-raised without retrying. Default: permits any
@@ -150,7 +151,7 @@ def retry(timeoutSec, initialRetryDelaySec, maxRetryDelaySec,
   Usage Example:
     NOTE: logging must be initialized *before* any loggers are created, else
       there will be no output; see nupic.support.initLogging()
-    
+
     _retry = retry(timeoutSec=300, initialRetryDelaySec=0.2, maxRetryDelaySec=10,
                    retryExceptions=[socket.error])
     @_retry
@@ -160,17 +161,17 @@ def retry(timeoutSec, initialRetryDelaySec, maxRetryDelaySec,
         ...
   TODO: TAUR-439 unit test
   """
-  
+
   assert initialRetryDelaySec > 0, str(initialRetryDelaySec)
-  
+
   assert timeoutSec >= 0, str(timeoutSec)
-  
+
   assert maxRetryDelaySec >= initialRetryDelaySec, \
       "%r < %r" % (maxRetryDelaySec, initialRetryDelaySec)
-  
+
   assert isinstance(retryExceptions, tuple), (
     "retryExceptions must be tuple, but got %r") % (type(retryExceptions),)
-  
+
   if logger is None:
     logger = logging.getLogger(__name__)
 
@@ -181,7 +182,7 @@ def retry(timeoutSec, initialRetryDelaySec, maxRetryDelaySec,
       numAttempts = 0
       delaySec = initialRetryDelaySec
       startTime = time.time()
-      
+
       # Make sure it gets called at least once
       while True:
         numAttempts += 1
@@ -195,7 +196,7 @@ def retry(timeoutSec, initialRetryDelaySec, maxRetryDelaySec,
                 'Caller stack:\n%s', clientLabel, func,
                 ''.join(traceback.format_stack()), exc_info=True)
             raise
-          
+
           now = time.time()
           # Compensate for negative time adjustment so we don't get stuck
           # waiting way too long (python doesn't provide monotonic time yet)
@@ -207,7 +208,7 @@ def retry(timeoutSec, initialRetryDelaySec, maxRetryDelaySec,
               'Caller stack:\n%s', clientLabel, timeoutSec, numAttempts, func,
               ''.join(traceback.format_stack()))
             raise
-          
+
           if numAttempts == 1:
             logger.warning(
               '[%s] First failure in %r; initial retry in %s sec.; '
@@ -219,19 +220,18 @@ def retry(timeoutSec, initialRetryDelaySec, maxRetryDelaySec,
               'Caller stack:\n%s',
               clientLabel, func, numAttempts, delaySec, timeoutSec,
               ''.join(traceback.format_stack()), exc_info=True)
-              
-              
-            time.sleep(delaySec)
-            
-            delaySec = min(delaySec*2, maxRetryDelaySec)
+
+          time.sleep(delaySec)
+
+          delaySec = min(delaySec*2, maxRetryDelaySec)
         else:
           if numAttempts > 1:
             logger.info('[%s] %r succeeded on attempt # %d',
                         clientLabel, func, numAttempts)
-            
+
           return result
-    
-    
+
+
     return retryWrap
 
   return retryDecorator

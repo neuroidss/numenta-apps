@@ -5,15 +5,15 @@
 # following terms and conditions apply:
 #
 # This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License version 3 as
+# it under the terms of the GNU Affero Public License version 3 as
 # published by the Free Software Foundation.
 #
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-# See the GNU General Public License for more details.
+# See the GNU Affero Public License for more details.
 #
-# You should have received a copy of the GNU General Public License
+# You should have received a copy of the GNU Affero Public License
 # along with this program.  If not, see http://www.gnu.org/licenses.
 #
 # http://numenta.org/licenses/
@@ -64,15 +64,14 @@ def prepareEnv(workspace, nupicBuildDir=None, environ=None):
         "BUILD_WORKSPACE": "path/to/workspace",
         "REPOSITORY": "path/to/nupic/repository",
         "PY_VERSION": "python version",
-        "GROK_HOME": "path/to/grok/home",
-        "LD_LIBRARY_PATH": "path/to/lib",
+        "HTM_IT_HOME": "path/to/htm-it/home",
         "NUPIC": "/path/to/nupic",
         "NTA": "/path/to/nupic/build/release",
         "PATH": "path/to/nupic/build/release/bin",
         "PYTHONPATH": "path/to/nupic/build/release/lib/python",
         "NTA_ROOT_DIR": "/path/to/nupic/build/release",
         "NTA_DATA_PATH": "/path/to/nupic/build/release/share/prediction/data",
-        "APPLICATION_CONFIG_PATH": "path/to/grok/home/conf",
+        "APPLICATION_CONFIG_PATH": "path/to/htm-it/home/conf",
         "ARCHFLAGS": "-arch x86_64",
         "MACOSX_DEPLOYMENT_TARGET": "version of OS X",
     }
@@ -86,9 +85,8 @@ def prepareEnv(workspace, nupicBuildDir=None, environ=None):
     BUILD_WORKSPACE=workspace,
     REPOSITORY=os.path.join(nupicBuildDir or workspace, "nupic"),
     PY_VERSION=sys.version[:3],
-    PRODUCTS=os.path.join(workspace, "products"),
-    GROK_HOME=os.path.join(workspace, "products", "grok"),
-    LD_LIBRARY_PATH=environ.get("LD_LIBRARY_PATH")
+    PRODUCTS=os.path.join(workspace, "numenta-apps"),
+    HTM_IT_HOME=os.path.join(workspace, "numenta-apps", "htm.it")
   )
 
   env.update(
@@ -106,7 +104,7 @@ def prepareEnv(workspace, nupicBuildDir=None, environ=None):
                                                     environ.get("PYTHONPATH")),
     NTA_ROOT_DIR=env["NTA"],
     NTA_DATA_PATH=os.path.join(env["NTA"], "share/prediction/data"),
-    APPLICATION_CONFIG_PATH=os.path.join(env["GROK_HOME"], "conf")
+    APPLICATION_CONFIG_PATH=os.path.join(env["HTM_IT_HOME"], "conf")
   )
 
   env.update(
@@ -114,8 +112,8 @@ def prepareEnv(workspace, nupicBuildDir=None, environ=None):
   )
 
   env.update(
-    PATH=prependPath(os.path.join(env["GROK_HOME"], "bin"), env["PATH"]),
-    PYTHONPATH=prependPath(os.path.join(env["GROK_HOME"],
+    PATH=prependPath(os.path.join(env["HTM_IT_HOME"], "bin"), env["PATH"]),
+    PYTHONPATH=prependPath(os.path.join(env["HTM_IT_HOME"],
                            "lib/python%s/site-packages" % env["PY_VERSION"]),
                            env["PYTHONPATH"])
   )
@@ -149,4 +147,5 @@ def addNupicCoreToEnv(env, nupicCoreDir):
   """
   env.update(
     NUPIC_CORE_DIR=nupicCoreDir,
+    NUPIC_CORE_RELEASE=os.path.join(nupicCoreDir, "build", "release")
   )

@@ -6,15 +6,15 @@
 # following terms and conditions apply:
 #
 # This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License version 3 as
+# it under the terms of the GNU Affero Public License version 3 as
 # published by the Free Software Foundation.
 #
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-# See the GNU General Public License for more details.
+# See the GNU Affero Public License for more details.
 #
-# You should have received a copy of the GNU General Public License
+# You should have received a copy of the GNU Affero Public License
 # along with this program.  If not, see http://www.gnu.org/licenses.
 #
 # http://numenta.org/licenses/
@@ -124,18 +124,15 @@ class Transport(object):
 
 
 
-def _forwardData(messageBus, protocol, data):
+def _forwardData(messageBus, data):
   """Puts the data in the custom metric queue.
 
-  :param protocol: Encoding protocol for the given data (e.g., Protocol.PLAIN)
-
-  :param data: A sequence of data samples encoded according to the given
-    protocol
+  :param data: A sequence of data samples
   """
   if gProfiling:
     startTime = time.time()
 
-  message = json.dumps({"protocol": protocol, "data": data})
+  message = json.dumps({"protocol": Protocol.PLAIN, "data": data})
   try:
     LOGGER.debug("Publishing message: %s", message)
     messageBus.publish(mqName=gQueueName, body=message, persistent=True)
@@ -145,7 +142,9 @@ def _forwardData(messageBus, protocol, data):
     LOGGER.debug("Re-publishing message: %s", message)
     messageBus.publish(mqName=gQueueName, body=message, persistent=True)
 
-  if gProfiling and data and protocol == Protocol.PLAIN:
+  LOGGER.debug("forwarded batchLen=%d", len(data))
+
+  if gProfiling and data:
     now = time.time()
     try:
       for sample in data:
@@ -229,20 +228,46 @@ class _TimeoutSafeBufferedLineReader(object):
 
 
 
-def _forwardBatch(messageBus, batch):
-  """ Forward metric data batch using Protocol.PLAIN encoding via message bus
+def _readlines(sock):
+  """ Generator that reads lines from the socket connection and yields:
+  - None if a short pause in input activity is detected and a line is not
+    available
+  - non-empty string when a line is available; will include the
+    trailing newline unless the stream ends without a newline
 
-  :param nta.utils.message_bus_connector.MessageBusConnector messageBus:
-  :param batch: a sequence of metric data samples encoded via Protocol.PLAIN
+  :param socket.socket sock: input socket
   """
-  # TODO I don't know why the original logic always checked protocol every time
-  # before sending. It sounds like this would either not be necessary at all or
-  # only needed to do once when constructing the server.
-  if Protocol.current == Protocol.PLAIN:
-    _forwardData(messageBus, Protocol.PLAIN, batch)
-    LOGGER.debug("forwarded batchLen=%d", len(batch))
-  else:
-    raise ValueError("Unknown protocol %r" % Protocol.current)
+  socketTimeoutOnEntry = sock.gettimeout()
+  try:
+    # Start in blocking mode
+    timeout = None
+    sock.settimeout(timeout)
+
+    reader = _TimeoutSafeBufferedLineReader(sock)
+
+    for line in reader.readlinesWithTimeout():
+      if line is None:
+        # Signal break in data flow
+        LOGGER.debug("socket timeout, yielding None")
+        yield None
+
+        # Resume blocking mode
+        LOGGER.debug("resuming blocking socket mode")
+        timeout = None
+        sock.settimeout(timeout)
+        continue
+
+      # Set a short timeout to detect break in data flow
+      if timeout is None:
+        LOGGER.debug("lowering timeout")
+        timeout = 0.0001
+        sock.settimeout(timeout)
+
+      # Yield the line
+      yield line
+  finally:
+    # Restore socket timeout
+    sock.settimeout(socketTimeoutOnEntry)
 
 
 
@@ -252,7 +277,7 @@ class UDPHandler(SocketServer.BaseRequestHandler):
   def handle(self):
     data = self.request[0].strip()
     with MessageBusConnector() as messageBus:
-      _forwardBatch(messageBus, (data,))
+      _forwardData(messageBus, (data,))
 
 
 
@@ -272,7 +297,7 @@ class TCPHandler(SocketServer.StreamRequestHandler):
 
       batch = []
       with MessageBusConnector() as messageBus:
-        for line in self.__readlines():
+        for line in _readlines(self.connection):
           if line is not None:
             batch.append(line.strip())
             LOGGER.debug("got line=%r; batchLen=%d", line, len(batch))
@@ -280,53 +305,13 @@ class TCPHandler(SocketServer.StreamRequestHandler):
             LOGGER.debug("got data break; batchLen=%d", len(batch))
 
           if (line is None and batch) or len(batch) >= _MAX_BATCH_SIZE:
-            _forwardBatch(messageBus, batch)
+            _forwardData(messageBus, batch)
             batch = []
         else:
           if batch:
             # Send the remnant
-            _forwardBatch(messageBus, batch)
+            _forwardData(messageBus, batch)
           return
-
-
-  def __readlines(self):
-    """ Generator that reads lines from the socket connection and yields:
-    - None if a short pause in input activity is detected and a line is not
-      available
-    - non-empty string when a line is available; will include the
-      trailing newline unless the stream ends without a newline
-    """
-    socketTimeoutOnEntry = self.connection.gettimeout()
-    try:
-      # Start in blocking mode
-      timeout = None
-      self.connection.settimeout(timeout)
-
-      reader = _TimeoutSafeBufferedLineReader(self.connection)
-
-      for line in reader.readlinesWithTimeout():
-        if line is None:
-          # Signal break in data flow
-          LOGGER.debug("socket timeout, yielding None")
-          yield None
-
-          # Resume blocking mode
-          LOGGER.debug("resuming blocking socket mode")
-          timeout = None
-          self.connection.settimeout(timeout)
-          continue
-
-        # Set a short timeout to detect break in data flow
-        if timeout is None:
-          LOGGER.debug("lowering timeout")
-          timeout = 0.0001
-          self.connection.settimeout(timeout)
-
-        # Yield the line
-        yield line
-    finally:
-      # Restore socket timeout
-      self.connection.settimeout(socketTimeoutOnEntry)
 
 
 

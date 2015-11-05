@@ -6,15 +6,15 @@
 # following terms and conditions apply:
 #
 # This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License version 3 as
+# it under the terms of the GNU Affero Public License version 3 as
 # published by the Free Software Foundation.
 #
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-# See the GNU General Public License for more details.
+# See the GNU Affero Public License for more details.
 #
-# You should have received a copy of the GNU General Public License
+# You should have received a copy of the GNU Affero Public License
 # along with this program.  If not, see http://www.gnu.org/licenses.
 #
 # http://numenta.org/licenses/
@@ -33,16 +33,12 @@ from collections import namedtuple
 import itertools
 import json
 import logging
-import operator
 import os
-import socket
 import time
-from collections import deque
 from datetime import datetime, timedelta
 from functools import partial
 import multiprocessing
 from optparse import OptionParser
-from StringIO import StringIO
 
 import requests
 import sqlalchemy as sql
@@ -52,7 +48,6 @@ from nta.utils.error_handling import logExceptions
 from nta.utils.error_handling import retry
 
 from taurus.metric_collectors import collectorsdb
-from taurus.metric_collectors import logging_support
 from taurus.metric_collectors.collectorsdb import schema
 from taurus.metric_collectors import config
 from taurus.metric_collectors import logging_support
@@ -83,6 +78,8 @@ _EMITTED_NEWS_VOLUME_SAMPLE_TRACKER_KEY = "xignite-security-news-volume"
 # News volume metrics provider key to match against properties in metrics.json
 _NEWS_VOLUME_METRIC_PROVIDER = "xignite-security-news"
 
+
+_HTTP_INACTIVITY_TIMEOUT_SEC = 240
 
 
 NewsVolumeMetricSpec = namedtuple(
@@ -159,7 +156,7 @@ def _httpGetWithRetries(session, url, params):
   :returns: requests.models.Response instance. see requests.Session.get for
     details
   """
-  return session.get(url, params=params)
+  return session.get(url, params=params, timeout=_HTTP_INACTIVITY_TIMEOUT_SEC)
 
 
 
@@ -262,7 +259,7 @@ class _HistoricalNewsTaskBase(object):
     for story in headlines:
       localPubDate = datetime.strptime(story["Date"],
                                        self._XIGNITE_DATE_FMT).date()
-      if not (self.startDate <= localPubDate <= self.endDate):
+      if not self.startDate <= localPubDate <= self.endDate:
         # I saw there a lot at time of this writing. Reported to xignite
         # as case 00016736
         g_log.debug("%s: localPubDate=%r outside task's range; story=%s",
@@ -324,9 +321,9 @@ class _HistoricalNewsTaskBase(object):
     """
     params = copy.deepcopy(self._NEWS_URL_ARGS_TEMPLATE)
     params.update({"Identifier": self.security[0],
-                  "StartDate": self.startDate.strftime(self._XIGNITE_DATE_FMT),
-                  "EndDate": self.endDate.strftime(self._XIGNITE_DATE_FMT),
-                  "_Token": apiToken})
+                   "StartDate": self.startDate.strftime(self._XIGNITE_DATE_FMT),
+                   "EndDate": self.endDate.strftime(self._XIGNITE_DATE_FMT),
+                   "_Token": apiToken})
 
     response = _httpGetWithRetries(session, self._BASE_NEWS_URL, params=params)
 
@@ -376,8 +373,9 @@ class _HistoricalNewsTaskBase(object):
     """
     sel = sql.select([table.c.local_pub_date, table.c.url, table.c.source]
       ).where(
-          (table.c.local_pub_date >= startDate) &
-          (table.c.local_pub_date <= endDate))
+        (table.c.symbol == symbol) &
+        (table.c.local_pub_date >= startDate) &
+        (table.c.local_pub_date <= endDate))
 
     return collectorsdb.engineFactory().execute(sel).fetchall()
 
@@ -442,7 +440,8 @@ class _HistoricalNewsTaskBase(object):
     :raises MarketNewsDetailsUnavailable:
     :raises MarketNewsDetailsFetchError:
     """
-    # Reference=http://www.cnbc.com/id/101433706&_fields=Outcome,Message,Delay,Headline,Time,Source,Url,Summary
+    # Reference=http://www.cnbc.com/id/101433706&_fields=Outcome,Message,Delay,\
+    # Headline,Time,Source,Url,Summary
     params = {
       "Reference": url,
       "_fields": "Outcome,Message,Delay,Headline,Time,Source,Url,Summary",
@@ -505,7 +504,7 @@ class _HistoricalNewsTaskBase(object):
 
     if self.dryRun:
       g_log.info("%r.process(dryRun=True): security=%s, news=%s", self,
-                 securityRow, headlineRows)
+                 xigniteSecurity, headlineRows)
       return 0
 
     engine = collectorsdb.engineFactory()
@@ -528,7 +527,7 @@ class _HistoricalNewsTaskBase(object):
 
       # Re-insert news after resolving IntegrityError
       return saveNews()
-      
+
 
 
 
@@ -676,8 +675,7 @@ def _queryNewsVolumes(aggStartDatetime, aggStopDatetime):
 def _forwardNewsVolumeMetrics(metricSpecs,
                               lastEmittedAggTime,
                               stopDatetime,
-                              periodSec,
-                              metricDestAddr):
+                              periodSec):
   """ Query news volume metrics since the given last emitted timestamp through
   stopDatetime and forward them to htmengine's Metric Listener. Update the
   datetime of the last successfully-emitted news volume metric batch in the
@@ -695,7 +693,6 @@ def _forwardNewsVolumeMetrics(metricSpecs,
     batch
   :param stopDatetime: non-inclusive upper bound UTC datetime for forwarding
   :param periodSec: aggregation period in seconds
-  :param metricDestAddr: two-tuple (metricDestHost, metricDestPort)
   :returns: UTC timestamp of the last successfully-emitted sample batch.
   :rtype: datetime.datetime
   """
@@ -723,7 +720,7 @@ def _forwardNewsVolumeMetrics(metricSpecs,
       with metric_utils.metricDataBatchWrite(log=g_log) as putSample:
         for sample in samples:
           putSample(**sample)
-    except Exception:
+    except Exception:  # pylint: disable=W0703
       g_log.exception("Failure while emitting metric data for agg=%s "
                       "containing numSamples=%d",
                       aggStartDatetime, len(samples))
@@ -789,7 +786,7 @@ def _logSummaries(headlineTasksWithCounts,
 
   if releaseErrorTasks:
     totalReleaseErrors = sum(len(tasks) for tasks in
-                              releaseErrorTasks.itervalues())
+                             releaseErrorTasks.itervalues())
     g_log.error("totalReleaseErrors=%d", totalReleaseErrors)
 
 
@@ -864,46 +861,49 @@ def main():
   """
   logging_support.LoggingSupport.initService()
 
-  options = _parseArgs()
-
-  # See OP_MODE_ACTIVE, etc. in ApplicationConfig
-  opMode = config.get("xignite_security_news_agent", "opmode")
-  g_log.info("Starting: opMode=%s", opMode)
-
-  aggSec = options.aggIntervalSec
-
-  # Load metric specs from metric configuration
-  metricSpecs = _loadNewsVolumeMetricSpecs()
-
-  # Load securities from metric configuration
-  securities = getAllMetricSecurities()
-  g_log.info("Collecting headlines and releases for %s", securities)
-
-  # Maps security symbols to the datetime.date of most recently-stored headlines
-  lastSecurityHeadlineEndDates = _querySecurityNewsEndDates(
-    schema.xigniteSecurityHeadline)
-
-  # Map security symbols to the datetime.date of most recently-stored releases
-  lastSecurityReleaseEndDates = _querySecurityNewsEndDates(
-    schema.xigniteSecurityRelease)
-
-  # Establish/retrieve datetime of last successfully-emitted metric data batch
-  lastEmittedAggTime = metric_utils.establishLastEmittedSampleDatetime(
-    key=_EMITTED_NEWS_VOLUME_SAMPLE_TRACKER_KEY,
-    aggSec=aggSec)
-
-  # Calculate next aggregation start time using lastEmittedAggTime as base
-  lastAggStart = date_time_utils.epochFromNaiveUTCDatetime(lastEmittedAggTime)
-  nextAggEnd= lastAggStart + (
-    int((time.time() - lastAggStart + aggSec - 1) / aggSec) * aggSec) + aggSec
-
-  # Poll, store and emit samples
-  pollingIntervalSec = aggSec / 2.0
   numPoolWorkers = max(_MIN_POOL_CONCURRENCY, multiprocessing.cpu_count())
-  g_log.info("Entering main loop: pollingIntervalSec=%s; numPoolWorkers=%d",
-             pollingIntervalSec, numPoolWorkers)
   pool = multiprocessing.Pool(processes=numPoolWorkers)
   try:
+
+    options = _parseArgs()
+
+    # See OP_MODE_ACTIVE, etc. in ApplicationConfig
+    opMode = config.get("xignite_security_news_agent", "opmode")
+    g_log.info("Starting: opMode=%s", opMode)
+
+    aggSec = options.aggIntervalSec
+
+    # Load metric specs from metric configuration
+    metricSpecs = _loadNewsVolumeMetricSpecs()
+
+    # Load securities from metric configuration
+    securities = getAllMetricSecurities()
+    g_log.info("Collecting headlines and releases for %s", securities)
+
+    # Maps security symbols to the datetime.date of most recently-stored
+    # headlines
+    lastSecurityHeadlineEndDates = _querySecurityNewsEndDates(
+      schema.xigniteSecurityHeadline)
+
+    # Map security symbols to the datetime.date of most recently-stored releases
+    lastSecurityReleaseEndDates = _querySecurityNewsEndDates(
+      schema.xigniteSecurityRelease)
+
+    # Establish/retrieve datetime of last successfully-emitted metric data batch
+    lastEmittedAggTime = metric_utils.establishLastEmittedSampleDatetime(
+      key=_EMITTED_NEWS_VOLUME_SAMPLE_TRACKER_KEY,
+      aggSec=aggSec)
+
+    # Calculate next aggregation start time using lastEmittedAggTime as base
+    lastAggStart = date_time_utils.epochFromNaiveUTCDatetime(lastEmittedAggTime)
+    nextAggEnd= lastAggStart + (
+      int((time.time() - lastAggStart + aggSec - 1) / aggSec) * aggSec) + aggSec
+
+    # Poll, store and emit samples
+    pollingIntervalSec = aggSec / 2.0
+    g_log.info("Entering main loop: pollingIntervalSec=%s; numPoolWorkers=%d",
+               pollingIntervalSec, numPoolWorkers)
+
     while True:
       pollingIntervalEnd = time.time() + pollingIntervalSec
 
@@ -937,8 +937,7 @@ def main():
             metricSpecs=metricSpecs,
             lastEmittedAggTime=lastEmittedAggTime,
             stopDatetime=datetime.utcfromtimestamp(nextAggEnd),
-            periodSec=aggSec,
-            metricDestAddr=options.metricDestAddr)
+            periodSec=aggSec)
 
         nextAggEnd += aggSec
 
@@ -952,7 +951,6 @@ def main():
   except KeyboardInterrupt:
     # Log with exception info to help debug deadlocks
     g_log.info("Observed KeyboardInterrupt", exc_info=True)
-    pass
   finally:
     g_log.info("Closing multiprocessing.Pool")
     pool.close()
@@ -981,37 +979,37 @@ def _parseArgs():
   parser = OptionParser(helpString)
 
   parser.add_option(
-      "--api-token",
-      action="store",
-      type="string",
-      default=_DEFAULT_API_TOKEN,
-      dest="apiToken",
-      help="XIgnite API Token [default: %default]")
+    "--api-token",
+    action="store",
+    type="string",
+    default=_DEFAULT_API_TOKEN,
+    dest="apiToken",
+    help="XIgnite API Token [default: %default]")
 
   parser.add_option(
-      "--agg-interval",
-      action="store",
-      type="int",
-      dest="aggIntervalSec",
-      default=DEFAULT_AGGREGATION_INTERVAL_SEC,
-      help="Metric aggregation interval in seconds [default: %default]")
+    "--agg-interval",
+    action="store",
+    type="int",
+    dest="aggIntervalSec",
+    default=DEFAULT_AGGREGATION_INTERVAL_SEC,
+    help="Metric aggregation interval in seconds [default: %default]")
 
   parser.add_option(
-      "--backfill-days",
-      action="store",
-      type="int",
-      dest="backfillDays",
-      default=DEFAULT_MAX_BACKFILL_DAYS,
-      help=("Max number of days for backfilling headlines and releases; the "
-            "underlying service lacks datetime granularity for backfilled data "
-            "beyond the article's date [default: %default]"))
+    "--backfill-days",
+    action="store",
+    type="int",
+    dest="backfillDays",
+    default=DEFAULT_MAX_BACKFILL_DAYS,
+    help=("Max number of days for backfilling headlines and releases; the "
+          "underlying service lacks datetime granularity for backfilled data "
+          "beyond the article's date [default: %default]"))
 
   parser.add_option(
-      "--dryrun",
-      action="store_true",
-      default=False,
-      dest="dryRun",
-      help="Use this flag to do a dry run (retrieve data, but don't store it)")
+    "--dryrun",
+    action="store_true",
+    default=False,
+    dest="dryRun",
+    help="Use this flag to do a dry run (retrieve data, but don't store it)")
 
   parser.add_option(
     "--metric-addr",
@@ -1019,7 +1017,7 @@ def _parseArgs():
     type="string",
     dest="metricDestAddr",
     help=("Destination address for metrics as host:port; typically address of "
-          "Grok's custom metrics listener; Grok's default metric listener port "
+          "HTM-IT's custom metrics listener; HTM-IT's default metric listener port "
           "is 2003"))
 
   options, _ = parser.parse_args()

@@ -6,15 +6,15 @@
 # following terms and conditions apply:
 #
 # This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License version 3 as
+# it under the terms of the GNU Affero Public License version 3 as
 # published by the Free Software Foundation.
 #
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-# See the GNU General Public License for more details.
+# See the GNU Affero Public License for more details.
 #
-# You should have received a copy of the GNU General Public License
+# You should have received a copy of the GNU Affero Public License
 # along with this program.  If not, see http://www.gnu.org/licenses.
 #
 # http://numenta.org/licenses/
@@ -43,7 +43,7 @@ from jenkinsapi.custom_exceptions import UnknownJob
 
 from infrastructure.utilities.exceptions import (
   CommandFailedError, InvalidParametersError)
-from infrastructure.utilities.logger import initPipelineLogger
+from infrastructure.utilities.diagnostics import initPipelineLogger
 from infrastructure.utilities.git import (
   getActiveBranch,
   getCurrentSha,
@@ -80,17 +80,15 @@ def invokeBuild(jobName, buildParams):
     :raises jenkinsapi.custom_exceptions.UnknownJob: if Jenkins isn't able to
       find the specified job.
   """
+  buildNum = os.environ.get("BUILD_NUMBER", "local")
   getConnectionToJenkins()[jobName].invoke(build_params=buildParams,
-                                           cause="product-master-build")
+                                           cause="product-master-build-%s" %
+                                                 buildNum)
 
 
-def invokeGrokBuild(gitRemote, branch, buildSha):
+def invokeHtmItBuild(gitRemote, branch, buildSha):
   """
-    TODO: Define params, flesh out implementation details, and uncomment the
-    actual `invokeBuild` command
-
-    This function will be used to invoke the Jenkins job related to Grok builds
-    as appropriate.
+    This function invokes the Jenkins job related to HTM-IT builds.
 
     :param gitRemote: The remote to be used when accessing git (e.g.:
       git@github.com:Numenta/numenta-apps.git)
@@ -102,13 +100,13 @@ def invokeGrokBuild(gitRemote, branch, buildSha):
   params = {"GIT_REMOTE": gitRemote,
             "BRANCH": branch,
             "COMMIT_SHA": buildSha}
-  invokeBuild("grok-product-pipeline", params)
-  g_logger.info("Invoking Grok Build")
+  invokeBuild("htm-it-product-pipeline", params)
+  g_logger.info("Invoking HTM-IT Build")
 
 
-def invokeGrokMobileBuild(gitRemote, branch, buildSha):
+def invokeHtmItMobileBuild(gitRemote, branch, buildSha):
   """
-    This function invokes the Jenkins job related to Grok-Mobile builds.
+    This function invokes the Jenkins job related to HTM-IT-Mobile builds.
 
     :param gitRemote: The remote to be used when accessing git (e.g.:
       git@github.com:Numenta/numenta-apps.git)
@@ -117,22 +115,18 @@ def invokeGrokMobileBuild(gitRemote, branch, buildSha):
 
     :param buildSha: The commit SHA to set the git repo to before building.
   """
-  g_logger.info("Invoking Grok Mobile Build")
+  g_logger.info("Invoking HTM-IT Mobile Build")
   params = {"GIT_REMOTE": gitRemote,
             "BRANCH": branch,
             "COMMIT_SHA": buildSha,
             "PIPELINE": "product-master-build"}
-  invokeBuild("grok-mobile-product-pipeline", params)
+  invokeBuild("htm-it-mobile-product-pipeline", params)
 
 
 def invokeTaurusBuild(gitRemote, branch, buildSha):
   """
-    TODO: Define params, flesh out implementation details, and uncomment the
-    actual `invokeBuild` command
-
-
-    This function will be used to invoke the Jenkins job related to Taurus
-    builds as appropriate.
+    Invoke `refresh-taurus-servers` pipeline, overriding USER_GIT_URL,
+    USER_GIT_BRANCH_NAME, and USER_GIT_COMMIT environment variable defaults.
 
     :param gitRemote: The remote to be used when accessing git (e.g.:
       git@github.com:Numenta/numenta-apps.git)
@@ -141,21 +135,16 @@ def invokeTaurusBuild(gitRemote, branch, buildSha):
 
     :param buildSha: The commit SHA to set the git repo to before building.
   """
-  params = {"GIT_REMOTE": gitRemote,
-            "BRANCH": branch,
-            "COMMIT_SHA": buildSha}
-  #don"t actually invoke tauras build yet; need to flesh this out a lot!
-  #invokeBuild("taurus-pipeline", params)
+  params = {"USER_GIT_URL": gitRemote,
+            "USER_GIT_BRANCH_NAME": branch,
+            "USER_GIT_COMMIT": buildSha}
+  invokeBuild("refresh-taurus-servers", params)
   g_logger.info("Invoking Taurus Build")
 
 
 def invokeTaurusMobileBuild(gitRemote, branch, buildSha):
   """
-    TODO: Define params, flesh out implementation details, and uncomment the
-    actual `invokeBuild` command
-
-    This function will be used to invoke the Jenkins job related to
-    Taurus-Mobile builds as appropriate.
+    This function invokes the Jenkins job related to Taurus-Mobile builds.
 
     :param gitRemote: The remote to be used when accessing git (e.g.:
       git@github.com:Numenta/numenta-apps.git)
@@ -169,6 +158,22 @@ def invokeTaurusMobileBuild(gitRemote, branch, buildSha):
             "COMMIT_SHA": buildSha}
   invokeBuild("taurus-mobile-product-pipeline", params)
   g_logger.info("Invoking Taurus Mobile Build")
+
+
+def invokeInfrastructureBuild(gitRemote, commitish):
+  """
+    This function will be used to invoke the Jenkins job related to
+    Infrastructure builds as appropriate.
+
+    :param gitRemote: The remote to be used when accessing git (e.g.:
+      git@github.com:Numenta/numenta-apps.git)
+
+    :param commitish: The commit-ish to set the git repo to before building.
+  """
+  params = {"GIT_REMOTE": gitRemote,
+            "COMMITISH": commitish}
+  invokeBuild("infrastructure-python-pipeline", params)
+  g_logger.info("Invoking Infrastructure Build")
 
 
 def invokeRpmBuild(gitRemote, branch, buildSha):
@@ -221,7 +226,9 @@ def getChangedFoldersBetweenRevisions(startSha, endSha):
     :rtype: set
 
   """
-  files = getModifiedFilesBetweenRevisions(startSha, endSha)
+  files = getModifiedFilesBetweenRevisions(startSha=startSha,
+                                           endSha=endSha,
+                                           logger=g_logger)
   rootFolders = []
   for name in files:
     if not name.split("/")[0] in rootFolders:
@@ -243,6 +250,10 @@ def parseArgs():
                             "have changed. If unspecified, the script will use "
                             "the latest green build commit SHA from the "
                             "product-master-build Jenkins job."))
+  parser.add_argument("--branch", dest="branch", type=str,
+                      help=("**OPTIONAL** If specified, this determines which "
+                            "branch to work off of. Otherwise, this will be "
+                            "set to the active branch."))
   return parser.parse_args()
 
 
@@ -265,24 +276,27 @@ def main(args):
   try:
     #STEP 1: Determine which folders have been modified
     startSha = args.startSha or getLatestGreenRevision("product-master-build")
-    currentSha = getCurrentSha()
-    branch = getActiveBranch()
+    currentSha = getCurrentSha(logger=g_logger)
+    branch = args.branch or getActiveBranch(logger=g_logger)
 
     rootFolders = getChangedFoldersBetweenRevisions(startSha, currentSha)
     g_logger.info("Folders with modifications: %s", rootFolders)
 
     #STEP 2: Execute the appropriate sub-pipelines as needed
-    if set(["grok", "htmengine", "nta.utils"]) & rootFolders:
-      invokeGrokBuild(args.gitRemote, branch, currentSha)
+    if set(["htm.it", "htmengine", "nta.utils"]) & rootFolders:
+      invokeHtmItBuild(args.gitRemote, branch, currentSha)
     if (set(["taurus", "taurus.metric_collectors", "htmengine", "nta.utils"]) &
         rootFolders):
       invokeTaurusBuild(args.gitRemote, branch, currentSha)
-    if (set(["grok", "htmengine", "grok-mobile", "mobile-core", "nta.utils"]) &
-        rootFolders):
-      invokeGrokMobileBuild(args.gitRemote, branch, currentSha)
+    # Only run the htm-it-mobile pipeline if it has been updated itself. Otherwise
+    # rely on the HTM-IT pipeline to kick off this build on success.
+    if (set(["htm-it-mobile", "mobile-core", "nta.utils"]) & rootFolders):
+      invokeHtmItMobileBuild(args.gitRemote, branch, currentSha)
     if set(["taurus", "taurus.metric_collectors", "nta.utils", "htmengine",
             "taurus-mobile", "mobile-core"]) & rootFolders:
       invokeTaurusMobileBuild(args.gitRemote, branch, currentSha)
+    if set(["infrastructure"]) & rootFolders:
+      invokeInfrastructureBuild(args.gitRemote, currentSha)
 
     if (set(["infrastructure/utilities", "infrastructure/saltcellar"]) &
         rootFolders):
@@ -295,7 +309,6 @@ def main(args):
     g_logger.exception("Could not find the Jenkins job specified; aborting")
     raise
   except:
-    #TODO add better error handling
     g_logger.exception("Script execution failed")
     raise
 

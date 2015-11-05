@@ -5,15 +5,15 @@
 # following terms and conditions apply:
 #
 # This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License version 3 as
+# it under the terms of the GNU Affero Public License version 3 as
 # published by the Free Software Foundation.
 #
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-# See the GNU General Public License for more details.
+# See the GNU Affero Public License for more details.
 #
-# You should have received a copy of the GNU General Public License
+# You should have received a copy of the GNU Affero Public License
 # along with this program.  If not, see http://www.gnu.org/licenses.
 #
 # http://numenta.org/licenses/
@@ -27,7 +27,7 @@ ami-test-directory:
   file.directory:
     - user: root
     - group: root
-    - mode: 755
+    - mode: 0755
     - name: /etc/numenta/tests
     - require:
       - file: /etc/numenta
@@ -37,7 +37,7 @@ ami-test-helper-directory:
   file.directory:
     - user: root
     - group: root
-    - mode: 755
+    - mode: 0755
     - name: /etc/numenta/tests/helpers
     - require:
       - file: ami-test-directory
@@ -48,12 +48,12 @@ ami-test-helper-directory:
     - source: salt://nta-nucleus/files/tests/run-ami-tests
     - user: root
     - group: root
-    - mode: 755
+    - mode: 0755
 
 # Add the generic AMI tests
 /etc/numenta/tests/test_generic_instance.py:
   file.managed:
     - source: salt://nta-nucleus/files/tests/test_generic_instance.py
-    - mode: 755
+    - mode: 0755
     - require:
       - file: ami-test-directory

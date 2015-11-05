@@ -6,15 +6,15 @@
   ~ following terms and conditions apply:
   ~
   ~ This program is free software: you can redistribute it and/or modify
-  ~ it under the terms of the GNU General Public License version 3 as
+  ~ it under the terms of the GNU Affero Public License version 3 as
   ~ published by the Free Software Foundation.
   ~
   ~ This program is distributed in the hope that it will be useful,
   ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
   ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-  ~ See the GNU General Public License for more details.
+  ~ See the GNU Affero Public License for more details.
   ~
-  ~ You should have received a copy of the GNU General Public License
+  ~ You should have received a copy of the GNU Affero Public License
   ~ along with this program.  If not, see http://www.gnu.org/licenses.
   ~
   ~ http://numenta.org/licenses/
@@ -24,7 +24,7 @@
 <resources>
 
     <!-- Application -->
-    <string name="app_name">Grok for Stocks</string>
+    <string name="app_name">HTM for Stocks</string>
 
     <!-- Action Bar -->
     <string name="menu_settings">Settings</string>
@@ -43,18 +43,18 @@
 
     <!-- About Activity -->
     <string name="about_message">
-        Grok for Stocks monitors stock price, stock volume and Twitter volume for about 200 large
+        HTM for Stocks monitors stock price, stock volume and Twitter volume for about 200 large
         cap, U.S. companies and alerts you if something unusual is happening.  Results are ranked by
         the most anomalous to enable you to quickly determine what is important.
         \n\n
         This application is a demonstration of Numenta Hierarchical Temporal Memory (HTM)
         technology. The HTM technology automatically learns models for each metric and each stock.
         The models then predict the next data point and, when the next input arrives, highlight
-        anomalies.  Numenta is making the source code for Grok for Stocks available via the NuPIC
+        anomalies.  Numenta is making the source code for HTM for Stocks available via the NuPIC
         open source project (www.numenta.org) to encourage others to create new and derivative
         products.
         \n\n
-        Contact us at grokbeta@numenta.com with comments or feedback.
+        Contact us at feedback@numenta.com with comments or feedback.
     </string>
 
     <!-- Preferences -->

@@ -12,8 +12,10 @@ for req in open("requirements.txt").readlines():
   install_requirements.append(req)
 
 depLinks = []
-if "linux" in sys.platform and platform.linux_distribution()[0] == "CentOS":
-  depLinks = [ "https://pypi.numenta.com/pypi/nupic", ]
+if ("linux" in sys.platform and
+    "centos" in platform.linux_distribution()[0].lower()):
+  depLinks = [ "https://pypi.numenta.com/pypi/nupic",
+               "https://pypi.numenta.com/pypi/nupic.bindings" ]
 
 setup(
   name = "htmengine",

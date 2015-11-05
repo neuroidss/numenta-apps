@@ -6,15 +6,15 @@
 # following terms and conditions apply:
 #
 # This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License version 3 as
+# it under the terms of the GNU Affero Public License version 3 as
 # published by the Free Software Foundation.
 #
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-# See the GNU General Public License for more details.
+# See the GNU Affero Public License for more details.
 #
-# You should have received a copy of the GNU General Public License
+# You should have received a copy of the GNU Affero Public License
 # along with this program.  If not, see http://www.gnu.org/licenses.
 #
 # http://numenta.org/licenses/
@@ -42,7 +42,7 @@ from nta.utils.logging_support_raw import LoggingSupport as LS
 _SAMPLE_CONNECTION_CONTENTS = """
 # MySQL database connection parameters
 [config_test_database]
-db = grok
+db = htm-it
 host = localhost
 user = root
 passwd =
@@ -94,11 +94,12 @@ class LoggingSupportTest(unittest.TestCase):
 
 
     def resourceFilenamePatch(module, path):
-      self.assertEqual(module, "grok")
+      self.assertEqual(module, "htm-it")
       self.assertEqual(path, "")
-      return os.path.join(self._tempDir, "grok")
+      return os.path.join(self._tempDir, "htm-it")
 
-    environPatch = patch.dict(logging_support_raw.os.environ, values=environCopy, clear=True)
+    environPatch = patch.dict(logging_support_raw.os.environ,
+                              values=environCopy, clear=True)
     resourceFilenamePatch = patch.object(
       logging_support_raw, "resource_filename",
       autospec=True, side_effect=resourceFilenamePatch)
@@ -118,66 +119,79 @@ class LoggingSupportTest(unittest.TestCase):
 
   def testInitLoggingInputs(self):
     # Invalid loggingLevel throws a ValueError
-    temp_ls = LS()
+    tempLS = LS()
     with self.assertRaises(ValueError):
-      temp_ls.initLogging("DEBUGGING")
+      tempLS.initLogging("DEBUGGING")
     # Invalid console throws a ValueError
     with self.assertRaises(ValueError):
-      temp_ls.initLogging("DEBUG", "stderror")
+      tempLS.initLogging("DEBUG", "stderror")
 
 
   def testInitLoggingNullHandlers(self):
-    # Null handlers should throw ConfigParser.NoOptionError and print a sys.stderr message
-    temp_ls = LS()
+    # Null handlers should throw ConfigParser.NoOptionError and print a
+    # sys.stderr message
+    tempLS = LS()
     with self.assertRaises(ConfigParser.NoOptionError):
-      temp_ls.initLogging(None, None)
-      assertEqual(sys.stderr.getvalue(), "WARNING: logging_support is disabling logging output because all output handlers are disabled")
+      tempLS.initLogging(None, None)
+      self.assertEqual(sys.stderr.getvalue(),
+                       ("WARNING: logging_support is disabling logging output "
+                        "because all output handlers are disabled"))
 
 
   def testLogFilePathExists(self):
-    # Directory containing the log file should be created; loggin_support.py line 250-257
+    # Directory containing the log file should be created;
+    # logging_support.py line 250-257
     with self._redirectLogBase("logging_example", _SAMPLE_CONNECTION_CONTENTS):
-      temp_ls = LS()
-      temp_ls.initLogging("DEBUG", "stderr", True)
-      path = temp_ls.getApplicationLogFilePath()
+      tempLS = LS()
+      tempLS.initLogging("DEBUG", "stderr", True)
+      path = tempLS.getApplicationLogFilePath()
       self.assertTrue(os.path.isdir(os.path.dirname(path)))
 
 
   def testLoggingInitForUsageExamples(self):
-    g_log = logging.getLogger("my_example")
-    assert isinstance(g_log, logging.Logger)
+    gLogger = logging.getLogger("my_example")
+    assert isinstance(gLogger, logging.Logger)
 
     with self._redirectLogBase("logging_example", _SAMPLE_CONNECTION_CONTENTS):
       # Test logging init for a tool
-      self.assertEqual(LS.initTool(), LS.initLogging(None, console="stderr", logToFile=True))
+      self.assertEqual(LS.initTool(),
+                       LS.initLogging(None, console="stderr", logToFile=True))
 
       # Test logging init for a service
-      self.assertEqual(LS.initService(), LS.initLogging(None, console="stderr", logToFile=False))
+      self.assertEqual(LS.initService(),
+                       LS.initLogging(None, console="stderr", logToFile=False))
 
       # Test logging init for a test app
-      self.assertEqual(LS.initTestApp(), LS.initLogging(None, console="stderr", logToFile=False))
+      self.assertEqual(LS.initTestApp(),
+                       LS.initLogging(None, console="stderr", logToFile=False))
 
 
   def testLoggingRootPath(self):
     # getLoggingRootDir() should return the temp path
     with self._redirectLogBase("logging_example", _SAMPLE_CONNECTION_CONTENTS):
-      temp_ls = LS()
-      temp_ls.initLogging("DEBUG", "stderr", True)
-      self.assertEqual(temp_ls.getLoggingRootDir(), os.path.join(self._tempDir, "log"))
+      tempLS = LS()
+      tempLS.initLogging("DEBUG", "stderr", True)
+      self.assertEqual(tempLS.getLoggingRootDir(),
+                       os.path.join(self._tempDir, "log"))
 
 
   def testLoggingConfigPath(self):
     # getLoggingConfTemplatePath() should return path to ../logging.conf
-    temp_ls = LS()
-    temp_ls.initLogging()
-    self.assertEqual(os.path.join(logging_support_raw._APPLICATION_CONF_DIR, "logging.conf"),
-                       temp_ls.getLoggingConfTemplatePath())
+    tempLS = LS()
+    tempLS.initLogging()
+    self.assertEqual(os.path.join(logging_support_raw._APPLICATION_CONF_DIR,
+                                  "logging.conf"),
+                     tempLS.getLoggingConfTemplatePath())
 
 
   def testLoggingAppPath(self):
-    # getApplicationLogFilePath() should return path to ../app_name.log
-    app_name = "py"  # Because called with py.test
-    with self._redirectLogBase(app_name, _SAMPLE_CONNECTION_CONTENTS):
-      temp_ls = LS()
-      temp_ls.initLogging("DEBUG", "stderr", True)
-      self.assertEqual(os.path.abspath(os.path.join(temp_ls.getLoggingRootDir(), "processes", app_name + ".log")), temp_ls.getApplicationLogFilePath())
+    # getApplicationLogFilePath() should return path to ../appName.log
+    appName = os.path.splitext(os.path.basename(sys.argv[0]))[0]
+    with self._redirectLogBase(appName, _SAMPLE_CONNECTION_CONTENTS):
+      tempLS = LS()
+      tempLS.initLogging("DEBUG", "stderr", True)
+      self.assertEqual(os.path.abspath(os.path.join(tempLS.getLoggingRootDir(),
+                                                    "processes",
+                                                    appName + ".log")),
+                       tempLS.getApplicationLogFilePath())
+    self.assertIn(appName, ["py", "run_tests"])

@@ -6,15 +6,15 @@
 # following terms and conditions apply:
 #
 # This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License version 3 as
+# it under the terms of the GNU Affero Public License version 3 as
 # published by the Free Software Foundation.
 #
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-# See the GNU General Public License for more details.
+# See the GNU Affero Public License for more details.
 #
-# You should have received a copy of the GNU General Public License
+# You should have received a copy of the GNU Affero Public License
 # along with this program.  If not, see http://www.gnu.org/licenses.
 #
 # http://numenta.org/licenses/
@@ -22,7 +22,7 @@
 
 import multiprocessing
 from subprocess import Popen, PIPE
-import unittest2 as unittest
+import unittest
 
 import sqlalchemy
 import sqlalchemy.exc
@@ -34,15 +34,6 @@ from taurus.metric_collectors import collectorsdb, logging_support
 
 def setUpModule():
   logging_support.LoggingSupport.initTestApp()
-
-
-
-def _forkedEngineId():
-  """ Get engine and return id.  Needs to be in global namespace for
-  multiprocessing.Pool().apply() to work properly
-  """
-  return id(collectorsdb.engineFactory())
-
 
 
 def startProxy(host, port, listenPort):
@@ -72,7 +63,8 @@ def startProxy(host, port, listenPort):
     listener = Popen(["nc", "-lk", "0.0.0.0", str(listenPort)],
                      stdin=PIPE, stdout=PIPE)
     destination = Popen(["nc", host, str(port)],
-                     stdin=listener.stdout, stdout=listener.stdin)
+                        stdin=listener.stdout,
+                        stdout=listener.stdin)
 
     killed = False
     while True:
@@ -94,6 +86,8 @@ def startProxy(host, port, listenPort):
 
 
 class CollectorsdbTestCase(unittest.TestCase):
+
+
   def tearDown(self):
     # Return collectorsdb engine singleton to a pristine state.  If running
     # tests in non-boxed mode, for example, to collect coverage statistics,
@@ -110,15 +104,16 @@ class CollectorsdbTestCase(unittest.TestCase):
     engine2 = collectorsdb.engineFactory()
     self.assertIs(engine2, engine)
 
-    # Call collectorsdb.engineFactory() in different process, assert new
-    # instance
-    originalEngineId = id(engine)
-    engine3 = multiprocessing.Pool(processes=1).apply(_forkedEngineId)
-    self.assertNotEqual(id(engine3), originalEngineId)
+    # Call collectorsdb.engineFactory() in different process, assert raises
+    # AssertionError
+    with self.assertRaises(AssertionError):
+      multiprocessing.Pool(processes=1).apply(collectorsdb.engineFactory)
 
 
 
 class TestTransientErrorHandling(unittest.TestCase):
+
+
   def tearDown(self):
     # Return collectorsdb engine singleton to a pristine state.  If running
     # tests in non-boxed mode, for example, to collect coverage statistics,
@@ -144,22 +139,21 @@ class TestTransientErrorHandling(unittest.TestCase):
     self.addCleanup(proxy.send, "kill")
 
     # Patch collectorsdb config with local proxy
-    with ConfigAttributePatch(
-          config.CONFIG_NAME,
-          config.baseConfigDir,
-          (("repository", "host", "127.0.0.1"),
-           ("repository", "port", "6033"))):
+    with ConfigAttributePatch(config.CONFIG_NAME,
+                              config.baseConfigDir,
+                              (("repository", "host", "127.0.0.1"),
+                               ("repository", "port", "6033"))):
 
       # Force refresh of engine singleton
       collectorsdb.resetEngineSingleton()
       engine = collectorsdb.engineFactory()
 
       # First, make sure valid query returns expected results
-      res = engine.execute("select 1")
+      res = collectorsdb.retryOnTransientErrors(engine.execute)("select 1")
       self.assertEqual(res.scalar(), 1)
 
       @collectorsdb.retryOnTransientErrors
-      def _killProxyTryRestartProxyAndTryAgain(n=[]):
+      def _killProxyTryRestartProxyAndTryAgain(n=[]):  # pylint: disable=W0102
         if not n:
           # Kill the proxy on first attempt
           proxy.send("kill")

@@ -107,6 +107,8 @@ taurus.metric_collector application modules:
 where metric data samples as well as non-metric data (e.g., tweets) are
 forwarded
 
+`TAURUS_API_KEY`: API Key of the corresponding Taurus server
+
 `TAURUS_METRIC_COLLECTORS_LOG_DIR`: Path of the directory where logs are to be
 stored; defaults to <numenta-apps/taurus.metric_collectors/logs/>
 
@@ -155,6 +157,9 @@ symbol is changed (for example when Walgreens went from trading under *WBA* to *
   Note: If running supervisor on a non-default port (we currently use port 8001) run the following command:
   `supervisorctl -s http://localhost:8001 restart all`
 - `taurus-resymbol --oldsymbol=<ABC> --newsymbol=<DEF>`
+  To only copy twitter metrics use the -t flag, to only copy xignite stock metrics use the -x flag. Default action is to copy both metrics.
 - `taurus-collectors-set-opmode active`
 - `supervisorctl restart all` or `supervisorctl -s http://localhost:8001 restart all`
-Note: you will need to manually start monitoring the metric when there are enough records
+Note: The new metrics are NOT automatically monitored, regardless of whether or not the replaced
+metrics were already monitored. Once a metric has enough records om the taurus database, monitor
+metrics manually.

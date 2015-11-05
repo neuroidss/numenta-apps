@@ -1,0 +1,33 @@
+Release Notes:
+
+Known issues
+Instance View:
+
+Instance Details
+-Metric charts off 
+-Slow to load
+
+Twitter view
+-Slow to load
+-metric chart off 
+-crash if try to load view before metrics finish loading
+
+Notifications
+-Don't work
+
+Share
+-Doesn't work
+
+Feedback
+-Doesn't work
+
+Market DAta
+- Need support or holidays
+
+
+Some performance issues
+
+Menu sometimes doesn’t expand enough
+
+UI Cleanup:
+I have to go through and make sure I have all the colors and sizes rights.

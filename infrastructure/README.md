@@ -24,7 +24,7 @@ This directory contains scripts for creating AMIs.
 `saltcellar`
 ------------
 This directory contains salt formulas for installing packages
-required for GROK, modifying dot files, user management and
+required for HTM-IT, modifying dot files, user management and
 installation of development tools as per requirements.
 
 `create-numenta-rpm`

@@ -1,0 +1,23 @@
+{
+  "description": "--stats arg passed to the engine; used by getScalarMetricWithTimeOfDayAnomalyParams in nupic.frameworks.opf.common_models.cluster_params.",
+  "type": "object",
+  "additionalProperties": false,
+
+  "properties": {
+    "min": {
+      "description": "Min metric data value",
+      "required": true,
+      "type": "number"
+    },
+    "max": {
+      "description": "Max metric data value",
+      "required": true,
+      "type": "number"
+    },
+    "minResolution": {
+      "description": "Minimum resolution of metric",
+      "required": false,
+      "type": "number"
+    }
+  }
+}

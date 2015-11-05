@@ -6,15 +6,15 @@
 # following terms and conditions apply:
 #
 # This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License version 3 as
+# it under the terms of the GNU Affero Public License version 3 as
 # published by the Free Software Foundation.
 #
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-# See the GNU General Public License for more details.
+# See the GNU Affero Public License for more details.
 #
-# You should have received a copy of the GNU General Public License
+# You should have received a copy of the GNU Affero Public License
 # along with this program.  If not, see http://www.gnu.org/licenses.
 #
 # http://numenta.org/licenses/
@@ -33,12 +33,18 @@
 bootstrap_salt(){
   echo "Bootstrapping salt..."
   chmod +x /tmp/bootstrap-salt.sh
-  time /tmp/bootstrap-salt.sh
+
+  if [ -f /tmp/infrastructure_minion_id ]; then
+    echo "Setting minion id.."
+    cat /tmp/infrastructure_minion_id > /etc/salt/minion_id
+  fi
+
+  time /tmp/bootstrap-salt.sh -A salt.numenta.com
 }
 
 prep_instance_for_salt(){
-  echo "Remove stale grok repo files"
-  rm -fv /etc/yum.repos.d/grok*repo
+  echo "Remove stale htm-it repo files"
+  rm -fv /etc/yum.repos.d/htm-it*repo
 
   echo "Updating yum cache..."
   yum clean all
@@ -59,14 +65,15 @@ prep_instance_for_salt(){
 
   if [ ! -x /usr/bin/pip ]; then
     echo "We need pip in system python, or Salt won't find the pip in anaconda."
-    echo "No, I'm not kidding - see https://github.com/saltstack/salt/issues/7659"
+    echo "See https://github.com/saltstack/salt/issues/7659"
     yum install -y python-pip
   fi
 }
 
 setup_directories(){
-  mkdir -p /usr/local/sbin
+  mkdir -p /etc/salt
   mkdir -p /usr/local/bin
+  mkdir -p /usr/local/sbin
 }
 
 prep_instance_for_salt

@@ -1,0 +1,969 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 46;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		236016D11BCFDCD200AF82FE /* TwitterHeaderCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 236016D01BCFDCD200AF82FE /* TwitterHeaderCell.swift */; settings = {ASSET_TAGS = (); }; };
+		236016D31BD00A9500AF82FE /* Appearence.swift in Sources */ = {isa = PBXBuildFile; fileRef = 236016D21BD00A9500AF82FE /* Appearence.swift */; settings = {ASSET_TAGS = (); }; };
+		236016D71BD1410100AF82FE /* ShareService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 236016D61BD1410100AF82FE /* ShareService.swift */; settings = {ASSET_TAGS = (); }; };
+		236989821BA919C200EA4FB5 /* MarketCalendar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 236989811BA919C200EA4FB5 /* MarketCalendar.swift */; };
+		236D00471BBC2C4C00782B36 /* TwitterViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 236D00461BBC2C4C00782B36 /* TwitterViewController.swift */; };
+		237CDC421BAB3C9E00AAF305 /* createdb.sql in Resources */ = {isa = PBXBuildFile; fileRef = 237CDC411BAB3C9E00AAF305 /* createdb.sql */; };
+		238055801BBEE7190048E214 /* TutorialController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2380557F1BBEE7190048E214 /* TutorialController.swift */; };
+		238055821BBEE88D0048E214 /* TutorialPageController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 238055811BBEE88D0048E214 /* TutorialPageController.swift */; };
+		238055C21BBEED020048E214 /* ModelController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 238055C11BBEED020048E214 /* ModelController.swift */; };
+		23AB22FE1BA75F170091A5E6 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 23AB22FC1BA75F170091A5E6 /* Main.storyboard */; };
+		23AB23001BA75F170091A5E6 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 23AB22FF1BA75F170091A5E6 /* Assets.xcassets */; };
+		23AB23031BA75F170091A5E6 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 23AB23011BA75F170091A5E6 /* LaunchScreen.storyboard */; };
+		23AB230E1BA75F170091A5E6 /* TaurusTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23AB230D1BA75F170091A5E6 /* TaurusTests.swift */; };
+		23AB23191BA75F170091A5E6 /* TaurusUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23AB23181BA75F170091A5E6 /* TaurusUITests.swift */; };
+		23AD4EC31BB2FE080041D650 /* AppConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23AD4EC21BB2FE080041D650 /* AppConfig.swift */; };
+		23AD4EC51BB2FEC00041D650 /* README.txt in Resources */ = {isa = PBXBuildFile; fileRef = 23AD4EC41BB2FEC00041D650 /* README.txt */; };
+		23AD4F161BB31B8D0041D650 /* InstanceViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23AD4F131BB31B8D0041D650 /* InstanceViewController.swift */; };
+		23AD4F181BB31BDC0041D650 /* TimeSliderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23AD4F171BB31BDC0041D650 /* TimeSliderView.swift */; };
+		23AD4F1A1BB31C640041D650 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23AD4F191BB31C640041D650 /* AppDelegate.swift */; };
+		23AD4F1D1BB37DF70041D650 /* LineChartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23AD4F1C1BB37DF70041D650 /* LineChartView.swift */; };
+		23AD4F1F1BB3AA590041D650 /* InstanceDetailsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23AD4F1E1BB3AA590041D650 /* InstanceDetailsViewController.swift */; };
+		23AD78F61BA77731003FBEF4 /* TarausApplication.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23AD78F51BA77731003FBEF4 /* TarausApplication.swift */; };
+		23AD790B1BA778B3003FBEF4 /* AggregationType.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23AD78F91BA778B3003FBEF4 /* AggregationType.swift */; };
+		23AD790C1BA778B3003FBEF4 /* Annotation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23AD78FA1BA778B3003FBEF4 /* Annotation.swift */; };
+		23AD790D1BA778B3003FBEF4 /* CoreDatabase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23AD78FB1BA778B3003FBEF4 /* CoreDatabase.swift */; };
+		23AD790E1BA778B3003FBEF4 /* CoreDatabaseImpl.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23AD78FC1BA778B3003FBEF4 /* CoreDatabaseImpl.swift */; };
+		23AD790F1BA778B3003FBEF4 /* CoreDataFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23AD78FD1BA778B3003FBEF4 /* CoreDataFactory.swift */; };
+		23AD79101BA778B3003FBEF4 /* CoreDataFactoryImpl.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23AD78FE1BA778B3003FBEF4 /* CoreDataFactoryImpl.swift */; };
+		23AD79111BA778B3003FBEF4 /* Instance.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23AD78FF1BA778B3003FBEF4 /* Instance.swift */; };
+		23AD79121BA778B3003FBEF4 /* InstanceData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23AD79001BA778B3003FBEF4 /* InstanceData.swift */; };
+		23AD79131BA778B3003FBEF4 /* Metric.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23AD79011BA778B3003FBEF4 /* Metric.swift */; };
+		23AD79141BA778B3003FBEF4 /* MetricData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23AD79021BA778B3003FBEF4 /* MetricData.swift */; };
+		23AD79151BA778B3003FBEF4 /* Notification.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23AD79031BA778B3003FBEF4 /* Notification.swift */; };
+		23AD79161BA778B3003FBEF4 /* SQLiteHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23AD79041BA778B3003FBEF4 /* SQLiteHelper.swift */; };
+		23AD79171BA778B3003FBEF4 /* SwiftyJSON.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23AD79051BA778B3003FBEF4 /* SwiftyJSON.swift */; };
+		23AD79181BA778B3003FBEF4 /* GrokClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23AD79071BA778B3003FBEF4 /* GrokClient.swift */; };
+		23AD79191BA778B3003FBEF4 /* GrokClientFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23AD79081BA778B3003FBEF4 /* GrokClientFactory.swift */; };
+		23AD791A1BA778B3003FBEF4 /* DataUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23AD790A1BA778B3003FBEF4 /* DataUtils.swift */; };
+		23BF792A1BB4C67D0025E996 /* MetricAnomalyChartData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23BF79291BB4C67D0025E996 /* MetricAnomalyChartData.swift */; };
+		23CFAC3D1BB4A1E100B4E882 /* MetricCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23CFAC3C1BB4A1E100B4E882 /* MetricCell.swift */; };
+		23D75F1D1BBE10BF00FA870C /* TwitterCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23D75F1C1BBE10BF00FA870C /* TwitterCell.swift */; };
+		23DF8C971BA9BF3800ECAE98 /* AnomalyChartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23DF8C951BA9BF3800ECAE98 /* AnomalyChartView.swift */; };
+		23DF8C981BA9BF3800ECAE98 /* InstanceCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23DF8C961BA9BF3800ECAE98 /* InstanceCell.swift */; };
+		23DF8CA01BA9CDE500ECAE98 /* AnomalyValue.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23DF8C991BA9CDE500ECAE98 /* AnomalyValue.swift */; };
+		23DF8CA21BA9CDE500ECAE98 /* TaurusDatabase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23DF8C9B1BA9CDE500ECAE98 /* TaurusDatabase.swift */; };
+		23DF8CA31BA9CDE500ECAE98 /* TaurusDataFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23DF8C9C1BA9CDE500ECAE98 /* TaurusDataFactory.swift */; };
+		23DF8CA41BA9CDE500ECAE98 /* TaurusInstanceData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23DF8C9D1BA9CDE500ECAE98 /* TaurusInstanceData.swift */; };
+		23DF8CA51BA9CDE500ECAE98 /* TaurusNotification.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23DF8C9E1BA9CDE500ECAE98 /* TaurusNotification.swift */; };
+		23DF8CA61BA9CDE500ECAE98 /* Tweet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23DF8C9F1BA9CDE500ECAE98 /* Tweet.swift */; };
+		23DF8CA81BA9CE2700ECAE98 /* TarusDBProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23DF8CA71BA9CE2700ECAE98 /* TarusDBProtocol.swift */; };
+		23DF8CAB1BA9CE9C00ECAE98 /* MetricType.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23DF8CAA1BA9CE9C00ECAE98 /* MetricType.swift */; };
+		23DF8CB01BA9CEB700ECAE98 /* TaurusClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23DF8CAD1BA9CEB700ECAE98 /* TaurusClient.swift */; };
+		23DF8CB11BA9CEB700ECAE98 /* TaurusClientFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23DF8CAE1BA9CEB700ECAE98 /* TaurusClientFactory.swift */; };
+		23DF8CB21BA9CEB700ECAE98 /* TaurusDataSyncService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23DF8CAF1BA9CEB700ECAE98 /* TaurusDataSyncService.swift */; };
+		23DF8CB71BA9CEE900ECAE98 /* DataSyncService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23DF8CB61BA9CEE900ECAE98 /* DataSyncService.swift */; };
+		23DF8CEA1BA9CF9C00ECAE98 /* AnomalyChartData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23DF8CE91BA9CF9C00ECAE98 /* AnomalyChartData.swift */; };
+		23DF8CEC1BA9CFA800ECAE98 /* InstanceAnomalyChartData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23DF8CEB1BA9CFA800ECAE98 /* InstanceAnomalyChartData.swift */; };
+		23ED58D01BB088D800EEEEC1 /* GrokApplication.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23ED58CF1BB088D800EEEEC1 /* GrokApplication.swift */; };
+		23F58D6F1BBA1CBB00C7C6B6 /* SWRevealViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 23F58D6E1BBA1CBB00C7C6B6 /* SWRevealViewController.m */; };
+		23F58D711BBA287200C7C6B6 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 23F58D701BBA287200C7C6B6 /* Images.xcassets */; };
+		23F58D731BBA318700C7C6B6 /* MenuController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23F58D721BBA318700C7C6B6 /* MenuController.swift */; };
+		23F58D751BBAC21D00C7C6B6 /* SettingsController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23F58D741BBAC21D00C7C6B6 /* SettingsController.swift */; };
+		9D6590581D077B613D94B220 /* libPods.a in Frameworks */ = {isa = PBXBuildFile; fileRef = D5967E9F3F71FA63EF40469B /* libPods.a */; };
+		DE8C3C6C96A556CE6C2EB24F /* libPods.a in Frameworks */ = {isa = PBXBuildFile; fileRef = D5967E9F3F71FA63EF40469B /* libPods.a */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		23AB230A1BA75F170091A5E6 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 23AB22ED1BA75F170091A5E6 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 23AB22F41BA75F170091A5E6;
+			remoteInfo = Taurus;
+		};
+		23AB23151BA75F170091A5E6 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 23AB22ED1BA75F170091A5E6 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 23AB22F41BA75F170091A5E6;
+			remoteInfo = Taurus;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		2319D5721BA7798100935447 /* Taurus-Bridging-Header.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "Taurus-Bridging-Header.h"; sourceTree = SOURCE_ROOT; };
+		236016D01BCFDCD200AF82FE /* TwitterHeaderCell.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TwitterHeaderCell.swift; sourceTree = "<group>"; };
+		236016D21BD00A9500AF82FE /* Appearence.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Appearence.swift; sourceTree = "<group>"; };
+		236016D61BD1410100AF82FE /* ShareService.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ShareService.swift; sourceTree = "<group>"; };
+		236989811BA919C200EA4FB5 /* MarketCalendar.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MarketCalendar.swift; sourceTree = "<group>"; };
+		236D00461BBC2C4C00782B36 /* TwitterViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = TwitterViewController.swift; path = src/controllers/TwitterViewController.swift; sourceTree = SOURCE_ROOT; };
+		237CDC411BAB3C9E00AAF305 /* createdb.sql */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = createdb.sql; path = Taurus/createdb.sql; sourceTree = "<group>"; };
+		2380557F1BBEE7190048E214 /* TutorialController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = TutorialController.swift; path = src/controllers/TutorialController.swift; sourceTree = SOURCE_ROOT; };
+		238055811BBEE88D0048E214 /* TutorialPageController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TutorialPageController.swift; sourceTree = "<group>"; };
+		238055C11BBEED020048E214 /* ModelController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = ModelController.swift; path = src/controllers/ModelController.swift; sourceTree = SOURCE_ROOT; };
+		23AB22F51BA75F170091A5E6 /* Taurus.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Taurus.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		23AB22FD1BA75F170091A5E6 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
+		23AB22FF1BA75F170091A5E6 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		23AB23021BA75F170091A5E6 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
+		23AB23041BA75F170091A5E6 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		23AB23091BA75F170091A5E6 /* TaurusTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = TaurusTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		23AB230D1BA75F170091A5E6 /* TaurusTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaurusTests.swift; sourceTree = "<group>"; };
+		23AB230F1BA75F170091A5E6 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		23AB23141BA75F170091A5E6 /* TaurusUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = TaurusUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		23AB23181BA75F170091A5E6 /* TaurusUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaurusUITests.swift; sourceTree = "<group>"; };
+		23AB231A1BA75F170091A5E6 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		23AD4EC21BB2FE080041D650 /* AppConfig.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AppConfig.swift; sourceTree = "<group>"; };
+		23AD4EC41BB2FEC00041D650 /* README.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = README.txt; sourceTree = SOURCE_ROOT; };
+		23AD4F131BB31B8D0041D650 /* InstanceViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = InstanceViewController.swift; path = ../src/controllers/InstanceViewController.swift; sourceTree = "<group>"; };
+		23AD4F171BB31BDC0041D650 /* TimeSliderView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TimeSliderView.swift; sourceTree = "<group>"; };
+		23AD4F191BB31C640041D650 /* AppDelegate.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		23AD4F1C1BB37DF70041D650 /* LineChartView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LineChartView.swift; sourceTree = "<group>"; };
+		23AD4F1E1BB3AA590041D650 /* InstanceDetailsViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = InstanceDetailsViewController.swift; path = src/controllers/InstanceDetailsViewController.swift; sourceTree = SOURCE_ROOT; };
+		23AD78F51BA77731003FBEF4 /* TarausApplication.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TarausApplication.swift; sourceTree = "<group>"; };
+		23AD78F91BA778B3003FBEF4 /* AggregationType.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AggregationType.swift; sourceTree = "<group>"; };
+		23AD78FA1BA778B3003FBEF4 /* Annotation.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Annotation.swift; sourceTree = "<group>"; };
+		23AD78FB1BA778B3003FBEF4 /* CoreDatabase.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CoreDatabase.swift; sourceTree = "<group>"; };
+		23AD78FC1BA778B3003FBEF4 /* CoreDatabaseImpl.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CoreDatabaseImpl.swift; sourceTree = "<group>"; };
+		23AD78FD1BA778B3003FBEF4 /* CoreDataFactory.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CoreDataFactory.swift; sourceTree = "<group>"; };
+		23AD78FE1BA778B3003FBEF4 /* CoreDataFactoryImpl.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CoreDataFactoryImpl.swift; sourceTree = "<group>"; };
+		23AD78FF1BA778B3003FBEF4 /* Instance.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Instance.swift; sourceTree = "<group>"; };
+		23AD79001BA778B3003FBEF4 /* InstanceData.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = InstanceData.swift; sourceTree = "<group>"; };
+		23AD79011BA778B3003FBEF4 /* Metric.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Metric.swift; sourceTree = "<group>"; };
+		23AD79021BA778B3003FBEF4 /* MetricData.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MetricData.swift; sourceTree = "<group>"; };
+		23AD79031BA778B3003FBEF4 /* Notification.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Notification.swift; sourceTree = "<group>"; };
+		23AD79041BA778B3003FBEF4 /* SQLiteHelper.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SQLiteHelper.swift; sourceTree = "<group>"; };
+		23AD79051BA778B3003FBEF4 /* SwiftyJSON.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SwiftyJSON.swift; sourceTree = "<group>"; };
+		23AD79071BA778B3003FBEF4 /* GrokClient.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = GrokClient.swift; sourceTree = "<group>"; };
+		23AD79081BA778B3003FBEF4 /* GrokClientFactory.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = GrokClientFactory.swift; sourceTree = "<group>"; };
+		23AD790A1BA778B3003FBEF4 /* DataUtils.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DataUtils.swift; sourceTree = "<group>"; };
+		23BF79291BB4C67D0025E996 /* MetricAnomalyChartData.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MetricAnomalyChartData.swift; sourceTree = "<group>"; };
+		23CFAC3C1BB4A1E100B4E882 /* MetricCell.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MetricCell.swift; sourceTree = "<group>"; };
+		23D75F1C1BBE10BF00FA870C /* TwitterCell.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TwitterCell.swift; sourceTree = "<group>"; };
+		23DF8C951BA9BF3800ECAE98 /* AnomalyChartView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AnomalyChartView.swift; sourceTree = "<group>"; };
+		23DF8C961BA9BF3800ECAE98 /* InstanceCell.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = InstanceCell.swift; sourceTree = "<group>"; };
+		23DF8C991BA9CDE500ECAE98 /* AnomalyValue.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AnomalyValue.swift; sourceTree = "<group>"; };
+		23DF8C9B1BA9CDE500ECAE98 /* TaurusDatabase.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TaurusDatabase.swift; sourceTree = "<group>"; };
+		23DF8C9C1BA9CDE500ECAE98 /* TaurusDataFactory.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TaurusDataFactory.swift; sourceTree = "<group>"; };
+		23DF8C9D1BA9CDE500ECAE98 /* TaurusInstanceData.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TaurusInstanceData.swift; sourceTree = "<group>"; };
+		23DF8C9E1BA9CDE500ECAE98 /* TaurusNotification.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TaurusNotification.swift; sourceTree = "<group>"; };
+		23DF8C9F1BA9CDE500ECAE98 /* Tweet.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Tweet.swift; sourceTree = "<group>"; };
+		23DF8CA71BA9CE2700ECAE98 /* TarusDBProtocol.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TarusDBProtocol.swift; sourceTree = "<group>"; };
+		23DF8CAA1BA9CE9C00ECAE98 /* MetricType.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MetricType.swift; sourceTree = "<group>"; };
+		23DF8CAD1BA9CEB700ECAE98 /* TaurusClient.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TaurusClient.swift; sourceTree = "<group>"; };
+		23DF8CAE1BA9CEB700ECAE98 /* TaurusClientFactory.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TaurusClientFactory.swift; sourceTree = "<group>"; };
+		23DF8CAF1BA9CEB700ECAE98 /* TaurusDataSyncService.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TaurusDataSyncService.swift; sourceTree = "<group>"; };
+		23DF8CB61BA9CEE900ECAE98 /* DataSyncService.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DataSyncService.swift; sourceTree = "<group>"; };
+		23DF8CE91BA9CF9C00ECAE98 /* AnomalyChartData.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AnomalyChartData.swift; sourceTree = "<group>"; };
+		23DF8CEB1BA9CFA800ECAE98 /* InstanceAnomalyChartData.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = InstanceAnomalyChartData.swift; sourceTree = "<group>"; };
+		23ED58CF1BB088D800EEEEC1 /* GrokApplication.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = GrokApplication.swift; path = app/GrokApplication.swift; sourceTree = "<group>"; };
+		23F58D6D1BBA1CBB00C7C6B6 /* SWRevealViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SWRevealViewController.h; sourceTree = "<group>"; };
+		23F58D6E1BBA1CBB00C7C6B6 /* SWRevealViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SWRevealViewController.m; sourceTree = "<group>"; };
+		23F58D701BBA287200C7C6B6 /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Images.xcassets; sourceTree = "<group>"; };
+		23F58D721BBA318700C7C6B6 /* MenuController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = MenuController.swift; path = src/controllers/MenuController.swift; sourceTree = SOURCE_ROOT; };
+		23F58D741BBAC21D00C7C6B6 /* SettingsController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SettingsController.swift; path = src/controllers/SettingsController.swift; sourceTree = SOURCE_ROOT; };
+		CC722459B06198A44AE0D9BF /* Pods.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = Pods.release.xcconfig; path = "Pods/Target Support Files/Pods/Pods.release.xcconfig"; sourceTree = "<group>"; };
+		D5967E9F3F71FA63EF40469B /* libPods.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libPods.a; sourceTree = BUILT_PRODUCTS_DIR; };
+		F04A1F33885B832737DD0D75 /* Pods.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = Pods.debug.xcconfig; path = "Pods/Target Support Files/Pods/Pods.debug.xcconfig"; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		23AB22F21BA75F170091A5E6 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				DE8C3C6C96A556CE6C2EB24F /* libPods.a in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		23AB23061BA75F170091A5E6 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				9D6590581D077B613D94B220 /* libPods.a in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		23AB23111BA75F170091A5E6 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		236989701BA9197A00EA4FB5 /* controllers */ = {
+			isa = PBXGroup;
+			children = (
+				238055C11BBEED020048E214 /* ModelController.swift */,
+				23F58D721BBA318700C7C6B6 /* MenuController.swift */,
+				236D00461BBC2C4C00782B36 /* TwitterViewController.swift */,
+				23AD4F1E1BB3AA590041D650 /* InstanceDetailsViewController.swift */,
+				23AD4F131BB31B8D0041D650 /* InstanceViewController.swift */,
+				23F58D741BBAC21D00C7C6B6 /* SettingsController.swift */,
+				2380557F1BBEE7190048E214 /* TutorialController.swift */,
+				238055811BBEE88D0048E214 /* TutorialPageController.swift */,
+			);
+			name = controllers;
+			sourceTree = "<group>";
+		};
+		236989801BA919C200EA4FB5 /* data */ = {
+			isa = PBXGroup;
+			children = (
+				23DF8CA71BA9CE2700ECAE98 /* TarusDBProtocol.swift */,
+				23DF8C991BA9CDE500ECAE98 /* AnomalyValue.swift */,
+				23DF8C9B1BA9CDE500ECAE98 /* TaurusDatabase.swift */,
+				23DF8C9C1BA9CDE500ECAE98 /* TaurusDataFactory.swift */,
+				23DF8C9D1BA9CDE500ECAE98 /* TaurusInstanceData.swift */,
+				23DF8C9E1BA9CDE500ECAE98 /* TaurusNotification.swift */,
+				23DF8C9F1BA9CDE500ECAE98 /* Tweet.swift */,
+				236989811BA919C200EA4FB5 /* MarketCalendar.swift */,
+			);
+			name = data;
+			path = src/data;
+			sourceTree = SOURCE_ROOT;
+		};
+		23AB22EC1BA75F170091A5E6 = {
+			isa = PBXGroup;
+			children = (
+				23F58D701BBA287200C7C6B6 /* Images.xcassets */,
+				237CDC411BAB3C9E00AAF305 /* createdb.sql */,
+				23AD4EC41BB2FEC00041D650 /* README.txt */,
+				23AD78F71BA778B3003FBEF4 /* mobileCore */,
+				23AB22F71BA75F170091A5E6 /* Taurus */,
+				23AB230C1BA75F170091A5E6 /* TaurusTests */,
+				23AB23171BA75F170091A5E6 /* TaurusUITests */,
+				23AB22F61BA75F170091A5E6 /* Products */,
+				23E2443B8795C70E2D9D1306 /* Pods */,
+				76FCBF07FE6EF1A60CEF38C3 /* Frameworks */,
+			);
+			sourceTree = "<group>";
+		};
+		23AB22F61BA75F170091A5E6 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				23AB22F51BA75F170091A5E6 /* Taurus.app */,
+				23AB23091BA75F170091A5E6 /* TaurusTests.xctest */,
+				23AB23141BA75F170091A5E6 /* TaurusUITests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		23AB22F71BA75F170091A5E6 /* Taurus */ = {
+			isa = PBXGroup;
+			children = (
+				23F58D6C1BBA1CBB00C7C6B6 /* SWReveal */,
+				23DF8C941BA9BF3800ECAE98 /* views */,
+				23DF8CAC1BA9CEB700ECAE98 /* service */,
+				23DF8CA91BA9CE9C00ECAE98 /* metric */,
+				236989801BA919C200EA4FB5 /* data */,
+				236989701BA9197A00EA4FB5 /* controllers */,
+				23AD78F41BA77731003FBEF4 /* app */,
+				23AB22FC1BA75F170091A5E6 /* Main.storyboard */,
+				23AB22FF1BA75F170091A5E6 /* Assets.xcassets */,
+				2319D5721BA7798100935447 /* Taurus-Bridging-Header.h */,
+				23AB23011BA75F170091A5E6 /* LaunchScreen.storyboard */,
+				23AB23041BA75F170091A5E6 /* Info.plist */,
+			);
+			path = Taurus;
+			sourceTree = "<group>";
+		};
+		23AB230C1BA75F170091A5E6 /* TaurusTests */ = {
+			isa = PBXGroup;
+			children = (
+				23AB230D1BA75F170091A5E6 /* TaurusTests.swift */,
+				23AB230F1BA75F170091A5E6 /* Info.plist */,
+			);
+			path = TaurusTests;
+			sourceTree = "<group>";
+		};
+		23AB23171BA75F170091A5E6 /* TaurusUITests */ = {
+			isa = PBXGroup;
+			children = (
+				23AB23181BA75F170091A5E6 /* TaurusUITests.swift */,
+				23AB231A1BA75F170091A5E6 /* Info.plist */,
+			);
+			path = TaurusUITests;
+			sourceTree = "<group>";
+		};
+		23AD4F1B1BB37DF70041D650 /* ui */ = {
+			isa = PBXGroup;
+			children = (
+				23AD4F1C1BB37DF70041D650 /* LineChartView.swift */,
+				236016D21BD00A9500AF82FE /* Appearence.swift */,
+			);
+			path = ui;
+			sourceTree = "<group>";
+		};
+		23AD78F41BA77731003FBEF4 /* app */ = {
+			isa = PBXGroup;
+			children = (
+				23AD4F191BB31C640041D650 /* AppDelegate.swift */,
+				23AD78F51BA77731003FBEF4 /* TarausApplication.swift */,
+				23AD4EC21BB2FE080041D650 /* AppConfig.swift */,
+			);
+			name = app;
+			path = src/app;
+			sourceTree = SOURCE_ROOT;
+		};
+		23AD78F71BA778B3003FBEF4 /* mobileCore */ = {
+			isa = PBXGroup;
+			children = (
+				23AD4F1B1BB37DF70041D650 /* ui */,
+				23ED58D11BB088E100EEEEC1 /* app */,
+				23AD78F81BA778B3003FBEF4 /* data */,
+				23AD79061BA778B3003FBEF4 /* service */,
+				23AD79091BA778B3003FBEF4 /* util */,
+			);
+			name = mobileCore;
+			path = "../../mobile-core/ios";
+			sourceTree = "<group>";
+		};
+		23AD78F81BA778B3003FBEF4 /* data */ = {
+			isa = PBXGroup;
+			children = (
+				23AD78F91BA778B3003FBEF4 /* AggregationType.swift */,
+				23AD78FA1BA778B3003FBEF4 /* Annotation.swift */,
+				23AD78FC1BA778B3003FBEF4 /* CoreDatabaseImpl.swift */,
+				23AD78FB1BA778B3003FBEF4 /* CoreDatabase.swift */,
+				23AD78FD1BA778B3003FBEF4 /* CoreDataFactory.swift */,
+				23AD78FE1BA778B3003FBEF4 /* CoreDataFactoryImpl.swift */,
+				23AD78FF1BA778B3003FBEF4 /* Instance.swift */,
+				23AD79001BA778B3003FBEF4 /* InstanceData.swift */,
+				23AD79011BA778B3003FBEF4 /* Metric.swift */,
+				23AD79021BA778B3003FBEF4 /* MetricData.swift */,
+				23AD79031BA778B3003FBEF4 /* Notification.swift */,
+				23AD79041BA778B3003FBEF4 /* SQLiteHelper.swift */,
+				23AD79051BA778B3003FBEF4 /* SwiftyJSON.swift */,
+			);
+			path = data;
+			sourceTree = "<group>";
+		};
+		23AD79061BA778B3003FBEF4 /* service */ = {
+			isa = PBXGroup;
+			children = (
+				23DF8CB61BA9CEE900ECAE98 /* DataSyncService.swift */,
+				23AD79071BA778B3003FBEF4 /* GrokClient.swift */,
+				23AD79081BA778B3003FBEF4 /* GrokClientFactory.swift */,
+			);
+			path = service;
+			sourceTree = "<group>";
+		};
+		23AD79091BA778B3003FBEF4 /* util */ = {
+			isa = PBXGroup;
+			children = (
+				23AD790A1BA778B3003FBEF4 /* DataUtils.swift */,
+			);
+			path = util;
+			sourceTree = "<group>";
+		};
+		23DF8C941BA9BF3800ECAE98 /* views */ = {
+			isa = PBXGroup;
+			children = (
+				23AD4F171BB31BDC0041D650 /* TimeSliderView.swift */,
+				23DF8CEB1BA9CFA800ECAE98 /* InstanceAnomalyChartData.swift */,
+				23DF8CE91BA9CF9C00ECAE98 /* AnomalyChartData.swift */,
+				23DF8C951BA9BF3800ECAE98 /* AnomalyChartView.swift */,
+				23DF8C961BA9BF3800ECAE98 /* InstanceCell.swift */,
+				23CFAC3C1BB4A1E100B4E882 /* MetricCell.swift */,
+				23BF79291BB4C67D0025E996 /* MetricAnomalyChartData.swift */,
+				23D75F1C1BBE10BF00FA870C /* TwitterCell.swift */,
+				236016D01BCFDCD200AF82FE /* TwitterHeaderCell.swift */,
+			);
+			name = views;
+			path = ../src/views;
+			sourceTree = "<group>";
+		};
+		23DF8CA91BA9CE9C00ECAE98 /* metric */ = {
+			isa = PBXGroup;
+			children = (
+				23DF8CAA1BA9CE9C00ECAE98 /* MetricType.swift */,
+			);
+			name = metric;
+			path = src/metric;
+			sourceTree = SOURCE_ROOT;
+		};
+		23DF8CAC1BA9CEB700ECAE98 /* service */ = {
+			isa = PBXGroup;
+			children = (
+				23DF8CAD1BA9CEB700ECAE98 /* TaurusClient.swift */,
+				23DF8CAE1BA9CEB700ECAE98 /* TaurusClientFactory.swift */,
+				23DF8CAF1BA9CEB700ECAE98 /* TaurusDataSyncService.swift */,
+				236016D61BD1410100AF82FE /* ShareService.swift */,
+			);
+			name = service;
+			path = src/service;
+			sourceTree = SOURCE_ROOT;
+		};
+		23E2443B8795C70E2D9D1306 /* Pods */ = {
+			isa = PBXGroup;
+			children = (
+				F04A1F33885B832737DD0D75 /* Pods.debug.xcconfig */,
+				CC722459B06198A44AE0D9BF /* Pods.release.xcconfig */,
+			);
+			name = Pods;
+			sourceTree = "<group>";
+		};
+		23ED58D11BB088E100EEEEC1 /* app */ = {
+			isa = PBXGroup;
+			children = (
+				23ED58CF1BB088D800EEEEC1 /* GrokApplication.swift */,
+			);
+			name = app;
+			sourceTree = "<group>";
+		};
+		23F58D6C1BBA1CBB00C7C6B6 /* SWReveal */ = {
+			isa = PBXGroup;
+			children = (
+				23F58D6D1BBA1CBB00C7C6B6 /* SWRevealViewController.h */,
+				23F58D6E1BBA1CBB00C7C6B6 /* SWRevealViewController.m */,
+			);
+			name = SWReveal;
+			path = src/SWReveal;
+			sourceTree = SOURCE_ROOT;
+		};
+		76FCBF07FE6EF1A60CEF38C3 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				D5967E9F3F71FA63EF40469B /* libPods.a */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		23AB22F41BA75F170091A5E6 /* Taurus */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 23AB231D1BA75F170091A5E6 /* Build configuration list for PBXNativeTarget "Taurus" */;
+			buildPhases = (
+				0DA4D2DC7E0C0883DDACDDD2 /* Check Pods Manifest.lock */,
+				23AB22F11BA75F170091A5E6 /* Sources */,
+				23AB22F21BA75F170091A5E6 /* Frameworks */,
+				23AB22F31BA75F170091A5E6 /* Resources */,
+				08F86FD8AFA025BC52A957B0 /* Copy Pods Resources */,
+				A156F98D492A236FD623E176 /* Embed Pods Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = Taurus;
+			productName = Taurus;
+			productReference = 23AB22F51BA75F170091A5E6 /* Taurus.app */;
+			productType = "com.apple.product-type.application";
+		};
+		23AB23081BA75F170091A5E6 /* TaurusTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 23AB23201BA75F170091A5E6 /* Build configuration list for PBXNativeTarget "TaurusTests" */;
+			buildPhases = (
+				CE8D5C584C8C123B83F27B40 /* Check Pods Manifest.lock */,
+				23AB23051BA75F170091A5E6 /* Sources */,
+				23AB23061BA75F170091A5E6 /* Frameworks */,
+				23AB23071BA75F170091A5E6 /* Resources */,
+				E8AC60A316FE00A3C3C10904 /* Copy Pods Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				23AB230B1BA75F170091A5E6 /* PBXTargetDependency */,
+			);
+			name = TaurusTests;
+			productName = TaurusTests;
+			productReference = 23AB23091BA75F170091A5E6 /* TaurusTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		23AB23131BA75F170091A5E6 /* TaurusUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 23AB23231BA75F170091A5E6 /* Build configuration list for PBXNativeTarget "TaurusUITests" */;
+			buildPhases = (
+				23AB23101BA75F170091A5E6 /* Sources */,
+				23AB23111BA75F170091A5E6 /* Frameworks */,
+				23AB23121BA75F170091A5E6 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				23AB23161BA75F170091A5E6 /* PBXTargetDependency */,
+			);
+			name = TaurusUITests;
+			productName = TaurusUITests;
+			productReference = 23AB23141BA75F170091A5E6 /* TaurusUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		23AB22ED1BA75F170091A5E6 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 0700;
+				ORGANIZATIONNAME = Numenta;
+				TargetAttributes = {
+					23AB22F41BA75F170091A5E6 = {
+						CreatedOnToolsVersion = 7.0;
+						DevelopmentTeam = 2589Z673MU;
+						SystemCapabilities = {
+							com.apple.BackgroundModes = {
+								enabled = 1;
+							};
+						};
+					};
+					23AB23081BA75F170091A5E6 = {
+						CreatedOnToolsVersion = 7.0;
+						TestTargetID = 23AB22F41BA75F170091A5E6;
+					};
+					23AB23131BA75F170091A5E6 = {
+						CreatedOnToolsVersion = 7.0;
+						TestTargetID = 23AB22F41BA75F170091A5E6;
+					};
+				};
+			};
+			buildConfigurationList = 23AB22F01BA75F170091A5E6 /* Build configuration list for PBXProject "taurus" */;
+			compatibilityVersion = "Xcode 3.2";
+			developmentRegion = English;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 23AB22EC1BA75F170091A5E6;
+			productRefGroup = 23AB22F61BA75F170091A5E6 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				23AB22F41BA75F170091A5E6 /* Taurus */,
+				23AB23081BA75F170091A5E6 /* TaurusTests */,
+				23AB23131BA75F170091A5E6 /* TaurusUITests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		23AB22F31BA75F170091A5E6 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				237CDC421BAB3C9E00AAF305 /* createdb.sql in Resources */,
+				23AB23031BA75F170091A5E6 /* LaunchScreen.storyboard in Resources */,
+				23AB23001BA75F170091A5E6 /* Assets.xcassets in Resources */,
+				23F58D711BBA287200C7C6B6 /* Images.xcassets in Resources */,
+				23AB22FE1BA75F170091A5E6 /* Main.storyboard in Resources */,
+				23AD4EC51BB2FEC00041D650 /* README.txt in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		23AB23071BA75F170091A5E6 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		23AB23121BA75F170091A5E6 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		08F86FD8AFA025BC52A957B0 /* Copy Pods Resources */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Copy Pods Resources";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${SRCROOT}/Pods/Target Support Files/Pods/Pods-resources.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		0DA4D2DC7E0C0883DDACDDD2 /* Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Check Pods Manifest.lock";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_ROOT}/../Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [[ $? != 0 ]] ; then\n    cat << EOM\nerror: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\nEOM\n    exit 1\nfi\n";
+			showEnvVarsInLog = 0;
+		};
+		A156F98D492A236FD623E176 /* Embed Pods Frameworks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Embed Pods Frameworks";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${SRCROOT}/Pods/Target Support Files/Pods/Pods-frameworks.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		CE8D5C584C8C123B83F27B40 /* Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Check Pods Manifest.lock";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_ROOT}/../Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [[ $? != 0 ]] ; then\n    cat << EOM\nerror: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\nEOM\n    exit 1\nfi\n";
+			showEnvVarsInLog = 0;
+		};
+		E8AC60A316FE00A3C3C10904 /* Copy Pods Resources */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Copy Pods Resources";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${SRCROOT}/Pods/Target Support Files/Pods/Pods-resources.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+/* End PBXShellScriptBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		23AB22F11BA75F170091A5E6 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				23DF8C981BA9BF3800ECAE98 /* InstanceCell.swift in Sources */,
+				23AD79121BA778B3003FBEF4 /* InstanceData.swift in Sources */,
+				23DF8CB01BA9CEB700ECAE98 /* TaurusClient.swift in Sources */,
+				23DF8CB11BA9CEB700ECAE98 /* TaurusClientFactory.swift in Sources */,
+				23AD79141BA778B3003FBEF4 /* MetricData.swift in Sources */,
+				236016D31BD00A9500AF82FE /* Appearence.swift in Sources */,
+				23DF8C971BA9BF3800ECAE98 /* AnomalyChartView.swift in Sources */,
+				23AD79111BA778B3003FBEF4 /* Instance.swift in Sources */,
+				23BF792A1BB4C67D0025E996 /* MetricAnomalyChartData.swift in Sources */,
+				23AD4F1A1BB31C640041D650 /* AppDelegate.swift in Sources */,
+				23AD79181BA778B3003FBEF4 /* GrokClient.swift in Sources */,
+				23F58D731BBA318700C7C6B6 /* MenuController.swift in Sources */,
+				23CFAC3D1BB4A1E100B4E882 /* MetricCell.swift in Sources */,
+				23AD4F1F1BB3AA590041D650 /* InstanceDetailsViewController.swift in Sources */,
+				23DF8CA41BA9CDE500ECAE98 /* TaurusInstanceData.swift in Sources */,
+				23AD790D1BA778B3003FBEF4 /* CoreDatabase.swift in Sources */,
+				23AD79101BA778B3003FBEF4 /* CoreDataFactoryImpl.swift in Sources */,
+				23DF8CA51BA9CDE500ECAE98 /* TaurusNotification.swift in Sources */,
+				23AD79191BA778B3003FBEF4 /* GrokClientFactory.swift in Sources */,
+				236016D11BCFDCD200AF82FE /* TwitterHeaderCell.swift in Sources */,
+				238055821BBEE88D0048E214 /* TutorialPageController.swift in Sources */,
+				236989821BA919C200EA4FB5 /* MarketCalendar.swift in Sources */,
+				23AD790E1BA778B3003FBEF4 /* CoreDatabaseImpl.swift in Sources */,
+				23F58D751BBAC21D00C7C6B6 /* SettingsController.swift in Sources */,
+				23F58D6F1BBA1CBB00C7C6B6 /* SWRevealViewController.m in Sources */,
+				23AD79131BA778B3003FBEF4 /* Metric.swift in Sources */,
+				23DF8CB21BA9CEB700ECAE98 /* TaurusDataSyncService.swift in Sources */,
+				23AD790B1BA778B3003FBEF4 /* AggregationType.swift in Sources */,
+				23DF8CAB1BA9CE9C00ECAE98 /* MetricType.swift in Sources */,
+				23AD790F1BA778B3003FBEF4 /* CoreDataFactory.swift in Sources */,
+				23AD79151BA778B3003FBEF4 /* Notification.swift in Sources */,
+				23AD4F1D1BB37DF70041D650 /* LineChartView.swift in Sources */,
+				23DF8CA21BA9CDE500ECAE98 /* TaurusDatabase.swift in Sources */,
+				23DF8CA61BA9CDE500ECAE98 /* Tweet.swift in Sources */,
+				23D75F1D1BBE10BF00FA870C /* TwitterCell.swift in Sources */,
+				23AD78F61BA77731003FBEF4 /* TarausApplication.swift in Sources */,
+				23AD790C1BA778B3003FBEF4 /* Annotation.swift in Sources */,
+				23DF8CB71BA9CEE900ECAE98 /* DataSyncService.swift in Sources */,
+				23DF8CA31BA9CDE500ECAE98 /* TaurusDataFactory.swift in Sources */,
+				23DF8CEA1BA9CF9C00ECAE98 /* AnomalyChartData.swift in Sources */,
+				23DF8CEC1BA9CFA800ECAE98 /* InstanceAnomalyChartData.swift in Sources */,
+				236D00471BBC2C4C00782B36 /* TwitterViewController.swift in Sources */,
+				23DF8CA81BA9CE2700ECAE98 /* TarusDBProtocol.swift in Sources */,
+				23DF8CA01BA9CDE500ECAE98 /* AnomalyValue.swift in Sources */,
+				238055C21BBEED020048E214 /* ModelController.swift in Sources */,
+				236016D71BD1410100AF82FE /* ShareService.swift in Sources */,
+				23ED58D01BB088D800EEEEC1 /* GrokApplication.swift in Sources */,
+				23AD4F161BB31B8D0041D650 /* InstanceViewController.swift in Sources */,
+				23AD79171BA778B3003FBEF4 /* SwiftyJSON.swift in Sources */,
+				23AD4F181BB31BDC0041D650 /* TimeSliderView.swift in Sources */,
+				23AD791A1BA778B3003FBEF4 /* DataUtils.swift in Sources */,
+				238055801BBEE7190048E214 /* TutorialController.swift in Sources */,
+				23AD4EC31BB2FE080041D650 /* AppConfig.swift in Sources */,
+				23AD79161BA778B3003FBEF4 /* SQLiteHelper.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		23AB23051BA75F170091A5E6 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				23AB230E1BA75F170091A5E6 /* TaurusTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		23AB23101BA75F170091A5E6 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				23AB23191BA75F170091A5E6 /* TaurusUITests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		23AB230B1BA75F170091A5E6 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 23AB22F41BA75F170091A5E6 /* Taurus */;
+			targetProxy = 23AB230A1BA75F170091A5E6 /* PBXContainerItemProxy */;
+		};
+		23AB23161BA75F170091A5E6 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 23AB22F41BA75F170091A5E6 /* Taurus */;
+			targetProxy = 23AB23151BA75F170091A5E6 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin PBXVariantGroup section */
+		23AB22FC1BA75F170091A5E6 /* Main.storyboard */ = {
+			isa = PBXVariantGroup;
+			children = (
+				23AB22FD1BA75F170091A5E6 /* Base */,
+			);
+			name = Main.storyboard;
+			sourceTree = "<group>";
+		};
+		23AB23011BA75F170091A5E6 /* LaunchScreen.storyboard */ = {
+			isa = PBXVariantGroup;
+			children = (
+				23AB23021BA75F170091A5E6 /* Base */,
+			);
+			name = LaunchScreen.storyboard;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
+
+/* Begin XCBuildConfiguration section */
+		23AB231B1BA75F170091A5E6 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
+				MTL_ENABLE_DEBUG_INFO = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_OBJC_BRIDGING_HEADER = "Taurus-Bridging-Header.h";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		23AB231C1BA75F170091A5E6 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				SDKROOT = iphoneos;
+				SWIFT_OBJC_BRIDGING_HEADER = "Taurus-Bridging-Header.h";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		23AB231E1BA75F170091A5E6 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = F04A1F33885B832737DD0D75 /* Pods.debug.xcconfig */;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				CURRENT_PROJECT_VERSION = 1;
+				INFOPLIST_FILE = Taurus/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = com.numenta.taurusmobile;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		23AB231F1BA75F170091A5E6 /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = CC722459B06198A44AE0D9BF /* Pods.release.xcconfig */;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				CURRENT_PROJECT_VERSION = 1;
+				INFOPLIST_FILE = Taurus/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = com.numenta.taurusmobile;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
+		23AB23211BA75F170091A5E6 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = F04A1F33885B832737DD0D75 /* Pods.debug.xcconfig */;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				INFOPLIST_FILE = TaurusTests/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = com.numenta.TaurusTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Taurus.app/Taurus";
+			};
+			name = Debug;
+		};
+		23AB23221BA75F170091A5E6 /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = CC722459B06198A44AE0D9BF /* Pods.release.xcconfig */;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				INFOPLIST_FILE = TaurusTests/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = com.numenta.TaurusTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Taurus.app/Taurus";
+			};
+			name = Release;
+		};
+		23AB23241BA75F170091A5E6 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				INFOPLIST_FILE = TaurusUITests/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = com.numenta.TaurusUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				TEST_TARGET_NAME = Taurus;
+				USES_XCTRUNNER = YES;
+			};
+			name = Debug;
+		};
+		23AB23251BA75F170091A5E6 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				INFOPLIST_FILE = TaurusUITests/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = com.numenta.TaurusUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				TEST_TARGET_NAME = Taurus;
+				USES_XCTRUNNER = YES;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		23AB22F01BA75F170091A5E6 /* Build configuration list for PBXProject "taurus" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				23AB231B1BA75F170091A5E6 /* Debug */,
+				23AB231C1BA75F170091A5E6 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		23AB231D1BA75F170091A5E6 /* Build configuration list for PBXNativeTarget "Taurus" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				23AB231E1BA75F170091A5E6 /* Debug */,
+				23AB231F1BA75F170091A5E6 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		23AB23201BA75F170091A5E6 /* Build configuration list for PBXNativeTarget "TaurusTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				23AB23211BA75F170091A5E6 /* Debug */,
+				23AB23221BA75F170091A5E6 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		23AB23231BA75F170091A5E6 /* Build configuration list for PBXNativeTarget "TaurusUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				23AB23241BA75F170091A5E6 /* Debug */,
+				23AB23251BA75F170091A5E6 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 23AB22ED1BA75F170091A5E6 /* Project object */;
+}

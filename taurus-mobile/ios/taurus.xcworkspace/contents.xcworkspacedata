@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Workspace
+   version = "1.0">
+   <Group
+      location = "group:assets"
+      name = "assets">
+      <FileRef
+         location = "group:ic_grok_logo.png">
+      </FileRef>
+      <FileRef
+         location = "group:ic_logo_below.png">
+      </FileRef>
+      <FileRef
+         location = "group:tutorial_1.png">
+      </FileRef>
+      <FileRef
+         location = "group:tutorial_2.png">
+      </FileRef>
+      <FileRef
+         location = "group:tutorial_3.png">
+      </FileRef>
+      <FileRef
+         location = "group:tutorial_4.png">
+      </FileRef>
+      <FileRef
+         location = "group:tutorial_5.png">
+      </FileRef>
+   </Group>
+   <FileRef
+      location = "group:taurus.xcodeproj">
+   </FileRef>
+   <FileRef
+      location = "group:Pods/Pods.xcodeproj">
+   </FileRef>
+</Workspace>

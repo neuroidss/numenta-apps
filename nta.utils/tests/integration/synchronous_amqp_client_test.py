@@ -6,15 +6,15 @@
 # following terms and conditions apply:
 #
 # This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License version 3 as
+# it under the terms of the GNU Affero Public License version 3 as
 # published by the Free Software Foundation.
 #
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-# See the GNU General Public License for more details.
+# See the GNU Affero Public License for more details.
 #
-# You should have received a copy of the GNU General Public License
+# You should have received a copy of the GNU Affero Public License
 # along with this program.  If not, see http://www.gnu.org/licenses.
 #
 # http://numenta.org/licenses/
@@ -117,6 +117,8 @@ class SynchronousAmqpClientTest(unittest.TestCase):
         auth=(self.connParams.username,
               self.connParams.password)
     ).json()
+    self.assertIn("name", exchange)
+    self.assertIn("type", exchange)
     self.assertEqual(exchange["name"], testExchangeName)
     self.assertEqual(exchange["type"], testExchangeType)
 
@@ -160,6 +162,9 @@ class SynchronousAmqpClientTest(unittest.TestCase):
         auth=(self.connParams.username,
               self.connParams.password)
     ).json()
+    self.assertIn("name", queue)
+    self.assertIn("consumers", queue)
+    self.assertIn("messages", queue)
     self.assertEqual(queue["name"], testQueueName)
     self.assertEqual(queue["consumers"], testConsumerCount)
     self.assertEqual(queue["messages"], testMessageCount)
@@ -193,6 +198,7 @@ class SynchronousAmqpClientTest(unittest.TestCase):
             queueName),
         auth=(self.connParams.username, self.connParams.password)
     ).json()
+    self.assertIn("messages_ready", queue)
     self.assertEqual(queue["messages_ready"], _NUM_TEST_MESSAGES)
 
 
@@ -206,6 +212,7 @@ class SynchronousAmqpClientTest(unittest.TestCase):
             queueName),
         auth=(self.connParams.username, self.connParams.password)
     ).json()
+    self.assertIn("messages_unacknowledged", queue)
     self.assertEqual(queue["messages_unacknowledged"], _NUM_TEST_MESSAGES)
 
 
@@ -223,14 +230,11 @@ class SynchronousAmqpClientTest(unittest.TestCase):
             queueName),
         auth=(self.connParams.username, self.connParams.password)
     ).json()
+    self.assertIn("messages", queue)
+    self.assertIn("message_stats", queue)
     self.assertEqual(queue["messages"], 0)
     self.assertIn("ack", queue["message_stats"])
     self.assertEqual(queue["message_stats"]["ack"], _NUM_TEST_MESSAGES)
-
-
-  @_RETRY_ON_ASSERTION_ERROR
-  def _hasEvent(self):
-    self.assertTrue(self.client.hasEvent())
 
 
   def testDeclareAndDeleteDirectExchange(self):
@@ -679,7 +683,6 @@ class SynchronousAmqpClientTest(unittest.TestCase):
     self._verifyQueue(queueName, testMessageCount=_NUM_TEST_MESSAGES)
 
     consumer = self.client.createConsumer(queueName)
-    self._hasEvent()
 
     for i in range(0, _NUM_TEST_MESSAGES):
       message = self.client.getNextEvent()
@@ -713,7 +716,6 @@ class SynchronousAmqpClientTest(unittest.TestCase):
     self._verifyQueue(queueName, testMessageCount=_NUM_TEST_MESSAGES)
 
     consumer = self.client.createConsumer(queueName)
-    self._hasEvent()
 
     for i in range(0, _NUM_TEST_MESSAGES):
       message = self.client.getNextEvent()
@@ -780,7 +782,6 @@ class SynchronousAmqpClientTest(unittest.TestCase):
     self._verifyQueue(queueName, testMessageCount=_NUM_TEST_MESSAGES)
 
     self.client.createConsumer(queueName)
-    self._hasEvent()
 
     for i in range(0, _NUM_TEST_MESSAGES):
       self.client.getNextEvent().ack()
@@ -807,7 +808,6 @@ class SynchronousAmqpClientTest(unittest.TestCase):
     self._verifyQueue(queueName, testMessageCount=_NUM_TEST_MESSAGES)
 
     self.client.createConsumer(queueName)
-    self._hasEvent()
 
     self._verifyQueue(queueName, testMessageCount=_NUM_TEST_MESSAGES,
                       testConsumerCount=1)

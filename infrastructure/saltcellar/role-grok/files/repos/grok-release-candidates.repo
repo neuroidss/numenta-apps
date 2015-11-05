@@ -1,5 +1,0 @@
-[grok-release-candidates]
-name=grok-release-candidates
-baseurl=http://public.numenta.com/yum/release-candidates
-gpgcheck=0
-priority=1

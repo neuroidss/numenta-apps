@@ -5,15 +5,15 @@
  * following terms and conditions apply:
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 3 as
+ * it under the terms of the GNU Affero Public License version 3 as
  * published by the Free Software Foundation.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
+ * See the GNU Affero Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Affero Public License
  * along with this program.  If not, see http://www.gnu.org/licenses.
  *
  * http://numenta.org/licenses/
@@ -42,8 +42,8 @@ import com.numenta.core.data.InstanceData;
 import com.numenta.core.data.Metric;
 import com.numenta.core.data.MetricData;
 import com.numenta.core.data.Notification;
-import com.numenta.core.service.GrokClient;
-import com.numenta.core.service.GrokException;
+import com.numenta.core.service.HTMClient;
+import com.numenta.core.service.HTMException;
 import com.numenta.core.service.ObjectNotFoundException;
 import com.numenta.core.utils.DataUtils;
 import com.numenta.core.utils.Log;
@@ -84,7 +84,7 @@ import java.util.regex.Pattern;
  * <p><b>Taurus Client API</b></p>
  * This class is used to access taurus data from DynamoDB.
  */
-public class TaurusClient implements GrokClient {
+public class TaurusClient implements HTMClient {
 
     /**
      * Used by the client to notify the caller the when a new metric data value is ready
@@ -192,7 +192,7 @@ public class TaurusClient implements GrokClient {
      * @param callback   Callback for asynchronous call. It will be called on every {@link Tweet}
      */
     public void getTweets(String metricName, Date from, Date to,
-            DataCallback<Tweet> callback) throws GrokException, IOException {
+            DataCallback<Tweet> callback) throws HTMException, IOException {
         getTweets(metricName, from, to, -1, callback);
     }
 
@@ -207,7 +207,7 @@ public class TaurusClient implements GrokClient {
      * @param callback   Callback for asynchronous call. It will be called on every {@link Tweet}
      */
     public void getTweets(String metricName, Date from, Date to, int limit,
-            DataCallback<Tweet> callback) throws GrokException, IOException {
+            DataCallback<Tweet> callback) throws HTMException, IOException {
         if (metricName == null) {
             throw new ObjectNotFoundException("Cannot get tweets without metric name");
         }
@@ -282,8 +282,8 @@ public class TaurusClient implements GrokClient {
                     userId = item.get("userid").getS();
                     text = item.get("text").getS();
                     userName = item.get("username").getS();
-                    aggregated = DataUtils.parseGrokDate(item.get("agg_ts").getS());
-                    created = DataUtils.parseGrokDate(item.get("created_at").getS());
+                    aggregated = DataUtils.parseHTMDate(item.get("agg_ts").getS());
+                    created = DataUtils.parseHTMDate(item.get("created_at").getS());
 
                     // "retweet_count" is optional
                     retweet = item.get("retweet_count");
@@ -315,15 +315,15 @@ public class TaurusClient implements GrokClient {
     }
 
     @Override
-    public void login() throws IOException, GrokException {
+    public void login() throws IOException, HTMException {
         // Do nothing
     }
 
     @Override
     public void getMetricData(String modelId, Date from, Date to,
             final DataCallback<MetricData> callback)
-            throws GrokException, IOException {
-        throw new GrokException("Not Implemented");
+            throws HTMException, IOException {
+        throw new HTMException("Not Implemented");
     }
 
     /**
@@ -337,7 +337,7 @@ public class TaurusClient implements GrokClient {
      */
     public void getMetricValues(@NonNull String modelId, @NonNull Date from, @NonNull Date to,
             boolean ascending, @NonNull MetricValuesCallback callback)
-            throws GrokException, IOException {
+            throws HTMException, IOException {
 
         // Get metric from cache
         ConcurrentSkipListMap<Long, CachedMetricValue> cache = _cachedMetricValues.get(modelId);
@@ -422,7 +422,7 @@ public class TaurusClient implements GrokClient {
                 result = _awsClient.query(query);
                 for (Map<String, AttributeValue> item : result.getItems()) {
                     CachedMetricValue metricValue = new CachedMetricValue();
-                    timestamp = DataUtils.parseGrokDate(item.get("timestamp").getS()).getTime();
+                    timestamp = DataUtils.parseHTMDate(item.get("timestamp").getS()).getTime();
                     metricValue.value = Float.parseFloat(item.get("metric_value").getN());
                     metricValue.anomaly = Float.parseFloat(item.get("anomaly_score").getN());
                     cache.put(timestamp, metricValue);
@@ -453,7 +453,7 @@ public class TaurusClient implements GrokClient {
      */
     public void getAllInstanceDataForDate(@NonNull Date date, int fromHour, int toHour,
             boolean ascending, @NonNull DataCallback<InstanceData> callback)
-            throws GrokException, IOException {
+            throws HTMException, IOException {
 
         Map<String, Condition> keyConditions = new HashMap<String, Condition>();
 
@@ -552,7 +552,7 @@ public class TaurusClient implements GrokClient {
      * @param callback  User defined callback to receive instance data
      */
     public void getAllInstanceData(@NonNull Date from, @NonNull Date to, Boolean ascending,
-            final @NonNull DataCallback<InstanceData> callback) throws GrokException, IOException {
+            final @NonNull DataCallback<InstanceData> callback) throws HTMException, IOException {
 
         Calendar fromDate = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
         fromDate.clear();
@@ -589,7 +589,7 @@ public class TaurusClient implements GrokClient {
     }
 
     @Override
-    public List<Metric> getMetrics() throws GrokException, IOException {
+    public List<Metric> getMetrics() throws HTMException, IOException {
         String uid;
         String name;
         String server;
@@ -630,7 +630,7 @@ public class TaurusClient implements GrokClient {
                 request.setExclusiveStartKey(lastKey);
             } while (lastKey != null);
         } catch (JSONException e) {
-            throw new GrokException("JSON Parser error", e);
+            throw new HTMException("JSON Parser error", e);
         } catch (AmazonClientException e) {
             // Wraps Amazon's unchecked exception as IOException
             throw new IOException(e);
@@ -653,22 +653,22 @@ public class TaurusClient implements GrokClient {
      * local database
      */
     @Override
-    public List<Notification> getNotifications() throws GrokException, IOException {
+    public List<Notification> getNotifications() throws HTMException, IOException {
         return null;
     }
 
     @Override
-    public List<Annotation> getAnnotations(Date from, Date to) throws GrokException, IOException {
+    public List<Annotation> getAnnotations(Date from, Date to) throws HTMException, IOException {
         return null;
     }
 
     @Override
-    public void deleteAnnotation(Annotation annotation) throws GrokException, IOException {
+    public void deleteAnnotation(Annotation annotation) throws HTMException, IOException {
     }
 
     @Override
     public Annotation addAnnotation(Date timestamp, String server, String message, String user)
-            throws GrokException, IOException {
+            throws HTMException, IOException {
         return null;
     }
 
@@ -676,7 +676,7 @@ public class TaurusClient implements GrokClient {
      * Do nothing in Taurus since Notifications are all local
      */
     @Override
-    public void acknowledgeNotifications(String[] notifications) throws GrokException, IOException {
+    public void acknowledgeNotifications(String[] notifications) throws HTMException, IOException {
         // do nothing, taurus notifications are managed by the client
     }
 

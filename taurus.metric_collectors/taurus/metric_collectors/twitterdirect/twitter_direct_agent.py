@@ -6,15 +6,15 @@
 # following terms and conditions apply:
 #
 # This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License version 3 as
+# it under the terms of the GNU Affero Public License version 3 as
 # published by the Free Software Foundation.
 #
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-# See the GNU General Public License for more details.
+# See the GNU Affero Public License for more details.
 #
-# You should have received a copy of the GNU General Public License
+# You should have received a copy of the GNU Affero Public License
 # along with this program.  If not, see http://www.gnu.org/licenses.
 #
 # http://numenta.org/licenses/
@@ -39,9 +39,7 @@ import sqlalchemy as sql
 import tweepy
 
 from nta.utils import amqp
-from nta.utils.config import Config
 from nta.utils import date_time_utils
-from nta.utils.error_handling import abortProgramOnAnyException
 from nta.utils.error_handling import logExceptions
 from nta.utils.message_bus_connector import MessageBusConnector
 from nta.utils.message_bus_connector import MessageProperties
@@ -53,6 +51,7 @@ from taurus.metric_collectors import logging_support
 from taurus.metric_collectors import metric_utils
 from taurus.metric_collectors.metric_utils import getMetricsConfiguration
 from taurus.metric_collectors.text_utils import sanitize4ByteUnicode
+from taurus.metric_collectors.twitterdirect import purge_old_tweets
 
 
 
@@ -72,7 +71,6 @@ DEFAULT_ACCESS_TOKEN_SECRET = os.environ.get(
 
 # Our tracker key in the emitted_sample_tracker table
 _EMITTED_TWEET_VOLUME_SAMPLE_TRACKER_KEY = "twitter-tweets-volume"
-
 
 
 # Initialize logging
@@ -178,6 +176,7 @@ def buildTaggingMapAndStreamFilterParams(metricSpecs, authHandler):
   def tagOnSourceUsers(msg, mappings):
     """ Adds metric name(s) to msg["metricTagSet"] corresponding to the matching
     source twitter user id in mappings, if any
+
     :param mappings: userId-to-metricNames map
     """
     userObj = msg.get("user")
@@ -189,8 +188,9 @@ def buildTaggingMapAndStreamFilterParams(metricSpecs, authHandler):
       msg["metricTagSet"].update(metricNames)
 
   def tagOnMentions(msg, mappings):
-    """ Adds metric names to msg["metricTagSet"] corresponding to the matching twitter
-    mention user ids in mappings, if any
+    """ Adds metric names to msg["metricTagSet"] corresponding to the matching
+    twitter mention user ids in mappings, if any
+
     :param mappings: userId-to-metricNames map
     """
     entities = msg.get("entities")
@@ -257,8 +257,8 @@ def buildTaggingMapAndStreamFilterParams(metricSpecs, authHandler):
 
   # Generate stream filter parameters
   streamFilterParams = dict(
-    track=[("@" + screen) for screen in screenNameToMetricsMap] +
-      [("$" + ticker) for ticker in symbolToMetricMap],
+    track=([("@" + screen) for screen in screenNameToMetricsMap] +
+           [("$" + ticker) for ticker in symbolToMetricMap]),
     follow=userIdToMetricsMap.keys(),
     stall_warnings=True
   )
@@ -370,7 +370,7 @@ class TwitterStreamListener(tweepy.StreamListener):
                      "process has gone away without shutting us down first")
       sys.exit(1)
 
-    if not self._storageThread.is_alive():
+    if not self._storageThread.isAlive():
       g_log.critical("Exiting streaming process, because our storage thread "
                      "has stopped")
       sys.exit(1)
@@ -471,28 +471,32 @@ class TweetStorer(object):
 
   class _CurrentStreamStats(_StreamingStatsBase):
     def __init__(self):
-      super(TweetStorer._CurrentStreamStats, self).__init__()
+      super(TweetStorer._CurrentStreamStats,  # pylint: disable=W0212
+            self).__init__()
 
       # Starting datetime of the current stream
       self.startingDatetime = None
 
     def __str__(self):
       return "%s; started=%s" % (
-        super(TweetStorer._CurrentStreamStats, self).__str__(),
+        super(TweetStorer._CurrentStreamStats,  # pylint: disable=W0212
+              self).__str__(),
         (self.startingDatetime.replace(microsecond=0).isoformat()
          if self.startingDatetime else None),)
 
 
   class _RuntimeStreamingStats(_StreamingStatsBase):
     def __init__(self):
-      super(TweetStorer._RuntimeStreamingStats, self).__init__()
+      super(TweetStorer._RuntimeStreamingStats,  # pylint: disable=W0212
+            self).__init__()
 
       # 1-based number of the current stream
       self.streamNumber = None
 
     def __str__(self):
       return "%s; streamNumber=%s" % (
-        super(TweetStorer._RuntimeStreamingStats, self).__str__(),
+        super(TweetStorer._RuntimeStreamingStats,  # pylint: disable=W0212
+              self).__str__(),
         self.streamNumber,)
 
 
@@ -536,7 +540,7 @@ class TweetStorer(object):
                       aggSec=aggSec,
                       msgQ=msgQ,
                       echoData=echoData)
-    tweetStorer._run()
+    tweetStorer._run()  # pylint: disable=W0212
 
 
   def _run(self):
@@ -570,28 +574,25 @@ class TweetStorer(object):
       tweets = deletes = None
       try:
         tweets, deletes = self._reapMessages(messages)
-      except Exception:
+      except Exception:  # pylint: disable=W0703
         g_log.exception("_reapMessages failed")
-        pass
 
       # Save (re)tweets
       if tweets:
         try:
           self._saveTweets(messages=tweets, aggRefDatetime=aggRefDatetime)
-        except Exception:
+        except Exception:  # pylint: disable=W0703
           g_log.exception("Failed to save numTweets=%d", len(tweets))
-          pass
 
       # Save deletion requests
       if deletes:
         try:
           self._saveTweetDeletionRequests(messages=deletes)
-        except Exception:
+        except Exception:  # pylint: disable=W0703
           g_log.exception("Failed to save deletion numRequests=%d",
                           len(deletes))
           for msg in deletes:
             g_log.error("Failed to save deletion msg=%s", msg)
-          pass
 
       # Echo messages to stdout if requested
       if self._echoData:
@@ -682,7 +683,8 @@ class TweetStorer(object):
           if track is None:
             g_log.error("Twitter LIMIT message missing track value: %s", msg)
           elif track > streamStats.numLimitedTweets:
-            # NOTE: we frequently see these arriving out of order, hence the check
+            # NOTE: we frequently see these arriving out of order, hence the
+            # check
             runtimeStats.numLimitedTweets += (track -
                                               streamStats.numLimitedTweets)
             streamStats.numLimitedTweets = track
@@ -819,7 +821,7 @@ class TweetStorer(object):
       uid=msgId,
       created_at=createdAt,
       retweet=isRetweet,
-      lang=msg["lang"],
+      lang=msg.get("lang"),
       text=self._sanitizeTextForDb(msg.get("text")),
       userid=msg["user"]["id_str"],
       username=msg["user"]["screen_name"],
@@ -873,9 +875,8 @@ class TweetStorer(object):
       try:
         tweet, references = self._createTweetAndReferenceRows(msg,
                                                               aggRefDatetime)
-      except Exception:
+      except Exception:  # pylint: disable=W0703
         g_log.exception("Failed to reap tweet=%s", msg)
-        pass
       else:
         tweetRows.append(tweet)
         referenceRows.extend(references)
@@ -889,14 +890,14 @@ class TweetStorer(object):
       with self._sqlEngine.begin() as conn:
         # Save twitter message
         conn.execute(
-          schema.twitterTweets.insert(
+          schema.twitterTweets.insert(  # pylint: disable=E1120
             ).prefix_with("IGNORE", dialect="mysql"),
           tweetRows)
 
         # Save corresponding references
         # NOTE: some tweets may match multiple metrics
         conn.execute(
-          schema.twitterTweetSamples.insert(
+          schema.twitterTweetSamples.insert(  # pylint: disable=E1120
             ).prefix_with("IGNORE", dialect="mysql"),
           referenceRows)
 
@@ -926,7 +927,7 @@ class TweetStorer(object):
     @collectorsdb.retryOnTransientErrors
     def saveWithRetries():
       with self._sqlEngine.begin() as conn:
-        ins = schema.twitterDeletion.insert(
+        ins = schema.twitterDeletion.insert(  # pylint: disable=E1120
           ).prefix_with('IGNORE', dialect="mysql")
 
         conn.execute(ins, deletionRows)
@@ -959,7 +960,7 @@ class TweetForwarder(object):
 
 
   @classmethod
-  @abortProgramOnAnyException(exitCode=1, logger=g_log)
+  @logExceptions(g_log)
   def runInThread(cls):
     """ The thread target function; instantiates and runs MetricDataForwarder
 
@@ -967,7 +968,7 @@ class TweetForwarder(object):
     :param int aggSec: metric aggregation period in seconds
     """
     g_log.info("%s thread is running", cls.__name__)
-    cls()._run()
+    cls()._run()  # pylint: disable=W0212
 
 
   def _run(self):
@@ -1052,7 +1053,7 @@ class TweetForwarder(object):
 
   @classmethod
   def queryNonMetricTweetBatch(cls, sqlEngine, minSeq, maxItems=None,
-                               maxSeq=None, symbolList=None):
+                               maxSeq=None, metrics=None):
     """ Query a batch of non-metric twitter items for forwarding
 
     NOTE: Also used by migrate_tweets_to_dynamodb.py script
@@ -1064,6 +1065,9 @@ class TweetForwarder(object):
       unbound if None
     :param int maxSeq: OPTIONAL Maximum schema.twitterTweetSamples sequence
       number for filtering results; unbound if None
+    :param metrics: optional sequence of metric names; if specified (not None),
+      the query will be further limited to tweets corresponding to the given
+      metric names.
 
     :returns: a two-tuple (<last seq>, <items>); (None, None) if there are no
       rows in the requested range; otherwise <last seq> is the sequence number
@@ -1090,21 +1094,15 @@ class TweetForwarder(object):
       tweetsSchema,
       samplesSchema.c.msg_uid == tweetsSchema.c.uid)
 
-    if not symbolList:
-      sel = sql.select(fields
-        ).select_from(join
-        ).where(samplesSchema.c.seq >= minSeq
-        ).order_by(samplesSchema.c.seq.asc())
-    else:
-      sel = sql.select(fields
-        ).select_from(join
-        ).where(samplesSchema.c.seq >= minSeq
-        ).where(sql.or_(
-            schema.twitterTweetSamples.c.metric.ilike(
-              "TWITTER.TWEET.HANDLE.{symbol}.%".format(symbol=symbol)
-            ) for symbol in symbolList)
-      ).order_by(samplesSchema.c.seq.asc())
+    sel = (
+      sql.select(fields)
+      .select_from(join)
+      .where(samplesSchema.c.seq >= minSeq)
+      .order_by(samplesSchema.c.seq.asc())
+    )
 
+    if metrics is not None:
+      sel = sel.where(schema.twitterTweetSamples.c.metric.in_(metrics))
 
     if maxSeq is not None:
       sel = sel.where(samplesSchema.c.seq <= maxSeq)
@@ -1135,6 +1133,7 @@ class TweetForwarder(object):
         "retweet_count": row.retweet_count
       }
       for row in rows
+      if row.created_at and row.agg_ts
     ]
 
     return (rows[-1].seq, items)
@@ -1162,41 +1161,23 @@ class TweetForwarder(object):
 class MetricDataForwarder(object):
   """ This class is responsible for aggregating and forwarding metric data """
 
-  def __init__(self, metricSpecs, aggSec, symbolList=None,
-               forwardOnlyBacklog=False):
-
-    if not symbolList:
-      g_log.info("MetricDataForwarder was initialized without a symbol list; "
-                 "will use all symbols in metricSpec")
-      self._symbolList = []
-      self._metricSpecs = metricSpecs
-    else:
-      g_log.info("MetricDataForwarder was initialized with a symbol list; "
-                 "only metrics corresponding with these symbols will be "
-                 "recorded/forwarded")
-      self._symbolList=[symbol.upper() for symbol in symbolList]
-      self._metricSpecs = tuple(spec for spec in metricSpecs
-                                if spec.symbol.upper() in self._symbolList)
-
+  def __init__(self, metricSpecs, aggSec):
+    self._metricSpecs = metricSpecs
     self._aggSec = aggSec
 
     self._sqlEngine = collectorsdb.engineFactory()
 
-    self._forwardOnlyBacklog = forwardOnlyBacklog
-
 
   @classmethod
-  @abortProgramOnAnyException(exitCode=1, logger=g_log)
-  def runInThread(cls, metricSpecs, aggSec, symbolList=None,
-                  forwardOnlyBacklog=False):
+  @logExceptions(g_log)
+  def runInThread(cls, metricSpecs, aggSec):
     """ The thread target function; instantiates and runs MetricDataForwarder
 
     :param metricSpecs: sequence of TwitterMetricSpec
     :param int aggSec: metric aggregation period in seconds
     """
     g_log.info("%s thread is running", cls.__name__)
-    cls(metricSpecs, aggSec, symbolList=symbolList,
-        forwardOnlyBacklog=forwardOnlyBacklog)._run()
+    cls(metricSpecs, aggSec)._run()  # pylint: disable=W0212
 
 
   def _run(self):
@@ -1209,13 +1190,17 @@ class MetricDataForwarder(object):
       key=_EMITTED_TWEET_VOLUME_SAMPLE_TRACKER_KEY,
       aggSec=aggSec)
 
-    # Calculate next aggregation start time using lastEmittedAggTime as base
-    lastAggStartEpoch = date_time_utils.epochFromNaiveUTCDatetime(
-      lastEmittedAggTime) + aggSec
+    # Calculate next aggregation end time using lastEmittedAggTime as base
+    #
+    # NOTE: an aggregation timestamp is the time of the beginning of the
+    # aggregation window
+    nextAggEndEpoch = (
+      date_time_utils.epochFromNaiveUTCDatetime(lastEmittedAggTime) +
+      aggSec + aggSec)
 
-
-    nextAggEndEpoch = lastAggStartEpoch + aggSec
+    # Fudge factor to account for streaming and processing latencies upstream
     latencyAllowanceSec = aggSec
+
     while True:
       # Sleep until it's time to aggregate metric data
       aggHarvestEpoch = nextAggEndEpoch + latencyAllowanceSec
@@ -1224,7 +1209,6 @@ class MetricDataForwarder(object):
         time.sleep(aggHarvestEpoch - now)
         now = time.time()
 
-
       # Aggregate and forward metric samples to htmengine's Metric Listener
       lastEmittedAggTime = self._forwardTweetVolumeMetrics(
         lastEmittedAggTime=lastEmittedAggTime,
@@ -1232,9 +1216,67 @@ class MetricDataForwarder(object):
 
       nextAggEndEpoch += aggSec
 
-      if self._forwardOnlyBacklog and not (now >= (nextAggEndEpoch + latencyAllowanceSec)):
-        g_log.info("Done sending all backlogged metric data; returning from process")
-        return
+
+  def aggregateAndForward(self, aggStartDatetime, stopDatetime, metrics=None):
+    """ Aggregate tweet volume metrics in the given datetime range and forward
+    them to Taurus Engine.
+
+    NOTE: this may be called by tooling, such as `resymbol_metrics.py`
+
+    NOTE: does not updateLastEmittedSampleDatetime
+
+    :param datetime aggStartDatetime: UTC datetime of first aggregation to be
+      performed and emitted
+    :param datetime stopDatetime: non-inclusive upper bound UTC datetime for
+      forwarding
+    :param metrics: optional sequence of metric names; if specified (non-None),
+      the operation will be limited to the given metric names
+    """
+    def getSamples(aggStartDatetime):
+      """Retrieve and yield metric data samples of interest"""
+      periodTimedelta = timedelta(seconds=self._aggSec)
+
+      while aggStartDatetime < stopDatetime:
+        # Query Tweet Volume metrics for one aggregation interval
+        metricToVolumeMap = defaultdict(
+          int,
+          self._queryTweetVolumes(aggStartDatetime, metrics))
+
+        # Generate metric samples
+        epochTimestamp = date_time_utils.epochFromNaiveUTCDatetime(
+          aggStartDatetime)
+
+        samples = tuple(
+          dict(
+            metricName=spec.metric,
+            value=metricToVolumeMap[spec.metric],
+            epochTimestamp=epochTimestamp)
+          for spec in self._metricSpecs
+          if metrics is None or spec.metric in metrics
+        )
+
+        if g_log.isEnabledFor(logging.DEBUG):
+          g_log.debug("samples=%s", pprint.pformat(samples))
+
+        for sample in samples:
+          yield sample
+
+        g_log.info("Yielded numSamples=%d for agg=%s",
+                   len(samples), aggStartDatetime)
+
+        # Set up for next iteration
+        aggStartDatetime += periodTimedelta
+
+
+    # Emit samples to Taurus Engine
+    with metric_utils.metricDataBatchWrite(log=g_log) as putSample:
+      for sample in getSamples(aggStartDatetime):
+        try:
+          putSample(**sample)
+        except Exception:
+          g_log.exception("Failure while emitting metric data sample=%s",
+                          sample)
+          raise
 
 
   def _forwardTweetVolumeMetrics(self, lastEmittedAggTime, stopDatetime):
@@ -1260,40 +1302,15 @@ class MetricDataForwarder(object):
     """
     periodTimedelta = timedelta(seconds=self._aggSec)
     aggStartDatetime = lastEmittedAggTime + periodTimedelta
+
     while aggStartDatetime < stopDatetime:
-      # Query Tweet Volume metrics for one aggregation interval
-      metricToVolumeMap = defaultdict(int,
-                                      self._queryTweetVolumes(
-                                          aggStartDatetime,
-                                          self._symbolList))
-
-      # Generate metric samples
-      epochTimestamp = date_time_utils.epochFromNaiveUTCDatetime(
-        aggStartDatetime)
-      samples = tuple(
-        dict(
-          metricName=spec.metric,
-          value=metricToVolumeMap[spec.metric],
-          epochTimestamp=epochTimestamp)
-        for spec in self._metricSpecs
-      )
-
-      if g_log.isEnabledFor(logging.DEBUG):
-        g_log.debug("samples=%s", pprint.pformat(samples))
-
-      # Emit samples to Taurus
+      # Aggregate and forward Tweet Volume metrics for one aggregation interval
       try:
-        with metric_utils.metricDataBatchWrite(log=g_log) as putSample:
-          for sample in samples:
-            putSample(**sample)
-      except Exception:
-        g_log.exception("Failure while emitting metric data for agg=%s "
-                        "containing numSamples=%d",
-                        aggStartDatetime, len(samples))
+        self.aggregateAndForward(
+          aggStartDatetime=aggStartDatetime,
+          stopDatetime=aggStartDatetime + periodTimedelta)
+      except Exception:  # pylint: disable=W0703
         return lastEmittedAggTime
-      else:
-        g_log.info("Forwarded numSamples=%d for agg=%s",
-                   len(samples), aggStartDatetime)
 
       # Update db with last successfully-emitted datetime
       metric_utils.updateLastEmittedSampleDatetime(
@@ -1309,33 +1326,50 @@ class MetricDataForwarder(object):
 
 
   @collectorsdb.retryOnTransientErrors
-  def _queryTweetVolumes(self, aggDatetime, symbolList):
+  def _queryTweetVolumes(self, aggDatetime, metrics):
     """ Query the database for the counts of tweet metric volumes for the
     specified aggregation.
 
     :param datetime aggDatetime: aggregation timestamp
-    :param list symbolList: A list of strings containing the symbols the server
-      will update
+    :param metrics: optional sequence of metric names; if specified (non-None),
+      the operation will be limited to the given metric names
     :returns: a sparse sequence of two-tuples: (metric_name, count); metrics
       that have no tweets in the given aggregation period will be absent from
       the result.
     """
-    if not symbolList:
-      sel = sql.select(
-          [schema.twitterTweetSamples.c.metric, sql.func.count()]
-        ).where(schema.twitterTweetSamples.c.agg_ts == aggDatetime
-        ).group_by(schema.twitterTweetSamples.c.metric)
-    else:
-      sel = sql.select(
-          [schema.twitterTweetSamples.c.metric, sql.func.count()]
-      ).where(schema.twitterTweetSamples.c.agg_ts == aggDatetime
-      ).where(sql.or_(
-          schema.twitterTweetSamples.c.metric.ilike(
-              "TWITTER.TWEET.HANDLE.{symbol}.%".format(symbol=symbol)
-          ) for symbol in symbolList)
-      ).group_by(schema.twitterTweetSamples.c.metric)
+    sel = (
+      sql.select([schema.twitterTweetSamples.c.metric, sql.func.count()])
+      .where(schema.twitterTweetSamples.c.agg_ts == aggDatetime)
+      .group_by(schema.twitterTweetSamples.c.metric)
+    )
+
+    if metrics is not None:
+      sel = sel.where(schema.twitterTweetSamples.c.metric.in_(metrics))
 
     return self._sqlEngine.execute(sel).fetchall()
+
+
+
+class _TweetGarbageCollector(object):
+  """Garbage collector for old tweets in the twitter_tweets table"""
+
+  # Tweets older than this many days will be deleted from twitter_tweets table
+  # periodically
+  _GC_THRESHOLD_DAYS = 90
+
+  # How many seconds to sleep between garbage collection cycles
+  _PAUSE_INTERVAL_SEC = 3600
+
+  @classmethod
+  @logExceptions(g_log)
+  def run(cls):
+    """Run the garbage collector loop"""
+
+    while True:
+      purge_old_tweets.purgeOldTweets(
+        thresholdDays=cls._GC_THRESHOLD_DAYS)
+
+      time.sleep(cls._PAUSE_INTERVAL_SEC)
 
 
 
@@ -1350,115 +1384,93 @@ def _parseArgs():
     accessTokenSecret
     forwardNonMetric
     echoData
-    symbolList
   """
   helpString = (
     "%prog [options]"
     "This fetches twitter messages directly from twitter and sends message "
-    "volume to grok server as custom metrics. Metric configuration is in "
+    "volume to htm-it server as custom metrics. Metric configuration is in "
     "conf/metrics.json.")
 
   parser = OptionParser(helpString)
 
   parser.add_option(
-      "--partitions",
-      action="store",
-      type="int",
-      dest="numPartitions",
-      default=1,
-      help=("The list of companies will be partitioned into this many parts. "
-            "Each partition will be serviced by an individual stream listener. "
-            "At this time, it appears that Twitter allows MAX of TWO listeners "
-            "PER ACCOUNT. NOTE: if you start seeing 'ERROR: 420' in the log, "
-            "it's a sure sign that there are too many streamers on the same "
-            "account. [default: %default]"))
+    "--partitions",
+    action="store",
+    type="int",
+    dest="numPartitions",
+    default=1,
+    help=("The list of companies will be partitioned into this many parts. "
+          "Each partition will be serviced by an individual stream listener. "
+          "At this time, it appears that Twitter allows MAX of TWO listeners "
+          "PER ACCOUNT. NOTE: if you start seeing 'ERROR: 420' in the log, "
+          "it's a sure sign that there are too many streamers on the same "
+          "account. [default: %default]"))
 
   parser.add_option(
-      "--period",
-      action="store",
-      type="int",
-      dest="aggPeriod",
-      default=300,
-      help="Volume aggregation period in seconds [default: %default]")
+    "--period",
+    action="store",
+    type="int",
+    dest="aggPeriod",
+    default=300,
+    help="Volume aggregation period in seconds [default: %default]")
 
   parser.add_option(
-      "--ckey",
-      action="store",
-      type="string",
-      dest="consumerKey",
-      default=DEFAULT_CONSUMER_KEY,
-      help=("Twitter consumer key; overrides environment variable "
-            "TAURUS_TWITTER_CONSUMER_KEY [default: %default]"))
+    "--ckey",
+    action="store",
+    type="string",
+    dest="consumerKey",
+    default=DEFAULT_CONSUMER_KEY,
+    help=("Twitter consumer key; overrides environment variable "
+          "TAURUS_TWITTER_CONSUMER_KEY [default: %default]"))
 
   parser.add_option(
-      "--csecret",
-      action="store",
-      type="string",
-      dest="consumerSecret",
-      default=DEFAULT_CONSUMER_SECRET,
-      help=("Twitter consumer secret; overrides environment variable "
-            "TAURUS_TWITTER_CONSUMER_SECRET [default: %default]"))
+    "--csecret",
+    action="store",
+    type="string",
+    dest="consumerSecret",
+    default=DEFAULT_CONSUMER_SECRET,
+    help=("Twitter consumer secret; overrides environment variable "
+          "TAURUS_TWITTER_CONSUMER_SECRET [default: %default]"))
 
   parser.add_option(
-      "--atoken",
-      action="store",
-      type="string",
-      dest="accessToken",
-      default=DEFAULT_ACCESS_TOKEN,
-      help=("Twitter access token; overrides environment variable "
-            "TAURUS_TWITTER_ACCESS_TOKEN [default: %default]"))
+    "--atoken",
+    action="store",
+    type="string",
+    dest="accessToken",
+    default=DEFAULT_ACCESS_TOKEN,
+    help=("Twitter access token; overrides environment variable "
+          "TAURUS_TWITTER_ACCESS_TOKEN [default: %default]"))
 
   parser.add_option(
-      "--atokensecret",
-      action="store",
-      type="string",
-      dest="accessTokenSecret",
-      default=DEFAULT_ACCESS_TOKEN_SECRET,
-      help=("Twitter access token secret; overrides environment variable "
-            "TAURUS_TWITTER_ACCESS_TOKEN_SECRET [default: %default]"))
+    "--atokensecret",
+    action="store",
+    type="string",
+    dest="accessTokenSecret",
+    default=DEFAULT_ACCESS_TOKEN_SECRET,
+    help=("Twitter access token secret; overrides environment variable "
+          "TAURUS_TWITTER_ACCESS_TOKEN_SECRET [default: %default]"))
 
   parser.add_option(
-      "--forward-non-metric",
-      action="store_true",
-      default=False,
-      dest="forwardNonMetric",
-      help=("Forward non-metric data; applies only in active op-mode "
-            "[default: %default]"))
+    "--forward-non-metric",
+    action="store_true",
+    default=False,
+    dest="forwardNonMetric",
+    help=("Forward non-metric data; applies only in active op-mode "
+          "[default: %default]"))
 
   parser.add_option(
-      "--echodata",
-      action="store_true",
-      default=False,
-      dest="echoData",
-      help=("Echo processed Twitter messages to stdout for debugging "
-            "[default: %default]"))
-
-  parser.add_option(
-      "--forwardbacklog",
-      action="store_true",
-      default=False,
-      dest="forwardBacklog",
-      help=("Use this option to only forward backloged data (the processes "
-            "will not run indefinitely). This is only partially implemented "
-            "and currently only affects the MetricDataForwarder. "
-            "[default: %default]"))
-
-  parser.add_option(
-      "--symbol",
-      action="append",
-      dest="symbolList",
-      type=str,
-      default=[],
-      help=("(optional) Specify a list of symbols to update. The "
-            "twitter_direct_agent will only forward metric data for these "
-            "symbols but will continue collecting non-metric data (i.e. "
-            "tweets) for ALL symbols. Format: --symbol=ABC --symbol=DEF"))
+    "--echodata",
+    action="store_true",
+    default=False,
+    dest="echoData",
+    help=("Echo processed Twitter messages to stdout for debugging "
+          "[default: %default]"))
 
   options, remainingArgs = parser.parse_args()
   if remainingArgs:
     parser.error("Unexpected remaining args: %r" % (remainingArgs,))
 
-  if not (0 < options.numPartitions <= 2):
+  if not 0 < options.numPartitions <= 2:
     parser.error("Number of partitions must be either 1 or 2, but got %s" %
                  options.numPartitions)
 
@@ -1470,9 +1482,8 @@ def _parseArgs():
     accessToken=options.accessToken,
     accessTokenSecret=options.accessTokenSecret,
     forwardNonMetric=options.forwardNonMetric,
-    echoData=options.echoData,
-    forwardBacklog=options.forwardBacklog,
-    symbolList=options.symbolList)
+    echoData=options.echoData)
+
 
 
 def _partition(l, numParts):
@@ -1510,7 +1521,7 @@ def _runStreamWorker(task):
 
 
 
-@abortProgramOnAnyException(exitCode=1, logger=g_log)
+@logExceptions(g_log)
 def _runPoolThread(pool, tasks):
   # Stream data
   g_log.info("Submitting numTasks=%d to multiprocessing pool", len(tasks))
@@ -1540,59 +1551,44 @@ def main():
 
       raise
 
+    numPartitions = options["numPartitions"]
+
     opMode = config.get("twitter_direct_agent", "opmode")
 
     g_log.info("Starting TwitterStreamListener(s) with options=%r", options)
 
-    metricSpecs = loadMetricSpecs()
-
-    # Start forwarders
-    metricDataForwarderThread = None
-    tweetForwarderThread = None
-    if opMode == config.OP_MODE_ACTIVE:
-      # Start Metric Data Forwarder
-      metricDataForwarderThread = threading.Thread(
-        target=MetricDataForwarder.runInThread,
-        kwargs=dict(metricSpecs=metricSpecs,
-                    aggSec=options["aggPeriod"],
-                    symbolList=options["symbolList"],
-                    forwardOnlyBacklog=options["forwardBacklog"]))
-      metricDataForwarderThread.setDaemon(True)
-      metricDataForwarderThread.start()
-      g_log.info("Started MetricDataForwarder thread")
-
-      # Start Tweet Forwarder
-      if options["forwardNonMetric"]:
-        tweetForwarderThread = threading.Thread(
-          target=TweetForwarder.runInThread)
-        tweetForwarderThread.setDaemon(True)
-        tweetForwarderThread.start()
-        g_log.info("Started TweetForwarder thread")
-
-
-    numPartitions = options["numPartitions"]
-    metricPartitions = _partition(metricSpecs, numPartitions)
-
-    assert len(metricPartitions) == numPartitions, (
-      len(metricPartitions), numPartitions)
-    assert len(metricSpecs) == sum(len(part) for part in metricPartitions)
-
-    # Create a process pool with number of processes equal to the number of partitions
-    taskOptions = dict(options.iteritems())
-    taskOptions.pop("numPartitions")
-    taskOptions.pop("forwardNonMetric")
-    taskOptions.pop("forwardBacklog")
-    taskOptions.pop("symbolList")
-
-    tasks = [
-      dict(
-        [["metricSpecs", part]] + taskOptions.items())
-      for part in metricPartitions
-    ]
-
-    g_log.info("Creating multiprocessing pool with numWorkers=%d", len(tasks))
-    workerPool = multiprocessing.Pool(processes=len(tasks))
+    # NOTE: we must fork the process pool before running any other code
+    # in the main process that may invoke collectorsdb.engineFactory(),
+    # because the collectorsdb engine factory implementation is not fork-safe.
+    # The processes must be forked *before* the engine instance is allocated
+    # by the engine factory singleton.
+    g_log.info("Creating multiprocessing pool with numWorkers=%d",
+               numPartitions)
+    workerPool = multiprocessing.Pool(processes=numPartitions)
     try:
+
+      metricSpecs = loadMetricSpecs()
+
+      metricPartitions = _partition(metricSpecs, numPartitions)
+
+      assert len(metricPartitions) == numPartitions, (
+        len(metricPartitions), numPartitions)
+      assert len(metricSpecs) == sum(len(part) for part in metricPartitions)
+
+      # Create a process pool with number of processes equal to the number of
+      # partitions
+      taskOptions = dict(options.iteritems())
+      taskOptions.pop("numPartitions")
+      taskOptions.pop("forwardNonMetric")
+
+      tasks = [
+        dict(
+          [["metricSpecs", part]] + taskOptions.items())
+        for part in metricPartitions
+      ]
+
+      # Start tweet streamers
+      #
       # NOTE: we run workerPool.imap_unordered from a thread because the Pool
       # is otherwise somehow interfering with the processing of SIGINT and our
       # process just hangs when supervisord tries to shut it down.
@@ -1603,20 +1599,51 @@ def main():
       poolRunnerThread.start()
       g_log.info("Started Pool Runner thread")
 
-      # Wait for it to exit, which it never should
+      # Start Tweet Garbage Collector
+      tweetGarbageCollectorThread = threading.Thread(
+        target=_TweetGarbageCollector.run)
+      tweetGarbageCollectorThread.setDaemon(True)
+      tweetGarbageCollectorThread.start()
+      g_log.info("Started TweetGarbageCollector thread")
+
+      # Start forwarders
+      metricDataForwarderThread = None
+      tweetForwarderThread = None
+      if opMode == config.OP_MODE_ACTIVE:
+        # Start Metric Data Forwarder
+        metricDataForwarderThread = threading.Thread(
+          target=MetricDataForwarder.runInThread,
+          kwargs=dict(metricSpecs=metricSpecs,
+                      aggSec=options["aggPeriod"]))
+        metricDataForwarderThread.setDaemon(True)
+        metricDataForwarderThread.start()
+        g_log.info("Started MetricDataForwarder thread")
+
+        # Start Tweet Forwarder
+        if options["forwardNonMetric"]:
+          tweetForwarderThread = threading.Thread(
+            target=TweetForwarder.runInThread)
+          tweetForwarderThread.setDaemon(True)
+          tweetForwarderThread.start()
+          g_log.info("Started TweetForwarder thread")
+
+      # Wait for the pooled tasks to complete, which they never should
       while True:
         # Passing a timeout value allows the join call to be interrupted by
         # SIGINT, which results in KeyboardInterrupt exception.
-        poolRunnerThread.join(60)
-        assert poolRunnerThread.is_alive()
+        poolRunnerThread.join(10)
+        assert poolRunnerThread.isAlive()
+
+        tweetGarbageCollectorThread.join(10)
+        assert tweetGarbageCollectorThread.isAlive()
 
         if metricDataForwarderThread is not None:
-          metricDataForwarderThread.join(60)
-          assert metricDataForwarderThread.is_alive()
+          metricDataForwarderThread.join(10)
+          assert metricDataForwarderThread.isAlive()
 
         if tweetForwarderThread is not None:
-          tweetForwarderThread.join(60)
-          assert tweetForwarderThread.is_alive()
+          tweetForwarderThread.join(10)
+          assert tweetForwarderThread.isAlive()
     finally:
       # Terminate worker pool. There is no point in trying to close it because
       # our tasks never complete
@@ -1626,7 +1653,6 @@ def main():
   except KeyboardInterrupt:
     # Log with exception info to help debug deadlocks
     g_log.info("Observed KeyboardInterrupt", exc_info=True)
-    pass
   except:
     g_log.exception("Failed")
     raise

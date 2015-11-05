@@ -5,15 +5,15 @@
 # following terms and conditions apply:
 #
 # This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License version 3 as
+# it under the terms of the GNU Affero Public License version 3 as
 # published by the Free Software Foundation.
 #
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-# See the GNU General Public License for more details.
+# See the GNU Affero Public License for more details.
 #
-# You should have received a copy of the GNU General Public License
+# You should have received a copy of the GNU Affero Public License
 # along with this program.  If not, see http://www.gnu.org/licenses.
 #
 # http://numenta.org/licenses/
@@ -63,18 +63,18 @@ install-epel-repo:
     - user: root
     - group: root
     - source: salt://nta-yum/files/{{ repo }}
-    - mode: 644
+    - mode: 0644
     - require:
-      - file: remove-stale-grok-repo
+      - file: remove-stale-htm-it-repo
     - watch_in:
       - cmd: epel-installed
       - cmd: reload-yum-database
 {% endfor %}
 
-# Purge the old grok.repo file
-remove-stale-grok-repo:
+# Purge the old htm-it.repo file
+remove-stale-htm-it-repo:
   file.absent:
-    - name: /etc/yum.repos.d/grok.repo
+    - name: /etc/yum.repos.d/htm-it.repo
     - watch_in:
       - cmd: reload-yum-database
 
@@ -101,7 +101,7 @@ rebuild-yum-cache:
 /etc/init.d/yum-housekeeping:
   file.managed:
     - source: salt://nta-yum/files/yum-housekeeping.initd
-    - mode: 755
+    - mode: 0755
     - require:
       - file: remove-stale-yum-housekeeping-script
 

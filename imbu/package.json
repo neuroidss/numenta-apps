@@ -1,0 +1,82 @@
+{
+  "name": "Imbu",
+  "version": "0.0.1",
+  "description": "Numenta Imbu HTM NLP Example Application",
+  "main": "gui/loader.js",
+  "engines": {
+    "node": ">=0.12.7",
+    "npm": ">=2.11.3"
+  },
+  "os": [
+    "darwin",
+    "linux",
+    "win32"
+  ],
+  "cpu": [
+    "x64"
+  ],
+  "scripts": {
+    "check": "npm install && npm prune && npm outdated -depth 0",
+    "clean": "rm -Rf node_modules/",
+    "dev": "npm run pack-web && npm run serve",
+    "electron": "electron .",
+    "pack-electron": "gulp webpack --target atom",
+    "pack-web": "gulp webpack",
+    "serve": "http-server -p 9999 ./gui/browser/",
+    "start": "npm run pack-electron && npm run electron",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/numenta/numenta-apps"
+  },
+  "keywords": [
+    "Imbu",
+    "Numenta",
+    "Hierarchical",
+    "Temporal",
+    "Memory",
+    "HTM",
+    "NLP",
+    "Machine",
+    "Intelligence",
+    "Application"
+  ],
+  "homepage": "http://numenta.com",
+  "bugs": "https://github.com/numenta/numenta-apps/issues",
+  "author": {
+    "name": "Numenta",
+    "email": "info@numenta.com",
+    "url": "http://numenta.com"
+  },
+  "license": "SEE LICENSE IN LICENSE.txt",
+  "dependencies": {
+    "electron": "0.4.1",
+    "fluxible": "0.5.1",
+    "fluxible-addons-react": "0.1.6",
+    "material-ui": "0.10.2",
+    "node-sass": "3.2.0",
+    "react": "0.13.3",
+    "react-tap-event-plugin": "0.1.7",
+    "superagent": "1.3.0"
+  },
+  "devDependencies": {
+    "babel": "5.8.21",
+    "babel-core": "5.8.21",
+    "babel-eslint": "4.0.10",
+    "babel-loader": "5.3.2",
+    "babel-plugin-typecheck": "1.2.0",
+    "casperjs": "1.1.0-beta3",
+    "electron-prebuilt": "0.30.2",
+    "eslint": "1.2.1",
+    "eslint-plugin-react": "3.2.3",
+    "gulp": "3.9.0",
+    "gulp-util": "3.0.6",
+    "http-server": "0.8.0",
+    "mocha": "2.2.5",
+    "mocha-casperjs": "0.5.4",
+    "react-hot-loader": "1.2.8",
+    "webpack": "1.11.0",
+    "webpack-stream": "2.1.0"
+  }
+}

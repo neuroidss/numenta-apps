@@ -1,0 +1,10 @@
+*.egg
+*.egg-info
+*.log
+build/
+dist/
+frontend/browser/assets/bundle/
+frontend/docs/
+logs/
+node_modules/
+Unicorn-darwin-x64/

@@ -5,15 +5,15 @@
 # following terms and conditions apply:
 #
 # This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License version 3 as
+# it under the terms of the GNU Affero Public License version 3 as
 # published by the Free Software Foundation.
 #
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-# See the GNU General Public License for more details.
+# See the GNU Affero Public License for more details.
 #
-# You should have received a copy of the GNU General Public License
+# You should have received a copy of the GNU Affero Public License
 # along with this program.  If not, see http://www.gnu.org/licenses.
 #
 # http://numenta.org/licenses/
@@ -21,10 +21,10 @@
 
 # See http://peak.telecommunity.com/DevCenter/setuptools#namespace-packages
 try:
-    __import__('pkg_resources').declare_namespace(__name__)
+  __import__('pkg_resources').declare_namespace(__name__)
 except ImportError:
-    from pkgutil import extend_path
-    __path__ = extend_path(__path__, __name__)
+  from pkgutil import extend_path
+  __path__ = extend_path(__path__, __name__)
 
 import os
 from pkg_resources import resource_filename, get_distribution
@@ -40,10 +40,10 @@ CONF_DIR = os.path.join(TAURUS_METRIC_COLLECTORS_HOME, "conf")
 
 
 
-logging_support = logging_support_raw
+logging_support = logging_support_raw  # pylint: disable=C0103
 logging_support.setLogDir(
   os.environ.get("TAURUS_METRIC_COLLECTORS_LOG_DIR",
-  os.path.join(TAURUS_METRIC_COLLECTORS_HOME, "logs")))
+                 os.path.join(TAURUS_METRIC_COLLECTORS_HOME, "logs")))
 
 
 
@@ -51,8 +51,11 @@ class ApplicationConfig(Config):
   """ Common configration shared by taurus.metric_collectors applications
   """
 
+
   # Name of configation object
   CONFIG_NAME = "application.conf"
+
+  CONFIG_DIR = CONF_DIR
 
   # ACTIVE mode: consume datasource, aggregate, forward metrics and non-metric
   # data
@@ -67,7 +70,7 @@ class ApplicationConfig(Config):
 
   def __init__(self, mode=Config.MODE_LOGICAL):
     super(ApplicationConfig, self).__init__(self.CONFIG_NAME,
-                                            CONF_DIR,
+                                            self.CONFIG_DIR,
                                             mode=mode)
 
 config = ApplicationConfig()

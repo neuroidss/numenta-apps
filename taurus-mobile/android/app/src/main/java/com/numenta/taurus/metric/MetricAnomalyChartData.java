@@ -5,15 +5,15 @@
  * following terms and conditions apply:
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 3 as
+ * it under the terms of the GNU Affero Public License version 3 as
  * published by the Free Software Foundation.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
+ * See the GNU Affero Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Affero Public License
  * along with this program.  If not, see http://www.gnu.org/licenses.
  *
  * http://numenta.org/licenses/
@@ -24,7 +24,7 @@ package com.numenta.taurus.metric;
 
 import com.numenta.core.data.AggregationType;
 import com.numenta.core.data.Metric;
-import com.numenta.core.service.GrokException;
+import com.numenta.core.service.HTMException;
 import com.numenta.core.ui.chart.AnomalyChartData;
 import com.numenta.core.utils.DataUtils;
 import com.numenta.core.utils.Log;
@@ -454,6 +454,8 @@ public class MetricAnomalyChartData implements AnomalyChartData, Serializable {
                                     if (idx >= _allRawData.length) {
                                         idx = _allRawData.length - 1;
                                     }
+
+                                    Log.e("value","index: "+idx + "valvue: " + value +" timestamp: "+ timestamp);
                                     _allRawData[idx] = value;
                                     // Aggregate anomalies hourly using the max anomaly
                                     long hour = DataUtils.floorTo60minutes(timestamp);
@@ -474,7 +476,7 @@ public class MetricAnomalyChartData implements AnomalyChartData, Serializable {
                     refreshData();
                 } catch (IOException e) {
                     Log.e(TAG, "Failed to load metric data", e);
-                } catch (GrokException e) {
+                } catch (HTMException e) {
                     Log.e(TAG, "Failed to load metric data", e);
                 }
             } else {

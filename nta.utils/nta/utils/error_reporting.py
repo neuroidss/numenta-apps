@@ -5,15 +5,15 @@
 # following terms and conditions apply:
 #
 # This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License version 3 as
+# it under the terms of the GNU Affero Public License version 3 as
 # published by the Free Software Foundation.
 #
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-# See the GNU General Public License for more details.
+# See the GNU Affero Public License for more details.
 #
-# You should have received a copy of the GNU General Public License
+# You should have received a copy of the GNU Affero Public License
 # along with this program.  If not, see http://www.gnu.org/licenses.
 #
 # http://numenta.org/licenses/
@@ -37,9 +37,9 @@ g_log = logging.getLogger(__name__)
 
 
 def sendMonitorErrorEmail(monitorName, resourceName, message, isTest=False,
-                          params=None):
-  """
-  Sends an email concerning a monitor related error.
+                          subjectPrefix=None, params=None):
+  """Sends an email concerning a monitor related error. Expects additional
+  paramteres via environment variables as documented in ``sendErrorEmail``.
   :param monitorName: Name of monitor detecting error
   :type monitorName: string
   :param resourceName: URL checked by this monitor
@@ -48,16 +48,21 @@ def sendMonitorErrorEmail(monitorName, resourceName, message, isTest=False,
   :type message: string
   :param isTest: flag signaling whether email is being sent as a test
   :type isTest: Boolean
-  :param params: an optional dict that must contain the following keys:
+  :param params: an optional dict to use instead of environment variables that
+    must contain the following keys:
                  senderAddress,
                  recipients,
                  awsRegion,
                  sesEndpoint,
                  awsAccessKeyId,
                  awsSecretAccessKey
+                 It may optionally contain a subjectPrefix key which will be
+                 used as a prefix to the generated message subject
   :type params: dict
   """
   subject = "Test Email: " if isTest else ""
+  if subjectPrefix is not None:
+    subject += "%s: " % subjectPrefix
   subject += "Monitor {0} has detected an error!".format(monitorName)
 
   # Add current datetime
@@ -102,7 +107,8 @@ def sendErrorEmail(subject, body, params=None):
   :type subject: string
   :param body: Email body
   :type body: string
-  :param params: an optional dict that must contain the following keys:
+  :param params: an optional dict to use instead of environment variables that
+    must contain the following keys:
                  senderAddress,
                  recipients,
                  awsRegion,
@@ -166,14 +172,14 @@ def sendEmailViaSES(subject,
     conn = boto.ses.SESConnection(region=regionInfo,
                                   aws_access_key_id=awsAccessKeyId,
                                   aws_secret_access_key=awsSecretAccessKey)
-  
+
     conn.send_email(source=senderAddress,
                     subject=subject,
                     body=body,
                     to_addresses=recipients)
     g_log.info("Called boto.ses.SESConnection.send_email. This does not "
                "necessarily mean that the email was successfully sent.")
-    
+
   except BotoServerError:
     g_log.exception("Failed to send email via AWS/SES. subject='%s'" %
                     (subject,))

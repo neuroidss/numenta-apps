@@ -1,4 +1,4 @@
-**GROK CONFIGURATION PATCH: ConfigAttributePatch**
+**HTM-IT CONFIGURATION PATCH: ConfigAttributePatch**
 
 Override configuration settings in-proc and of child processes. An instance of
 ConfigAttributePatch may be used as a decorator, class decorator or Context
@@ -7,7 +7,7 @@ Manager to patch existing configuration attribute values.
 *Context Manager Example:*
 ```python
 with ConfigAttributePatch(
-   grok.app.config.CONFIG_NAME,
+   htm.it.app.config.CONFIG_NAME,
    (("aws", "aws_access_key_id", os.environ["AWS_ACCESS_KEY_ID"]),
    ("aws", "aws_secret_access_key", os.environ["AWS_SECRET_ACCESS_KEY"]))):
   <do test logic in the context of the patched config attributes>
@@ -16,7 +16,7 @@ with ConfigAttributePatch(
 *Function Decorator Example:*
 ```python
 @ConfigAttributePatch(
-   grok.app.config.CONFIG_NAME,
+   htm.it.app.config.CONFIG_NAME,
    (("aws", "aws_access_key_id", os.environ["AWS_ACCESS_KEY_ID"]),
    ("aws", "aws_secret_access_key", os.environ["AWS_SECRET_ACCESS_KEY"])))
 def testSomething(self):
@@ -26,7 +26,7 @@ def testSomething(self):
 *Class Decorator Example:*
 ```python
 @ConfigAttributePatch(
-   grok.app.config.CONFIG_NAME,
+   htm.it.app.config.CONFIG_NAME,
    (("aws", "aws_access_key_id", os.environ["AWS_ACCESS_KEY_ID"]),
    ("aws", "aws_secret_access_key", os.environ["AWS_SECRET_ACCESS_KEY"])))
 class MyTestCase(unittest.TestCase):
@@ -70,7 +70,7 @@ import subprocess
 
 with ConfigAttributePatch("application.conf",
                             (("metric_collector", "poll_interval", "999"),)):
-    p = subprocess.Popen(["python", "-c", "import grok.app; print 'poll_interval in subprocess:', "
-                         "grok.app.config.get('metric_collector', 'poll_interval')"])
+    p = subprocess.Popen(["python", "-c", "import htm.it.app; print 'poll_interval in subprocess:', "
+                         "htm.it.app.config.get('metric_collector', 'poll_interval')"])
     returnCode = p.wait()
 ```

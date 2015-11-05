@@ -1,5 +1,0 @@
-[grok-releases]
-name=Grok public releases repository
-baseurl=http://public.numenta.com/yum/releases
-gpgcheck=0
-priority=1

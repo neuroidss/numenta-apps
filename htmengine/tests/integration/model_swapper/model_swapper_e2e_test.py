@@ -6,15 +6,15 @@
 # following terms and conditions apply:
 #
 # This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License version 3 as
+# it under the terms of the GNU Affero Public License version 3 as
 # published by the Free Software Foundation.
 #
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-# See the GNU General Public License for more details.
+# See the GNU Affero Public License for more details.
 #
-# You should have received a copy of the GNU General Public License
+# You should have received a copy of the GNU Affero Public License
 # along with this program.  If not, see http://www.gnu.org/licenses.
 #
 # http://numenta.org/licenses/
@@ -34,10 +34,10 @@ import unittest
 
 
 from nupic.data.fieldmeta import FieldMetaInfo, FieldMetaSpecial, FieldMetaType
+from nupic.frameworks.opf.common_models.cluster_params import (
+  getScalarMetricWithTimeOfDayAnomalyParams)
 
 from htmengine import htmengineerrno
-from htmengine.algorithms.modelSelection.clusterParams import (
-  getScalarMetricWithTimeOfDayParams)
 from htmengine.model_swapper.model_swapper_interface import (
   ModelCommandResult,
   ModelInferenceResult,
@@ -120,12 +120,11 @@ class ModelSwapperE2ETestCase(unittest.TestCase):
     resultBatches = []
 
     with ModelSwapperInterface() as swapperAPI:
-      possibleModels = getScalarMetricWithTimeOfDayParams(metricData=[0],
-                                                         minVal=0,
-                                                         maxVal=1000)
+      args = getScalarMetricWithTimeOfDayAnomalyParams(metricData=[0],
+                                                       minVal=0,
+                                                       maxVal=1000)
 
       # Submit requests including a model creation command and two data rows.
-      args = possibleModels[0]
       args["inputRecordSchema"] = (
           FieldMetaInfo("c0", FieldMetaType.datetime,
                         FieldMetaSpecial.timestamp),
@@ -277,12 +276,11 @@ class ModelSwapperE2ETestCase(unittest.TestCase):
     resultBatches = []
 
     with ModelSwapperInterface() as swapperAPI:
-      possibleModels = getScalarMetricWithTimeOfDayParams(metricData=[0],
-                                                         minVal=0,
-                                                         maxVal=1000)
+      args = getScalarMetricWithTimeOfDayAnomalyParams(metricData=[0],
+                                                       minVal=0,
+                                                       maxVal=1000)
 
       # Submit requests including a model creation command and two data rows.
-      args = possibleModels[0]
       args["inputRecordSchema"] = (
           FieldMetaInfo("c0", FieldMetaType.datetime,
                         FieldMetaSpecial.timestamp),
@@ -415,5 +413,5 @@ class ModelSwapperE2ETestCase(unittest.TestCase):
 
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
   unittest.main()

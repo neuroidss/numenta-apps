@@ -29,5 +29,18 @@ setup(
   packages = find_packages(),
   include_package_data=True,
   install_requires = installRequires,
-  dependency_links = dependencyLinks
+  dependency_links = dependencyLinks,
+  entry_points = {
+    "console_scripts": [
+      "nta-import-queues = nta.utils.tools.import_queues:main",
+      ("nta-get-supervisord-state = "
+       "nta.utils.tools.supervisord_state:getStateMain"),
+      ("nta-wait-for-supervisord-running = "
+       "nta.utils.tools.supervisord_state:waitForRunningStateMain"),
+      ("nta-wait-for-supervisord-stopped = "
+       "nta.utils.tools.supervisord_state:waitForStoppedStateMain"),
+      ("nta-wait-for-supervisord-processes-stopped = "
+       "nta.utils.tools.supervisord_state:waitForAllToStop"),
+    ]
+  }
 )

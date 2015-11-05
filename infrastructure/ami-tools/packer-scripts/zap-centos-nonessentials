@@ -6,15 +6,15 @@
 # following terms and conditions apply:
 #
 # This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License version 3 as
+# it under the terms of the GNU Affero Public License version 3 as
 # published by the Free Software Foundation.
 #
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-# See the GNU General Public License for more details.
+# See the GNU Affero Public License for more details.
 #
-# You should have received a copy of the GNU General Public License
+# You should have received a copy of the GNU Affero Public License
 # along with this program.  If not, see http://www.gnu.org/licenses.
 #
 # http://numenta.org/licenses/
@@ -25,7 +25,7 @@
 # that actually need them, and the version in the C6 base AMI is outdated.
 #
 # We want to install only the bare minimum set of software packages that
-# Grok needs to run. The less we install, the less we have to support and
+# HTM-IT needs to run. The less we install, the less we have to support and
 # pay attention to security updates for.
 
 zap-centos-nonessentials() {
@@ -48,7 +48,7 @@ zap-centos-nonessentials() {
   echo
   echo
 
-  yum groupremove -y \
+  sudo yum groupremove -y \
     'Assamese Support [as]' \
     'Desktop Debugging and Performance Tools' \
     'Legacy X Window System compatibility' \
@@ -65,13 +65,13 @@ zap-centos-nonessentials() {
     'X Window System'
   # This removed 270+ packages we don't use.
 
-  # Even more packages that shouldn't be on a grok box.
+  # Even more packages that shouldn't be on a htm-it box.
   echo
   echo
   echo "Purging unnecessary packages..."
   echo
   echo
-  yum remove -y \
+  sudo yum remove -y \
     bison \
     cdparanoia \
     cdparanoia-libs \

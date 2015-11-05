@@ -5,15 +5,15 @@
 # following terms and conditions apply:
 #
 # This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License version 3 as
+# it under the terms of the GNU Affero Public License version 3 as
 # published by the Free Software Foundation.
 #
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-# See the GNU General Public License for more details.
+# See the GNU Affero Public License for more details.
 #
-# You should have received a copy of the GNU General Public License
+# You should have received a copy of the GNU Affero Public License
 # along with this program.  If not, see http://www.gnu.org/licenses.
 #
 # http://numenta.org/licenses/
@@ -23,9 +23,11 @@ We make a lot of RPMs. Utility functions to make building them with Python
 scripts less painful.
 """
 
+import os
+
 from infrastructure.utilities import git
 from infrastructure.utilities.path import changeToWorkingDir
-from infrastructure.utilities.cli import executeCommand, runWithOutput
+from infrastructure.utilities.cli import runWithOutput
 
 
 
@@ -154,8 +156,8 @@ def gitCloneIntoFakeroot(fakeroot,
                          installDirectory,
                          repoDirectory,
                          gitURL,
-                         sha=None,
-                         logger=None):
+                         logger,
+                         sha=None):
   """
   Clone a git repository into a specific path in a fakeroot
 
@@ -177,24 +179,23 @@ def gitCloneIntoFakeroot(fakeroot,
   with a specific SHA (we normally build tip of master, for example), but we
   always want to include the exact SHA packaged in our RPM descriptions.
   """
-  if logger:
-    logger.debug("Prepping fakeroot in %s", fakeroot)
-  installPath = "%s/%s" % (fakeroot, installDirectory)
+  logger.debug("Prepping fakeroot in %s", fakeroot)
+  installPath = os.path.join(fakeroot, installDirectory)
   with changeToWorkingDir(installPath):
     if logger:
-      logger.debug("Cloning %s into %s/%s/%s",
+      logger.debug("Cloning %s into %s",
                    gitURL,
-                   fakeroot,
-                   installDirectory,
-                   repoDirectory)
-    git.clone(gitURL, directory=repoDirectory)
-    workDirectory = "%s/%s/%s" % (fakeroot, installDirectory, repoDirectory)
+                   os.path.join(fakeroot,
+                                installDirectory,
+                                repoDirectory))
+    git.clone(gitURL=gitURL, directory=repoDirectory, logger=logger)
+    workDirectory = os.path.join(fakeroot, installDirectory, repoDirectory)
     with changeToWorkingDir(workDirectory):
       if sha:
-        git.resetHard()
+        git.resetHard(sha="", logger=logger)
         logger.debug("Checking out SHA %s in %s", sha, workDirectory)
-        git.checkout(sha)
+        git.checkout(pathspec=sha, logger=logger)
       else:
         logger.debug("No SHA specified, using head of master")
-      return git.getCurrentSha()
+      return git.getCurrentSha(logger=logger)
 

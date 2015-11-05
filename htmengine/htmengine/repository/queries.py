@@ -5,34 +5,30 @@
 # following terms and conditions apply:
 #
 # This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License version 3 as
+# it under the terms of the GNU Affero Public License version 3 as
 # published by the Free Software Foundation.
 #
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-# See the GNU General Public License for more details.
+# See the GNU Affero Public License for more details.
 #
-# You should have received a copy of the GNU General Public License
+# You should have received a copy of the GNU Affero Public License
 # along with this program.  If not, see http://www.gnu.org/licenses.
 #
 # http://numenta.org/licenses/
 # ----------------------------------------------------------------------
-from collections import namedtuple
-from datetime import datetime, timedelta
+from datetime import datetime
 
-from sqlalchemy import func, MetaData, Numeric, text
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy import func
 from sqlalchemy.sql import select
-from sqlalchemy.engine.base import Connection, Engine
+from sqlalchemy.engine.base import Connection
 
-from htmengine.exceptions import (DuplicateRecordError,
-                                  MetricStatisticsNotReadyError,
+from htmengine.exceptions import (MetricStatisticsNotReadyError,
                                   ObjectNotFoundError)
 import htmengine.utils
 from htmengine.utils import jsonDecode
 from htmengine.repository import schema
-from htmengine.repository.schema import metadata
 
 
 
@@ -94,7 +90,7 @@ def deleteMetric(conn, metricId):
     deleteModel(conn, metricId)
 
     # Delete metric
-    result = (conn.execute(schema.metric.delete()
+    result = (conn.execute(schema.metric.delete() # pylint: disable=E1120
                            .where(schema.metric.c.uid == metricId)))
 
     if result.rowcount == 0:
@@ -118,7 +114,7 @@ def deleteModel(conn, metricId):
 
   with conn.begin():
     # Reset model and model data
-    update = (schema.metric.update()
+    update = (schema.metric.update() # pylint: disable=E1120
               .values(parameters=None,
                       model_params=None,
                       status=MetricStatus.UNMONITORED,
@@ -197,10 +193,6 @@ def getCustomMetrics(conn, fields=None):
   sel = select(fields).where(schema.metric.c.datasource == "custom")
 
   return conn.execute(sel)
-
-
-
-  return _getMetrics(conn, fields=fields, where=where)
 
 
 
@@ -457,7 +449,8 @@ def setMetricCollectorError(conn, metricId, value):
   :type value: str
   :raises: htmengine.exceptions.ObjectNotFoundError if no match
   """
-  update = schema.metric.update().where(schema.metric.c.uid == metricId)
+  update = (schema.metric.update() # pylint: disable=E1120
+            .where(schema.metric.c.uid == metricId))
   result = conn.execute(update.values(collector_error=value))
 
   if result.rowcount == 0:
@@ -476,7 +469,8 @@ def setMetricLastTimestamp(conn, metricId, value):
   :type value: str
   :raises: htmengine.exceptions.ObjectNotFoundError if no match
   """
-  update = schema.metric.update().where(schema.metric.c.uid == metricId)
+  update = (schema.metric.update() # pylint: disable=E1120
+            .where(schema.metric.c.uid == metricId))
   result = conn.execute(update.values(last_timestamp=value))
 
   if result.rowcount == 0:
@@ -512,7 +506,8 @@ def setMetricStatus(conn, metricId, status, message=None, refStatus=None):
   """
   updateValues = {"status": status, "message": message}
 
-  update = schema.metric.update().where(schema.metric.c.uid == metricId)
+  update = (schema.metric.update() # pylint: disable=E1120
+            .where(schema.metric.c.uid == metricId))
 
   if refStatus is not None:
     # Add refStatus match to the predicate
@@ -578,13 +573,14 @@ def incrementMetricRowid(conn, metricId, amount=1):
 
   if amount < 1:
     raise ValueError("Expected positive integer amount for incrementing "
-                       "last_rowid, but got: %r" % (amount,))
+                     "last_rowid, but got: %r" % (amount,))
 
   with conn.begin():
     oldLastRowid = getMetricWithUpdateLock(
       conn, metricId, fields=[schema.metric.c.last_rowid])[0]
 
-    update = schema.metric.update().where(schema.metric.c.uid == metricId)
+    update = (schema.metric.update() # pylint: disable=E1120
+              .where(schema.metric.c.uid == metricId))
 
     conn.execute(update.values(last_rowid=schema.metric.c.last_rowid+amount))
 
@@ -621,7 +617,8 @@ def addMetricData(conn, metricId, data):
                                                        lastRowid - numRows + 1)
     ]
 
-    conn.execute(schema.metric_data.insert(), rows)
+    conn.execute(schema.metric_data.insert(), # pylint: disable=E1120
+                 rows)
 
   return rows
 
@@ -849,7 +846,7 @@ def getInstances(conn):
   instances = {}
   for metricRow in metricRows:
     if ("/" in metricRow.name and
-            "/" in metricRow.name[metricRow.name.index("/")+1:]):
+        "/" in metricRow.name[metricRow.name.index("/")+1:]):
       endOfNamespace = metricRow.name.index("/", metricRow.name.index("/")+1)
       namespace = metricRow.name[0:endOfNamespace]
     else:

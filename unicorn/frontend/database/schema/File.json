@@ -1,0 +1,37 @@
+{
+  "$schema": "http://json-schema.org/schema#",
+  "id": "/File",
+  "type": "object",
+  "properties": {
+    "uid": {
+      "type": "string",
+      "maxLength": 40,
+      "minLength": 1
+    },
+    "name": {
+      "type": "string"
+    },
+    "filename": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string",
+      "description": "File description"
+    },
+    "timestampFormat": {
+      "type": "string",
+      "default": "YYYY-MM-DDTHH:mm:ss.sssZ",
+      "description": "Timestamp format. Default ISO 8601"
+    },
+    "records": {
+      "type": "number",
+      "description": "Number of records"
+    },
+    "type": {
+      "description": "Sample file from filesystem, or Uploaded file from user?",
+      "enum": [ "sample", "uploaded" ],
+      "type": "string"
+    }
+  },
+  "required": ["uid", "name", "filename", "type"]
+}

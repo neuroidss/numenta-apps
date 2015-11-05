@@ -5,15 +5,15 @@
  * following terms and conditions apply:
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 3 as
+ * it under the terms of the GNU Affero Public License version 3 as
  * published by the Free Software Foundation.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
+ * See the GNU Affero Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Affero Public License
  * along with this program.  If not, see http://www.gnu.org/licenses.
  *
  * http://numenta.org/licenses/
@@ -23,7 +23,7 @@
 package com.numenta.core.service;
 
 import com.numenta.core.R;
-import com.numenta.core.app.GrokApplication;
+import com.numenta.core.app.HTMApplication;
 import com.numenta.core.data.Annotation;
 import com.numenta.core.data.CoreDatabase;
 import com.numenta.core.data.Metric;
@@ -55,7 +55,7 @@ import static com.numenta.core.preference.PreferencesConstants.PREF_LAST_CONNECT
 
 
 /**
- * This service is managed by {@link GrokService} and is responsible for
+ * This service is managed by {@link DataService} and is responsible for
  * synchronizing the local metric database with the server. It will poll the
  * server at {@link #REFRESH_RATE} interval for new data and download all
  * available data since last update.
@@ -106,13 +106,13 @@ public class DataSyncService {
     private static final String TAG = DataSyncService.class.getSimpleName();
 
     // Main Service
-    private final GrokService _service;
+    private final DataService _service;
 
     // This task will periodically load data from the server
     private ScheduledFuture<?> _updateTask;
 
-    // Grok API Helper
-    private GrokClient _grokCli;
+    // HTM API Helper
+    private HTMClient _htmClient;
 
     // Prevent multiple threads from downloading data from the server
     // simultaneously
@@ -121,13 +121,13 @@ public class DataSyncService {
     /**
      * DataSyncService constructor.
      * <p>
-     * Should only be called by {@link GrokService}
+     * Should only be called by {@link DataService}
      * </p>
      *
-     * @param service The main {@link GrokService}
+     * @param service The main {@link DataService}
      */
     /* package */
-    public DataSyncService(GrokService service) {
+    public DataSyncService(DataService service) {
         this._service = service;
     }
 
@@ -138,7 +138,7 @@ public class DataSyncService {
         Intent intent = new Intent(DataSyncService.REFRESH_STATE_EVENT);
         intent.putExtra("isRefreshing", isRefreshing);
         LocalBroadcastManager.getInstance(_service).sendBroadcast(intent);
-        GrokApplication.setLastError(null);
+        HTMApplication.setLastError(null);
     }
 
     /**
@@ -148,7 +148,7 @@ public class DataSyncService {
         Intent intent = new Intent(DataSyncService.REFRESH_STATE_EVENT);
         intent.putExtra("isRefreshing", isRefreshing);
         LocalBroadcastManager.getInstance(_service).sendBroadcast(intent);
-        GrokApplication.setLastError(result);
+        HTMApplication.setLastError(result);
     }
 
     /**
@@ -179,27 +179,27 @@ public class DataSyncService {
     }
 
     /**
-     * Load all metrics from Grok and update the local database by adding new metrics and removing
+     * Load all metrics from server and update the local database by adding new metrics and removing
      * old ones. This method will fire {@link #METRIC_CHANGED_EVENT}
      *
      * @return Number of new metrics
      */
     protected int loadAllMetrics() throws InterruptedException,
-            ExecutionException, GrokException, IOException {
-        if (_grokCli == null) {
+            ExecutionException, HTMException, IOException {
+        if (_htmClient == null) {
             Log.w(TAG, "Not connected to any server yet");
             return 0;
         }
 
         // Check for connectivity
-        if (!_grokCli.isOnline()) {
+        if (!_htmClient.isOnline()) {
             return 0;
         }
 
         // Get metrics from server
-        List<Metric> remoteMetrics = _grokCli.getMetrics();
+        List<Metric> remoteMetrics = _htmClient.getMetrics();
         if (remoteMetrics == null) {
-            Log.e(TAG, "Unable to load metrics from server. " + _grokCli.getServerUrl());
+            Log.e(TAG, "Unable to load metrics from server. " + _htmClient.getServerUrl());
             return 0;
         }
         int newMetrics = 0;
@@ -207,7 +207,7 @@ public class DataSyncService {
         // Save results to database
         boolean dataChanged = false;
         Metric localMetric;
-        CoreDatabase database = GrokApplication.getDatabase();
+        CoreDatabase database = HTMApplication.getDatabase();
         for (Metric remoteMetric : remoteMetrics) {
             // Check if it is a new metric
             localMetric = database.getMetric(remoteMetric.getId());
@@ -284,7 +284,7 @@ public class DataSyncService {
             return;
         }
 
-        final CoreDatabase database = GrokApplication.getDatabase();
+        final CoreDatabase database = HTMApplication.getDatabase();
         if (database == null) {
             return;
         }
@@ -321,11 +321,11 @@ public class DataSyncService {
 
             Future<?> pendingIO = null;
             try {
-                // Try to connect to Grok
-                if (_grokCli == null) {
-                    _grokCli = _service.connectToServer();
+                // Try to connect to server
+                if (_htmClient == null) {
+                    _htmClient = _service.connectToServer();
                 }
-                if (_grokCli == null) {
+                if (_htmClient == null) {
                     throw new IOException("Unable to connect to server");
                 }
 
@@ -334,7 +334,7 @@ public class DataSyncService {
                 editor.putLong(PREF_LAST_CONNECTED_TIME, now);
                 editor.apply();
 
-                // Start by downloading all the metrics available from Grok
+                // Start by downloading all the metrics available from backend
                 // in a background IO thread
                 pendingIO = _service.getIOThreadPool().submit(new Callable<Void>() {
                     @Override
@@ -354,7 +354,7 @@ public class DataSyncService {
                             synchronizeNotifications();
 
                             // Synchronize application data last
-                            GrokApplication.getInstance().loadApplicationData(_grokCli);
+                            HTMApplication.getInstance().loadApplicationData(_htmClient);
 
                         } catch (android.database.sqlite.SQLiteFullException e) {
                             // Try to delete old records to make room if possible
@@ -392,7 +392,7 @@ public class DataSyncService {
                 }
             } catch (AuthenticationException e) {
                 _service.fireAuthenticationFailedEvent();
-            } catch (GrokException e) {
+            } catch (HTMException e) {
                 Log.e(TAG, "Error loading data", e);
                 result = context.getString(R.string.refresh_update_error, hoursSinceData);
             } catch (IOException e) {
@@ -411,7 +411,7 @@ public class DataSyncService {
     protected void synchronizeNotifications() {
         try {
             _service.synchronizeNotifications();
-        } catch (GrokException e) {
+        } catch (HTMException e) {
             Log.e(TAG, "Failed to synchronize notifications", e);
         } catch (IOException e) {
             Log.e(TAG, "Failed to synchronize notifications", e);
@@ -421,28 +421,28 @@ public class DataSyncService {
     /**
      * Loads data for all metrics asynchronous.
      */
-    protected void loadAllData() throws GrokException, IOException {
+    protected void loadAllData() throws HTMException, IOException {
 
     }
 
     /**
-     * Load all annotations from Grok and update the local database by adding new annotations and
+     * Load all annotations from server and update the local database by adding new annotations and
      * removing old ones. This method will fire {@link DataSyncService#ANNOTATION_CHANGED_EVENT}
      * <p><b>Note:</b></p>
-     * This method will only load the last {@link com.numenta.core.app.GrokApplication#getNumberOfDaysToSync()}
+     * This method will only load the last {@link HTMApplication#getNumberOfDaysToSync()}
      * days of data.
      */
-    protected void loadAllAnnotations() throws IOException, GrokException {
-        if (_grokCli == null) {
+    protected void loadAllAnnotations() throws IOException, HTMException {
+        if (_htmClient == null) {
             Log.w(TAG, "Not connected to any server yet");
             return;
         }
         // Get Annotations from server for the last 2 weeks
         long now = System.currentTimeMillis();
-        long from = now - GrokApplication.getNumberOfDaysToSync() * DataUtils.MILLIS_PER_DAY;
-        List<Annotation> remoteAnnotations = _grokCli.getAnnotations(new Date(from), new Date(now));
+        long from = now - HTMApplication.getNumberOfDaysToSync() * DataUtils.MILLIS_PER_DAY;
+        List<Annotation> remoteAnnotations = _htmClient.getAnnotations(new Date(from), new Date(now));
         if (remoteAnnotations == null) {
-            Log.e(TAG, "Unable to load annotations from server. " + _grokCli.getServerUrl());
+            Log.e(TAG, "Unable to load annotations from server. " + _htmClient.getServerUrl());
             return;
         }
 
@@ -450,7 +450,7 @@ public class DataSyncService {
         HashSet<String> localAnnotations = new HashSet<String>();
         // Save results to database
         boolean dataChanged = false;
-        CoreDatabase database = GrokApplication.getDatabase();
+        CoreDatabase database = HTMApplication.getDatabase();
         // Get a set of all annotations in the database
         for (Annotation annotation : database.getAllAnnotations()) {
             localAnnotations.add(annotation.getId());
@@ -492,17 +492,17 @@ public class DataSyncService {
      * @return {@code true} if the annotation was successfully deleted from the server
      */
     protected boolean deleteAnnotation(String annotationId) {
-        if (_grokCli == null) {
+        if (_htmClient == null) {
             Log.w(TAG, "Not connected to any server yet");
             return false;
         }
         try {
-            CoreDatabase database = GrokApplication.getDatabase();
+            CoreDatabase database = HTMApplication.getDatabase();
             // Check if annotation exists
             Annotation annotation = database.getAnnotation(annotationId);
             if (annotation != null) {
                 // Delete from the server
-                _grokCli.deleteAnnotation(annotation);
+                _htmClient.deleteAnnotation(annotation);
                 // Delete from the database
                 if (database.deleteAnnotation(annotationId) == 1) {
                     // Notify receivers of changes
@@ -512,7 +512,7 @@ public class DataSyncService {
             }
             // Annotation not found
             Log.e(TAG, "Failed to delete annotation. " + annotationId + " was not found");
-        } catch (GrokException e) {
+        } catch (HTMException e) {
             Log.e(TAG, "Failed to delete annotation " + annotationId, e);
         } catch (IOException e) {
             Log.e(TAG, "Failed to delete annotation " + annotationId, e);
@@ -531,21 +531,21 @@ public class DataSyncService {
      * @return {@code true} if the annotation was successfully added to the server
      */
     public boolean addAnnotation(Date timestamp, String server, String message, String user) {
-        if (_grokCli == null) {
+        if (_htmClient == null) {
             Log.w(TAG, "Not connected to any server yet");
             return false;
         }
         try {
-            Annotation annotation = _grokCli.addAnnotation(timestamp, server, message, user);
+            Annotation annotation = _htmClient.addAnnotation(timestamp, server, message, user);
             // Update database with new annotation
             if (annotation != null) {
-                CoreDatabase database = GrokApplication.getDatabase();
+                CoreDatabase database = HTMApplication.getDatabase();
                 if (database.addAnnotation(annotation) != -1) {
                     fireAnnotationChangedEvent();
                     return true;
                 }
             }
-        } catch (GrokException e) {
+        } catch (HTMException e) {
             Log.e(TAG, "Failed to add annotation ", e);
         } catch (IOException e) {
             Log.e(TAG, "Failed to add annotation ", e);
@@ -568,7 +568,7 @@ public class DataSyncService {
     /**
      * Start the data sync service.
      * <p>
-     * Should only be called by {@link GrokService}
+     * Should only be called by {@link DataService}
      * </p>
      */
     protected void start() {
@@ -581,7 +581,7 @@ public class DataSyncService {
     /**
      * Stop the data sync service.
      * <p>
-     * Should only be called by {@link GrokService}
+     * Should only be called by {@link DataService}
      * </p>
      */
     protected void stop() {
@@ -604,14 +604,14 @@ public class DataSyncService {
     /**
      * Returns API Client
      */
-    protected GrokClient getClient() {
-        return _grokCli;
+    protected HTMClient getClient() {
+        return _htmClient;
     }
 
     /**
      * Return underlying background service
      */
-    public GrokService getService() {
+    public DataService getService() {
         return _service;
     }
 
@@ -619,6 +619,6 @@ public class DataSyncService {
      * Close server connection
      */
     public void closeConnection() {
-        _grokCli = null;
+        _htmClient = null;
     }
 }

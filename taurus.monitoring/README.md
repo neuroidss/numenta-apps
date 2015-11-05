@@ -13,7 +13,7 @@ local changes without conflicts:
 
     cp -r conf conf-user
 
-Alternatively, the configureation files' path can be overidden using the 
+Alternatively, the configuration files' path can be overidden using the
 TAURUS_MONITORS_DB_CONFIG_PATH environment variable.
 
 ### First, install `nta.utils`.  Then, to install `taurus.monitors`:
@@ -30,9 +30,9 @@ TAURUS_MONITORS_DB_CONFIG_PATH environment variable.
 
 ### Set up `monitorsdb` sql database connection
 
-1. The configuration in `conf/taurus-monitors-sqldb.conf` defaults to 
-host=localhost with the default user/password for mysql. To override mysql 
-host, username and password, use the following command, substituting the 
+1. The configuration in `conf/taurus-monitors-sqldb.conf` defaults to
+host=localhost with the default user/password for mysql. To override mysql
+host, username and password, use the following command, substituting the
 appropriate strings for HOST, USER and PASSWORD:
 ```
     >>> taurus-set-monitorsdb-login --host=HOST --user=USER --password=PASSWORD

@@ -6,15 +6,15 @@
 # following terms and conditions apply:
 #
 # This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License version 3 as
+# it under the terms of the GNU Affero Public License version 3 as
 # published by the Free Software Foundation.
 #
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-# See the GNU General Public License for more details.
+# See the GNU Affero Public License for more details.
 #
-# You should have received a copy of the GNU General Public License
+# You should have received a copy of the GNU Affero Public License
 # along with this program.  If not, see http://www.gnu.org/licenses.
 #
 # http://numenta.org/licenses/
@@ -27,15 +27,20 @@ echo "Marking instance as being an Infrastructure AMI build..."
 AMIBUILD_LOCK=/tmp/baking-ami
 touch "${AMIBUILD_LOCK}"
 
-complain() {
-  echo "$@"
-  logger -t ami-bake "$@"
-}
-
 echo "Installing Numenta repositories..."
 mv /tmp/nta-carbonite.repo /etc/yum.repos.d
 mv /tmp/nta-thirdparty.repo /etc/yum.repos.d
 mv /tmp/secretsauce.repo /etc/yum.repos.d
+
+echo "Installing mysql community repository..."
+yum install -y http://repo.mysql.com/mysql-community-release-el6-5.noarch.rpm
+
+echo "Installing mysql-python..."
+yum install -y mysql-community-devel python-devel
+
+# Use /usr/bin/pip so this is visible to salt or instances won't be able to
+# create MySQL users or grant privileges to them.
+/usr/bin/pip install mysql-python
 
 echo "Cleaning yum..."
 yum clean all
@@ -55,38 +60,7 @@ cat /etc/salt/minion_id
 echo "Stopping Salt..."
 service salt-minion stop
 
-echo "Setting search list in /etc/resolv.conf to numenta.com"
-sed 's/^search .*/search numenta.com/g' /etc/resolv.conf -i''
-cat /etc/resolv.conf
-host salt.numenta.com
-
-echo "Configuring Salt minion_id"
-echo
-echo "Setting Salt minion_id: $(cat /tmp/infrastructure_minion_id)"
-cat /tmp/infrastructure_minion_id > /etc/salt/minion_id
-
-echo "Setting salt master name"
-sed 's/^#master:/master: salt.numenta.com/g' /etc/salt/minion -i''
-grep ^master: /etc/salt/minion
-retcode="$?"
-if [ "${retcode}" != "0" ]; then
-  echo "Failed to set salt master name"
-  echo "Check for changes to default /etc/salt/minion"
-  exit "${retcode}"
-fi
-
-echo "Purging salt minion key data..."
-rm -fr /etc/salt/pki/minion/*
-
-echo "Restarting salt minion..."
-service salt-minion restart
-
-echo "Wait for master to sign key..."
-sleep 10
-
-# echo
-# echo "Test salt config"
-# salt-call state.highstate test=True
+echo "Salt minion_id: $(cat /etc/salt/minion_id)"
 
 echo
 echo "Running Salt..."

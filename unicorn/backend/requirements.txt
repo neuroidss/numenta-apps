@@ -1,0 +1,5 @@
+cx_freeze==4.3.4
+validictory==0.9.1
+
+# NuPIC HTM
+nupic==0.3.4

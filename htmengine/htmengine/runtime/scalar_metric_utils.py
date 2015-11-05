@@ -5,15 +5,15 @@
 # following terms and conditions apply:
 #
 # This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License version 3 as
+# it under the terms of the GNU Affero Public License version 3 as
 # published by the Free Software Foundation.
 #
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-# See the GNU General Public License for more details.
+# See the GNU Affero Public License for more details.
 #
-# You should have received a copy of the GNU General Public License
+# You should have received a copy of the GNU Affero Public License
 # along with this program.  If not, see http://www.gnu.org/licenses.
 #
 # http://numenta.org/licenses/
@@ -36,10 +36,10 @@ import time
 
 
 from nupic.data import fieldmeta
+from nupic.frameworks.opf.common_models.cluster_params import (
+  getScalarMetricWithTimeOfDayAnomalyParams)
 
 from htmengine import repository
-from htmengine.algorithms.modelSelection.clusterParams import (
-    getScalarMetricWithTimeOfDayParams)
 import htmengine.exceptions as app_exceptions
 from htmengine.model_swapper import model_swapper_interface
 import htmengine.model_swapper.utils as model_swapper_utils
@@ -63,7 +63,8 @@ MODEL_CREATION_RECORD_THRESHOLD = (60 / 5) * 24
 def generateSwarmParams(stats):
   """ Generate parameters for creating a model
 
-  :param stats: dict with "min" and "max"; values must be integer,float or None.
+  :param stats: dict with "min", "max" and optional "minResolution"; values must
+    be integer, float or None.
 
   :returns: if either minVal or maxVal is None, returns None; otherwise returns
     swarmParams object that is suitable for passing to startMonitoring and
@@ -76,13 +77,11 @@ def generateSwarmParams(stats):
     return None
 
   # Create possible swarm parameters based on metric data
-  possibleModels = getScalarMetricWithTimeOfDayParams(
+  swarmParams = getScalarMetricWithTimeOfDayAnomalyParams(
     metricData=[0],
     minVal=minVal,
     maxVal=maxVal,
     minResolution=minResolution)
-
-  swarmParams = possibleModels[0]
 
   swarmParams["inputRecordSchema"] = (
     fieldmeta.FieldMetaInfo("c0", fieldmeta.FieldMetaType.datetime,
@@ -222,11 +221,11 @@ def sendBacklogDataToModel(conn, metricId, logger):
     model_swapper_interface.ModelInputRow(
       rowID=md.rowid, data=(md.timestamp, md.metric_value,))
     for md in repository.getMetricData(
-                conn,
-                metricId,
-                fields=[schema.metric_data.c.rowid,
-                        schema.metric_data.c.timestamp,
-                        schema.metric_data.c.metric_value]))
+      conn,
+      metricId,
+      fields=[schema.metric_data.c.rowid,
+              schema.metric_data.c.timestamp,
+              schema.metric_data.c.metric_value]))
 
   if backlogData:
     with model_swapper_interface.ModelSwapperInterface() as modelSwapper:
@@ -273,7 +272,7 @@ def _startModelHelper(conn, metricObj, swarmParams, logger):
       % (metricObj.uid,))
 
   if metricObj.status not in (MetricStatus.UNMONITORED,
-                           MetricStatus.PENDING_DATA):
+                              MetricStatus.PENDING_DATA):
     if metricObj.status in (MetricStatus.CREATE_PENDING, MetricStatus.ACTIVE):
       return False
 

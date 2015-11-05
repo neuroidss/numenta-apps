@@ -5,15 +5,15 @@
  * following terms and conditions apply:
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 3 as
+ * it under the terms of the GNU Affero Public License version 3 as
  * published by the Free Software Foundation.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
+ * See the GNU Affero Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Affero Public License
  * along with this program.  If not, see http://www.gnu.org/licenses.
  *
  * http://numenta.org/licenses/
@@ -59,6 +59,8 @@ public final class Metric implements Serializable {
 
     private long _lastTimestamp;
 
+    private String _unit;
+
     /**
      * Create a {@link com.numenta.core.data.Metric} object using the contents of the given
      * {@link android.database.Cursor}. The {@link android.database.Cursor} must contain all
@@ -77,6 +79,10 @@ public final class Metric implements Serializable {
         if (_parameters != null && !_parameters.trim().isEmpty()) {
             try {
                 _parametersJson = new JSONObject(_parameters);
+                _unit = getParameter("unit");
+                if (_unit == null) {
+                    _unit = getMetricSpec("unit");
+                }
             } catch (JSONException e) {
                 _parametersJson = null;
                 Log.e(Metric.class.getSimpleName(), "Failed to parse metric parameters", e);
@@ -96,6 +102,18 @@ public final class Metric implements Serializable {
         this._lastRowId = lastRowId;
         this._parametersJson = parameters;
         this._parameters = parameters != null ? parameters.toString() : null;
+        if (_parameters != null && !_parameters.trim().isEmpty()) {
+            try {
+                _parametersJson = new JSONObject(_parameters);
+                _unit = getParameter("unit");
+                if (_unit == null) {
+                    _unit = getMetricSpec("unit");
+                }
+            } catch (JSONException e) {
+                _parametersJson = null;
+                Log.e(Metric.class.getSimpleName(), "Failed to parse metric parameters", e);
+            }
+        }
 
         // Should be updated with the the last timestamp available in the
         // metric_data table
@@ -209,11 +227,7 @@ public final class Metric implements Serializable {
      * Get the metric unit if available, {@code null} if unknown
      */
     public String getUnit() {
-        String unit = getParameter("unit");
-        if (unit == null) {
-            unit = getMetricSpec("unit");
-        }
-        return unit;
+        return _unit;
     }
 
     /*
@@ -288,5 +302,9 @@ public final class Metric implements Serializable {
                 Log.e(Metric.class.getSimpleName(), "Failed to parse metric parameters", e);
             }
         }
+    }
+
+    public void setUnit(String unit) {
+        _unit = unit;
     }
 }

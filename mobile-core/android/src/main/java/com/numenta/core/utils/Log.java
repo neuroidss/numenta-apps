@@ -6,15 +6,15 @@
  * following terms and conditions apply:
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 3 as
+ * it under the terms of the GNU Affero Public License version 3 as
  * published by the Free Software Foundation.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
+ * See the GNU Affero Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Affero Public License
  * along with this program.  If not, see http://www.gnu.org/licenses.
  *
  * http://numenta.org/licenses/
@@ -23,7 +23,7 @@
 
 package com.numenta.core.utils;
 
-import com.numenta.core.app.GrokApplication;
+import com.numenta.core.app.HTMApplication;
 
 import android.os.Build;
 
@@ -36,11 +36,11 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 
 public class Log {
-    private static final String DEVICE_ID = "deviceID=" + GrokApplication.getDeviceId();
+    private static final String DEVICE_ID = "deviceID=" + HTMApplication.getDeviceId();
     private static final String SERIAL = " SERIAL=" + Build.SERIAL;
 
     private static final String DEVICE_INFO =
-            "APP_VERSION=" + GrokApplication.getVersion()
+            "APP_VERSION=" + HTMApplication.getVersion()
                     + " OS_VERSION=" + Build.VERSION.RELEASE
                     + " SDK_VERSION=" + Build.VERSION.SDK_INT
                     + " OS_BUILD=" + Build.ID
@@ -53,7 +53,7 @@ public class Log {
             MAX_LOGS_TO_KEEP);
 
     protected static void queueLog(String msg) {
-        if (GrokApplication.shouldUploadLog()) {
+        if (HTMApplication.shouldUploadLog()) {
             // Discard oldest log when the queue is full.
             if (!_queue.offer(msg)) {
                 _queue.poll();
@@ -63,7 +63,7 @@ public class Log {
     }
 
     protected static void queueLog(String type, String tag, String msg) {
-        if (GrokApplication.shouldUploadLog()) {
+        if (HTMApplication.shouldUploadLog()) {
             // Server Logging API requires the following fields separate by space:
             // DEVICE_ID EVENT_TYPE TIMESTAMP TAG MESSAGE
 
@@ -79,7 +79,7 @@ public class Log {
 
     protected static void queueLog(String type, String tag, String msg,
             Throwable tr) {
-        if (GrokApplication.shouldUploadLog()) {
+        if (HTMApplication.shouldUploadLog()) {
             Writer result = new StringWriter();
             PrintWriter printWriter = new PrintWriter(result);
             tr.printStackTrace(printWriter);

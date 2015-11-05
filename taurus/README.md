@@ -24,7 +24,7 @@ First, install `nta.utils`, `htmengine` and `taurus.metric_collectors`.  Then, t
 `install-taurus.sh` is included at the root of the `numenta-apps` repository as a
 convenient alternative:
 
-    ./install-taurus.sh <site-packages in $PYTHONPATH> <somewhere in $PATH>
+    ./install-taurus.sh <PREFIX>
 
 The configuration files for production reside in `conf/`.  It is recommended
 that you copy and rename this directory so that you may make the required
@@ -122,14 +122,14 @@ is passed by `superviosrd.conf` to `rmq_metric_collector_agent` as the value of
 its `--metric-addr` command-line option. NOTE: we don't hardcode the value in
 `supervisord.conf` in order to avoid having undersirable metric data samples
 accidentally forwarded from developer laptops and other test machines to the
-production "grok" application server.
+production "htm-it" application server.
 
 `TAURUS_RMQ_METRIC_PREFIX`: This defines the prefix to be used for metrics
-sent to the Grok server.  It is passed by `supervisord.conf` to
+sent to the HTM-IT server.  It is passed by `supervisord.conf` to
 `rmq_metric_collector_agent` as the value of its `--metric-prefix` command-line
 option. NOTE: we don't hardcode the value in `supervisord.conf` in order to
-avoid accidently corrupting metric data on an existing Grok installation. This
-allows having a single Grok instance monitor multiple Taurus instances
+avoid accidently corrupting metric data on an existing HTM-IT installation. This
+allows having a single HTM-IT instance monitor multiple Taurus instances
 (e.g., Production and Staging)
 
 *NOTE:* If `TAURUS_RMQ_METRIC_DEST` and `TAURUS_RMQ_METRIC_PREFIX` env vars
@@ -159,7 +159,7 @@ with the installation path you followed.
 
 #### Reset RabbitMQ
 
-If you have an old copy of grok then you need to clean up RabbitMQ queues.
+If you have an old copy of htm-it then you need to clean up RabbitMQ queues.
 
     rabbitmqctl stop_app
     rabbitmqctl reset

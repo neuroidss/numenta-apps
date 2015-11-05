@@ -1,3 +1,0 @@
-py.test htmengine/tests/unit --boxed --verbose --junitxml=results.xml
-py.test nta.utils/tests/unit --boxed --verbose --junitxml=results.xml
-py.test grok/tests/py/unit --boxed --verbose --junitxml=results.xml

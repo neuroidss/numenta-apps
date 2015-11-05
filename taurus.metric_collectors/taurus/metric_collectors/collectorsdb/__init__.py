@@ -5,23 +5,26 @@
 # following terms and conditions apply:
 #
 # This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License version 3 as
+# it under the terms of the GNU Affero Public License version 3 as
 # published by the Free Software Foundation.
 #
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-# See the GNU General Public License for more details.
+# See the GNU Affero Public License for more details.
 #
-# You should have received a copy of the GNU General Public License
+# You should have received a copy of the GNU Affero Public License
 # along with this program.  If not, see http://www.gnu.org/licenses.
 #
 # http://numenta.org/licenses/
 # ----------------------------------------------------------------------
 
+import logging
+import multiprocessing
 import optparse
 import random
 import os
+import threading
 
 
 import sqlalchemy
@@ -29,9 +32,12 @@ import sqlalchemy
 from nta.utils import sqlalchemy_utils
 from nta.utils.config import Config
 
-from taurus.metric_collectors import CONF_DIR
+import taurus.metric_collectors
 from taurus.metric_collectors.collectorsdb import schema
 from taurus.metric_collectors.collectorsdb.migrate import migrate
+from taurus.metric_collectors import logging_support
+
+
 
 # Retry decorator for mysql transient errors
 retryOnTransientErrors = sqlalchemy_utils.retryOnTransientErrors
@@ -54,10 +60,12 @@ class CollectorsDbConfig(Config):
 
   CONFIG_NAME = "collectors-sqldb.conf"
 
+  CONFIG_DIR = taurus.metric_collectors.CONF_DIR
+
 
   def __init__(self, mode=Config.MODE_LOGICAL):
     super(CollectorsDbConfig, self).__init__(self.CONFIG_NAME,
-                                             CONF_DIR,
+                                             self.CONFIG_DIR,
                                              mode=mode)
 
 
@@ -84,31 +92,49 @@ def getDSN():
 class _EngineSingleton(object):
 
 
-  _engine = None
+  _mpMutex = multiprocessing.Lock()
   _pid = None
+  _threadMutex = None
+  _engine = None
 
 
   @classmethod
   def getEngine(cls):
     pid = os.getpid()
 
-    if cls._pid != pid:
-      if cls._engine is not None:
-        cls._engine.dispose()
-        cls._engine = None
+    with cls._mpMutex:
+      if cls._pid is None:
+        cls._threadMutex = threading.Lock()
+        cls._pid = pid
+      else:
+        # NOTE: we've experienced race condition hangs when the non-empty
+        # _EngineSingleton was cloned via multiprocessing forking. Resetting
+        # and/or `cls._engine.dispose()` didn't alleviate this problem.
+        assert cls._pid == pid, "collectorsdb engine factory is not fork-safe"
 
-      cls._engine = sqlalchemy.create_engine(getDSN())
-      cls._pid = pid
+    with cls._threadMutex:
+      if cls._engine is None:
+        cls._engine = sqlalchemy.create_engine(getDSN())
 
     return cls._engine
 
 
   @classmethod
   def reset(cls):
-    """ Reset internal engine and pid references
+    """ Reset internal engine and pid references. For use by tests only!
     """
-    cls._engine = None
-    cls._pid = None
+    with cls._mpMutex:
+      if cls._pid is not None:
+        # NOTE: we've experienced race condition hangs when the non-empty
+        # _EngineSingleton was cloned via multiprocessing forking. Resetting
+        # and/or `cls._engine.dispose()` didn't alleviate this problem.
+        assert cls._pid == os.getpid(), (
+          "collectorsdb engine factory is not fork-safe")
+        cls._pid = None
+
+        with cls._threadMutex:
+          cls._engine = None
+          cls._threadMutex = None
 
 
 
@@ -122,9 +148,19 @@ def engineFactory():
 
 
 def resetEngineSingleton():
-  """ Reset engine singleton
+  """ Reset engine singleton. For use by tests only!
   """
   _EngineSingleton.reset()
+
+
+
+def getUnaffiliatedEngine():
+  """
+  :returns: sqlalchemy Engine that's unaffiliated with any database
+  :rtype: sqlalchemy.engine.Engine
+  """
+  dsn = "mysql://%(user)s:%(password)s@%(host)s:%(port)s" % _getRepoParams()
+  return sqlalchemy.create_engine(dsn)
 
 
 
@@ -134,6 +170,13 @@ def resetCollectorsdbMain():
   :returns: 0 if reset was completed successfully; 1 if user doesn't confirm the
     request
   """
+  logging_support.LoggingSupport.initTool()
+
+  # Enable sqlalchemy engine logging at INFO level for more granular progress
+  # report during migration.
+  logging.getLogger("sqlalchemy.engine").setLevel(logging.INFO)
+
+
   repoParams = _getRepoParams()
 
   helpString = (
@@ -144,13 +187,13 @@ def resetCollectorsdbMain():
   parser = optparse.OptionParser(helpString)
 
   parser.add_option(
-      "--suppress-prompt-and-obliterate-database",
-      action="store_true",
-      default=False,
-      dest="suppressPrompt",
-      help=("Suppresses confirmation prompt and proceedes with this "
-            "DESTRUCTIVE operation. This option is intended for scripting. "
-            "[default: %default]"))
+    "--suppress-prompt-and-obliterate-database",
+    action="store_true",
+    default=False,
+    dest="suppressPrompt",
+    help=("Suppresses confirmation prompt and proceedes with this "
+          "DESTRUCTIVE operation. This option is intended for scripting. "
+          "[default: %default]"))
 
   options, remainingArgs = parser.parse_args()
   if remainingArgs:
@@ -208,8 +251,7 @@ def reset(offline=False, **kwargs):
     "CREATE DATABASE %(database)s;" % {"database": repoParams["db"]})
   statements = [s.strip() for s in resetDatabaseSQL.split(";") if s.strip()]
 
-  dsn = "mysql://%(user)s:%(password)s@%(host)s:%(port)s" % repoParams
-  e = sqlalchemy.create_engine(dsn)
+  e = getUnaffiliatedEngine()
   try:
     for s in statements:
       e.execute(s)

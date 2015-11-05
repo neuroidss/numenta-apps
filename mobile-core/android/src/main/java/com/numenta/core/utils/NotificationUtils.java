@@ -5,15 +5,15 @@
  * following terms and conditions apply:
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 3 as
+ * it under the terms of the GNU Affero Public License version 3 as
  * published by the Free Software Foundation.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
+ * See the GNU Affero Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Affero Public License
  * along with this program.  If not, see http://www.gnu.org/licenses.
  *
  * http://numenta.org/licenses/
@@ -30,7 +30,7 @@ import android.support.v4.app.NotificationCompat;
 import android.text.format.DateUtils;
 
 import com.numenta.core.R;
-import com.numenta.core.app.GrokApplication;
+import com.numenta.core.app.HTMApplication;
 import com.numenta.core.data.Metric;
 import com.numenta.core.data.Notification;
 
@@ -38,7 +38,7 @@ import java.util.List;
 
 public class NotificationUtils {
 
-    final static Context _ctx = GrokApplication.getContext();
+    final static Context _ctx = HTMApplication.getContext();
 
     // In order to persist the right notification counts and messages, we need to keep some objects
     // static for the life of the application.  If the app resets, so will the notifications, but
@@ -67,20 +67,20 @@ public class NotificationUtils {
                 .setDefaults(android.app.Notification.DEFAULT_ALL)
                 .setOnlyAlertOnce(true)
                 .setSmallIcon(R.drawable.ic_launcher)
-                .setContentTitle("Grok Anomaly Notification");
+                .setContentTitle("HTM Anomaly Notification");
 
         // Send OS notification.
         if (totalNotifications > 1) {
             notificationBuilder.setContentText(groupedMessage);
             // Intent to open the notification list when there's
             // multiple activities.
-            resultIntent = new Intent(GrokApplication.ACTION_SHOW_NOTIFICATION_LIST);
+            resultIntent = new Intent(HTMApplication.ACTION_SHOW_NOTIFICATION_LIST);
             notifyOS(_ctx, resultIntent, notificationBuilder, osNotificationId);
         } else {
             notificationBuilder.setContentText(description).setWhen(when);
             // Get the metric necessary for the new intent to
             // view the metric detail page.
-            resultIntent = new Intent(GrokApplication.ACTION_SHOW_NOTIFICATION);
+            resultIntent = new Intent(HTMApplication.ACTION_SHOW_NOTIFICATION);
             resultIntent.putExtra("id", notificationId);
             notifyOS(_ctx, resultIntent, notificationBuilder, osNotificationId);
         }
@@ -135,12 +135,15 @@ public class NotificationUtils {
         if (showSummary) {
             // Display summary as title and list below
             _inboxStyle.setBigContentTitle(groupedTitle);
+            notificationBuilder.setContentTitle(groupedTitle);
             for (Notification notification : notificationList) {
                 _inboxStyle.addLine(notification.getDescription());
             }
         } else {
             // Show first item as title and other items below
-            _inboxStyle.setBigContentTitle(notificationList.get(0).getDescription());
+            String description = notificationList.get(0).getDescription();
+            _inboxStyle.setBigContentTitle(description);
+            notificationBuilder.setContentTitle(description).setContentText(groupedTitle);
             for (int i = 1; i < notificationList.size(); i++) {
                 _inboxStyle.addLine(notificationList.get(i).getDescription());
             }
@@ -153,7 +156,7 @@ public class NotificationUtils {
         notificationBuilder.setNumber(_groupedNotificationCount);
         notificationBuilder.setStyle(_inboxStyle);
 
-        Intent resultIntent = new Intent(GrokApplication.ACTION_SHOW_NOTIFICATION_LIST);
+        Intent resultIntent = new Intent(HTMApplication.ACTION_SHOW_NOTIFICATION_LIST);
         notifyOS(_ctx, resultIntent, notificationBuilder, osNotificationId);
     }
 
@@ -172,11 +175,11 @@ public class NotificationUtils {
         // Gets the standard date formatter for the current locale of
         // the device
         String formattedCurrentDate = DateUtils.formatDateTime(
-                GrokApplication.getContext(), timestamp,
+                HTMApplication.getContext(), timestamp,
                 DateUtils.FORMAT_SHOW_DATE | DateUtils.FORMAT_SHOW_TIME);
 
         return String.format(
-                GrokApplication.getContext().getString(R.string.simple_notification_description_template),
+                HTMApplication.getContext().getString(R.string.simple_notification_description_template),
                 instanceName,
                 formattedCurrentDate);
     }
@@ -197,12 +200,13 @@ public class NotificationUtils {
         // $3=metric_data.value,
         // $4=metric.unit
         // $5=timestamp
+        String unit = metric.getUnit();
         return String.format(
-                GrokApplication.getContext().getString(R.string.notification_description_template),
+                HTMApplication.getContext().getString(R.string.notification_description_template),
                 metric.getServerName(),
                 metric.getName(),
                 metricValue,
-                metric.getUnit(),
+                unit == null ? "" : unit,
                 timestamp);
     }
 

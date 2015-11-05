@@ -1,5 +1,0 @@
-[marketplace-only]
-name=Grok Marketplace RPMs
-baseurl=http://public.numenta.com/yum/marketplace-only
-gpgcheck=0
-priority=1

@@ -5,15 +5,15 @@
 # following terms and conditions apply:
 #
 # This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License version 3 as
+# it under the terms of the GNU Affero Public License version 3 as
 # published by the Free Software Foundation.
 #
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-# See the GNU General Public License for more details.
+# See the GNU Affero Public License for more details.
 #
-# You should have received a copy of the GNU General Public License
+# You should have received a copy of the GNU Affero Public License
 # along with this program.  If not, see http://www.gnu.org/licenses.
 #
 # http://numenta.org/licenses/
@@ -31,7 +31,7 @@ security-patch-packages:
     - pkgs:
       - bash
 
-# TODO: TAUR-759 Re-enable the openssl kludge after getting the grok pipeline
+# TODO: TAUR-759 Re-enable the openssl kludge after getting the htm-it pipeline
 # unstuck
 #      - openssl
 
@@ -44,7 +44,7 @@ include:
     - source: salt://nta-nucleus/files/tests/test_user_accounts.py
     - user: root
     - group: root
-    - mode: 755
+    - mode: 0755
     - require:
       - file: ami-test-directory
 
@@ -54,7 +54,7 @@ include:
     - user: root
     - group: root
     - source: salt://nta-nucleus/files/tests/test_shellshock.py
-    - mode: 755
+    - mode: 0755
     - require:
       - file: ami-test-directory
 
@@ -65,7 +65,7 @@ include:
     - user: root
     - group: root
     - source: salt://nta-nucleus/files/tests/ghost-test-helper.py
-    - mode: 755
+    - mode: 0755
     - require:
       - file: ami-test-helper-directory
 
@@ -75,6 +75,6 @@ include:
     - user: root
     - group: root
     - source: salt://nta-nucleus/files/tests/test_ghost.py
-    - mode: 755
+    - mode: 0755
     - require:
       - file: ami-test-directory

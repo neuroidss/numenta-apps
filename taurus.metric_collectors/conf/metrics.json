@@ -207,41 +207,6 @@
     "stockExchange": "NYSE", 
     "symbol": "ACN"
   }, 
-  "Actavis": {
-    "metrics": {
-      "TWITTER.TWEET.HANDLE.ACT.VOLUME": {
-        "metricType": "TwitterVolume", 
-        "metricTypeName": "Twitter Volume", 
-        "modelParams": {
-          "minResolution": 0.6
-        }, 
-        "provider": "twitter", 
-        "screenNames": [
-          "Actavis"
-        ]
-      }, 
-      "XIGNITE.ACT.CLOSINGPRICE": {
-        "metricType": "StockPrice", 
-        "metricTypeName": "Stock Price", 
-        "modelParams": {
-          "minResolution": 0.2
-        }, 
-        "provider": "xignite", 
-        "sampleKey": "Close"
-      }, 
-      "XIGNITE.ACT.VOLUME": {
-        "metricType": "StockVolume", 
-        "metricTypeName": "Stock Volume", 
-        "modelParams": {
-          "minResolution": 0.2
-        }, 
-        "provider": "xignite", 
-        "sampleKey": "Volume"
-      }
-    }, 
-    "stockExchange": "NYSE", 
-    "symbol": "ACT"
-  }, 
   "Adobe Systems": {
     "metrics": {
       "TWITTER.TWEET.HANDLE.ADBE.VOLUME": {
@@ -427,6 +392,7 @@
         }, 
         "provider": "twitter", 
         "screenNames": [
+          "Actavis", 
           "Allergan"
         ]
       }, 
@@ -2300,41 +2266,6 @@
     "stockExchange": "NYSE", 
     "symbol": "DVN"
   }, 
-  "Directv": {
-    "metrics": {
-      "TWITTER.TWEET.HANDLE.DTV.VOLUME": {
-        "metricType": "TwitterVolume", 
-        "metricTypeName": "Twitter Volume", 
-        "modelParams": {
-          "minResolution": 0.6
-        }, 
-        "provider": "twitter", 
-        "screenNames": [
-          "Directv"
-        ]
-      }, 
-      "XIGNITE.DTV.CLOSINGPRICE": {
-        "metricType": "StockPrice", 
-        "metricTypeName": "Stock Price", 
-        "modelParams": {
-          "minResolution": 0.2
-        }, 
-        "provider": "xignite", 
-        "sampleKey": "Close"
-      }, 
-      "XIGNITE.DTV.VOLUME": {
-        "metricType": "StockVolume", 
-        "metricTypeName": "Stock Volume", 
-        "modelParams": {
-          "minResolution": 0.2
-        }, 
-        "provider": "xignite", 
-        "sampleKey": "Volume"
-      }
-    }, 
-    "stockExchange": "NASDAQ", 
-    "symbol": "DTV"
-  }, 
   "Discover Financial Services": {
     "metrics": {
       "TWITTER.TWEET.HANDLE.DFS.VOLUME": {
@@ -3079,7 +3010,7 @@
         }, 
         "provider": "twitter", 
         "screenNames": [
-          "GDC4Systems"
+          "GDMS"
         ]
       }, 
       "XIGNITE.GD.CLOSINGPRICE": {
@@ -3492,6 +3423,41 @@
     "stockExchange": "NYSE", 
     "symbol": "HON"
   }, 
+  "IBM": {
+    "metrics": {
+      "TWITTER.TWEET.HANDLE.IBM.VOLUME": {
+        "metricType": "TwitterVolume", 
+        "metricTypeName": "Twitter Volume", 
+        "modelParams": {
+          "minResolution": 0.6
+        }, 
+        "provider": "twitter", 
+        "screenNames": [
+          "IBM"
+        ]
+      }, 
+      "XIGNITE.IBM.CLOSINGPRICE": {
+        "metricType": "StockPrice", 
+        "metricTypeName": "Stock Price", 
+        "modelParams": {
+          "minResolution": 0.2
+        }, 
+        "provider": "xignite", 
+        "sampleKey": "Close"
+      }, 
+      "XIGNITE.IBM.VOLUME": {
+        "metricType": "StockVolume", 
+        "metricTypeName": "Stock Volume", 
+        "modelParams": {
+          "minResolution": 0.2
+        }, 
+        "provider": "xignite", 
+        "sampleKey": "Volume"
+      }
+    }, 
+    "stockExchange": "NYSE", 
+    "symbol": "IBM"
+  }, 
   "Illinois Tool Works": {
     "metrics": {
       "TWITTER.TWEET.HANDLE.ITW.VOLUME": {
@@ -3561,41 +3527,6 @@
     }, 
     "stockExchange": "NASDAQ", 
     "symbol": "INTC"
-  }, 
-  "International Business Machines": {
-    "metrics": {
-      "TWITTER.TWEET.HANDLE.IBM.VOLUME": {
-        "metricType": "TwitterVolume", 
-        "metricTypeName": "Twitter Volume", 
-        "modelParams": {
-          "minResolution": 0.6
-        }, 
-        "provider": "twitter", 
-        "screenNames": [
-          "IBM"
-        ]
-      }, 
-      "XIGNITE.IBM.CLOSINGPRICE": {
-        "metricType": "StockPrice", 
-        "metricTypeName": "Stock Price", 
-        "modelParams": {
-          "minResolution": 0.2
-        }, 
-        "provider": "xignite", 
-        "sampleKey": "Close"
-      }, 
-      "XIGNITE.IBM.VOLUME": {
-        "metricType": "StockVolume", 
-        "metricTypeName": "Stock Volume", 
-        "modelParams": {
-          "minResolution": 0.2
-        }, 
-        "provider": "xignite", 
-        "sampleKey": "Volume"
-      }
-    }, 
-    "stockExchange": "NYSE", 
-    "symbol": "IBM"
   }, 
   "JPMorgan Chase & Co": {
     "metrics": {
@@ -3808,9 +3739,9 @@
     "stockExchange": "NYSE", 
     "symbol": "KMI"
   }, 
-  "Kraft Foods Group": {
+  "Kraft Heinz Company": {
     "metrics": {
-      "TWITTER.TWEET.HANDLE.KRFT.VOLUME": {
+      "TWITTER.TWEET.HANDLE.KHC.VOLUME": {
         "metricType": "TwitterVolume", 
         "metricTypeName": "Twitter Volume", 
         "modelParams": {
@@ -3821,7 +3752,7 @@
           "KraftFoods"
         ]
       }, 
-      "XIGNITE.KRFT.CLOSINGPRICE": {
+      "XIGNITE.KHC.CLOSINGPRICE": {
         "metricType": "StockPrice", 
         "metricTypeName": "Stock Price", 
         "modelParams": {
@@ -3830,7 +3761,7 @@
         "provider": "xignite", 
         "sampleKey": "Close"
       }, 
-      "XIGNITE.KRFT.VOLUME": {
+      "XIGNITE.KHC.VOLUME": {
         "metricType": "StockVolume", 
         "metricTypeName": "Stock Volume", 
         "modelParams": {
@@ -3841,7 +3772,7 @@
       }
     }, 
     "stockExchange": "NASDAQ", 
-    "symbol": "KRFT"
+    "symbol": "KHC"
   }, 
   "Las Vegas Sands": {
     "metrics": {
@@ -6465,7 +6396,7 @@
   }, 
   "Walgreen": {
     "metrics": {
-      "TWITTER.TWEET.HANDLE.WAG.VOLUME": {
+      "TWITTER.TWEET.HANDLE.WBA.VOLUME": {
         "metricType": "TwitterVolume", 
         "metricTypeName": "Twitter Volume", 
         "modelParams": {
@@ -6476,7 +6407,7 @@
           "Walgreens"
         ]
       }, 
-      "XIGNITE.WAG.CLOSINGPRICE": {
+      "XIGNITE.WBA.CLOSINGPRICE": {
         "metricType": "StockPrice", 
         "metricTypeName": "Stock Price", 
         "modelParams": {
@@ -6485,7 +6416,7 @@
         "provider": "xignite", 
         "sampleKey": "Close"
       }, 
-      "XIGNITE.WAG.VOLUME": {
+      "XIGNITE.WBA.VOLUME": {
         "metricType": "StockVolume", 
         "metricTypeName": "Stock Volume", 
         "modelParams": {
@@ -6496,7 +6427,7 @@
       }
     }, 
     "stockExchange": "NYSE", 
-    "symbol": "WAG"
+    "symbol": "WBA"
   }, 
   "Walt Disney": {
     "metrics": {

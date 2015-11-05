@@ -6,31 +6,36 @@
 # following terms and conditions apply:
 #
 # This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License version 3 as
+# it under the terms of the GNU Affero Public License version 3 as
 # published by the Free Software Foundation.
 #
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-# See the GNU General Public License for more details.
+# See the GNU Affero Public License for more details.
 #
-# You should have received a copy of the GNU General Public License
+# You should have received a copy of the GNU Affero Public License
 # along with this program.  If not, see http://www.gnu.org/licenses.
 #
 # http://numenta.org/licenses/
 # ----------------------------------------------------------------------
 
 """
-unit tests for taurus.metric_collectors.metric_utils
+Unit tests for taurus.metric_collectors.metric_utils
 """
+
+# Disable warning "access to protected member" and "method could be a function"
+# pylint: disable=W0212,R0201
+
 
 from datetime import datetime, timedelta
 import json
 import logging
+import unittest
+
 import mock
 from mock import ANY, MagicMock, Mock, patch
 
-import unittest
 
 import sqlalchemy
 
@@ -152,6 +157,74 @@ class MetricUtilsTestCase(unittest.TestCase):
           self.assertIn("sampleKey", metric)
 
 
+  def testGetMetricNamesFromConfig(self):
+    jsonConfig = (
+      """
+      {
+        "3M": {
+          "metrics": {
+            "TWITTER.TWEET.HANDLE.MMM.VOLUME": {
+              "metricType": "TwitterVolume",
+              "metricTypeName": "Twitter Volume",
+              "modelParams": {
+                "minResolution": 0.6
+              },
+              "provider": "twitter",
+              "screenNames": [
+                "3M"
+              ]
+            },
+            "XIGNITE.MMM.VOLUME": {
+              "metricType": "StockVolume",
+              "metricTypeName": "Stock Volume",
+              "modelParams": {
+                "minResolution": 0.2
+              },
+              "provider": "xignite",
+              "sampleKey": "Volume"
+            }
+          },
+          "stockExchange": "NYSE",
+          "symbol": "MMM"
+        },
+        "ACE Ltd": {
+          "metrics": {
+            "TWITTER.TWEET.HANDLE.ACE.VOLUME": {
+              "metricType": "TwitterVolume",
+              "metricTypeName": "Twitter Volume",
+              "modelParams": {
+                "minResolution": 0.6
+              },
+              "provider": "twitter",
+              "screenNames": []
+            },
+            "XIGNITE.ACE.CLOSINGPRICE": {
+              "metricType": "StockPrice",
+              "metricTypeName": "Stock Price",
+              "modelParams": {
+                "minResolution": 0.2
+              },
+              "provider": "xignite",
+              "sampleKey": "Close"
+            }
+          },
+          "stockExchange": "NYSE",
+          "symbol": "ACE"
+        }
+      }
+      """
+    )
+    metricNames = metric_utils.getMetricNamesFromConfig(json.loads(jsonConfig))
+
+    expected = [
+      "TWITTER.TWEET.HANDLE.MMM.VOLUME",
+      "XIGNITE.MMM.VOLUME",
+      "TWITTER.TWEET.HANDLE.ACE.VOLUME",
+      "XIGNITE.ACE.CLOSINGPRICE"
+    ]
+    self.assertItemsEqual(expected, metricNames)
+
+
   def testGetAllMetricSecurities(self):
     securities = metric_utils.getAllMetricSecurities()
     self.assertIsInstance(securities, tuple)
@@ -179,12 +252,11 @@ class MetricUtilsTestCase(unittest.TestCase):
   @patch("taurus.metric_collectors.metric_utils.requests", autospec=True)
   def testCreateAllModelsHappyPath(self, requestsMock):
     requestsMock.post.return_value = Mock(status_code=201,
-                                          text='[{"uid":"foo"}]')
+                                          text='[{"uid":"foo", "name":"bar"}]')
 
-    totalModels = sum(len(resVal["metrics"])
-                      for resVal in (metric_utils
-                                     .getMetricsConfiguration()
-                                     .itervalues()))
+    totalModels = len(
+      metric_utils.getMetricNamesFromConfig(
+        metric_utils.getMetricsConfiguration()))
 
     metric_utils.createAllModels("localhost", "taurus")
     self.assertEqual(requestsMock.post.call_count, totalModels)
@@ -207,10 +279,56 @@ class MetricUtilsTestCase(unittest.TestCase):
       self.assertIn("modelParams", data)
 
 
+  @patch("taurus.metric_collectors.metric_utils.createCustomHtmModel",
+         autospec=True)
+  def testCreateAllModelsWithMetricNameFilter(self, createCustomHtmModelMock):
+    allMetricNames = metric_utils.getMetricNamesFromConfig(
+      metric_utils.getMetricsConfiguration())
+
+    subsetOfMetricNames = allMetricNames[:(len(allMetricNames) + 1) // 2]
+    self.assertGreater(len(subsetOfMetricNames), 0)
+
+    createCustomHtmModelMock.side_effect = (
+      lambda **kwargs: dict(name=kwargs["metricName"],
+                            uid=kwargs["metricName"] * 2))
+
+    models = metric_utils.createAllModels(host="host",
+                                          apiKey="apikey",
+                                          onlyMetricNames=subsetOfMetricNames)
+
+    self.assertEqual(createCustomHtmModelMock.call_count,
+                     len(subsetOfMetricNames))
+
+    self.assertEqual(len(models), len(subsetOfMetricNames))
+
+    self.assertItemsEqual(subsetOfMetricNames,
+                          [model["name"] for model in models])
+
+
+  def testCreateAllModelsWithEmptyMetricFilter(self):
+    with self.assertRaises(ValueError) as assertContext:
+      metric_utils.createAllModels(host="host",
+                                   apiKey="apikey",
+                                   onlyMetricNames=[])
+
+    self.assertEqual(assertContext.exception.args[0],
+                     "onlyMetricNames is empty")
+
+
+  def testCreateAllModelsWithUnknownsInMetricFilter(self):
+    with self.assertRaises(ValueError) as assertContext:
+      metric_utils.createAllModels(host="host",
+                                   apiKey="apikey",
+                                   onlyMetricNames=["a", "b"])
+
+    self.assertIn(
+      "elements in onlyMetricNames are not in metrics configuration",
+      assertContext.exception.args[0])
+
 
   @patch("taurus.metric_collectors.metric_utils.time.sleep", autospec=True)
   @patch("taurus.metric_collectors.metric_utils.requests", autospec=True)
-  def testCreateAllModelsWithErrors(self, requestsMock, sleepMock):
+  def testCreateAllModelsWithErrors(self, requestsMock, _sleepMock):
     requestsMock.post.return_value = Mock(status_code=500,
                                           text="Server limit exceeded")
 
@@ -221,6 +339,66 @@ class MetricUtilsTestCase(unittest.TestCase):
 
     self.assertRaises(metric_utils.RetriesExceededError,
                       metric_utils.createAllModels, "localhost", "taurus")
+
+
+  def testFilterCompanyMetricNamesBySymbol(self):
+    negatives = [
+      "TWITTER.TWEET.HANDLE.ZZZ.VOLUME",
+      "XIGNITE.ZZZ.CLOSINGPRICE",
+      "XIGNITE.FOOBARZZZ.CLOSINGPRICE",
+      "XIGNITE.ZZZFOOBAR.CLOSINGPRICE",
+      "XIGNITE.FOOBAR.ZZZ.VOLUME",
+      "XIGNITE.NEWS.FOOBAR.ZZZ.VOLUME",
+      "FOOBAR.VOLUME",
+      ".FOOBAR.CLOSINGPRICE",
+      "XIGNITE.FOOBAR.",
+      "FOOBARCLOSINGPRICE",
+    ]
+
+    positives = [
+      "XIGNITE.FOOBAR.CLOSINGPRICE",
+      "XIGNITE.FOOBAR.VOLUME",
+      "TWITTER.TWEET.HANDLE.FOOBAR.VOLUME",
+      "XIGNITE.NEWS.FOOBAR.VOLUME",
+    ]
+
+    # Execute
+    filteredNames = metric_utils.filterCompanyMetricNamesBySymbol(
+      metricNames=negatives + positives,
+      tickerSymbol="FOOBAR")
+
+    # Verify that the expected metric names were returned
+
+    self.assertItemsEqual(positives, filteredNames)
+
+
+  @patch("taurus.metric_collectors.metric_utils.requests", autospec=True)
+  def testDeleteMetric(self, requestsMock):
+    requestsMock.delete.return_value = Mock(status_code=200)
+
+    metric_utils.deleteMetric(host="localhost",
+                              apiKey="taurus",
+                              metricName="XIGNITE.FOO.VOLUME")
+    requestsMock.delete.assert_called_once_with(
+      "https://localhost/_metrics/custom/XIGNITE.FOO.VOLUME",
+      auth=("taurus", ""), verify=ANY)
+
+
+  @patch("taurus.metric_collectors.metric_utils.requests", autospec=True)
+  def testDeleteMetricMetricNotFound(self, requestsMock):
+    requestsMock.delete.return_value = Mock(status_code=404,
+                                            text="metric not found")
+
+    with self.assertRaises(metric_utils.MetricNotFound) as errorContext:
+      metric_utils.deleteMetric(host="localhost",
+                                apiKey="taurus",
+                                metricName="XIGNITE.FOO.VOLUME")
+
+    requestsMock.delete.assert_called_once_with(
+      "https://localhost/_metrics/custom/XIGNITE.FOO.VOLUME",
+      auth=("taurus", ""), verify=ANY)
+
+    self.assertEqual(errorContext.exception.args[0], "metric not found")
 
 
   @patch("taurus.metric_collectors.metric_utils.requests", autospec=True)
@@ -243,7 +421,7 @@ class MetricUtilsTestCase(unittest.TestCase):
 
   @patch("taurus.metric_collectors.metric_utils.time.sleep", autospec=True)
   @patch("taurus.metric_collectors.metric_utils.requests", autospec=True)
-  def testGetAllModelsWithErrors(self, requestsMock, sleepMock):
+  def testGetAllModelsWithErrors(self, requestsMock, _sleepMock):
 
     requestsMock.get.return_value = Mock()
 
@@ -274,7 +452,7 @@ class MetricUtilsTestCase(unittest.TestCase):
 
   @patch("taurus.metric_collectors.metric_utils.time.sleep", autospec=True)
   @patch("taurus.metric_collectors.metric_utils.requests", autospec=True)
-  def testGetOneModelWithErrors(self, requestsMock, sleepMock):
+  def testGetOneModelWithErrors(self, requestsMock, _sleepMock):
 
     requestsMock.get.return_value = Mock()
 
@@ -306,7 +484,7 @@ class MetricUtilsTestCase(unittest.TestCase):
 
 
   @patch("taurus.metric_collectors.metric_utils.datetime",
-    autospec=True)
+         autospec=True)
   @patch("taurus.metric_collectors.metric_utils.collectorsdb", autospec=True)
   def testEstablishLastEmittedSampleDatetime(self, collectorsdbMock,
                                              datetimeMock):
@@ -332,9 +510,9 @@ class MetricUtilsTestCase(unittest.TestCase):
     # Test again with None queryLastEmittedSampleDatetime() result
 
     collectorsdbMock.engineFactory.return_value.execute.reset_mock()
-    with patch(
-        "taurus.metric_collectors.metric_utils"
-        ".queryLastEmittedSampleDatetime") as queryLastEmittedSampleDatetime:
+    with patch("taurus.metric_collectors.metric_utils"
+               ".queryLastEmittedSampleDatetime") \
+         as queryLastEmittedSampleDatetime:
       queryLastEmittedSampleDatetime.return_value = None
       result = metric_utils.establishLastEmittedSampleDatetime(
         "twitter-tweets-volume", 300)
@@ -455,7 +633,7 @@ class MetricUtilsTestCase(unittest.TestCase):
 
   @patch("taurus.metric_collectors.metric_utils.time.sleep", autospec=True)
   @patch("taurus.metric_collectors.metric_utils.requests", autospec=True)
-  def testUnMonitorMetricWithErrors(self, requestsMock, sleepMock):
+  def testUnMonitorMetricWithErrors(self, requestsMock, _sleepMock):
 
     requestsMock.delete.return_value = Mock()
 
@@ -471,20 +649,21 @@ class MetricUtilsTestCase(unittest.TestCase):
 
   @patch(("taurus.metric_collectors.metric_utils.message_bus_connector"
           ".MessageBusConnector"), autospec=True)
-  def testMetricDataBatchWrite(self, MessageBusConnectorMock):
+  def testMetricDataBatchWrite(self, messageBusConnectorClassMock):
 
     samples = [
       ("FOO.BAR.%d" % i, i * 3.789, i * 300)
       for i in xrange((metric_utils._METRIC_DATA_BATCH_WRITE_SIZE * 3) / 2)
     ]
 
-    MessageBusConnector = metric_utils.message_bus_connector.MessageBusConnector
+    messageBusConnectorClass = (
+      metric_utils.message_bus_connector.MessageBusConnector)
     messageBusMock = MagicMock(
-      spec_set=MessageBusConnector,
-      publish=Mock(spec_set=MessageBusConnector.publish))
+      spec_set=messageBusConnectorClass,
+      publish=Mock(spec_set=messageBusConnectorClass.publish))
     messageBusMock.__enter__.return_value = messageBusMock
 
-    MessageBusConnectorMock.return_value = messageBusMock
+    messageBusConnectorClassMock.return_value = messageBusMock
 
     loggerMock = Mock(spec_set=logging.Logger)
     with metric_utils.metricDataBatchWrite(loggerMock) as putSample:
@@ -525,7 +704,6 @@ class MetricUtilsTestCase(unittest.TestCase):
                 for m, v, t
                 in samples[metric_utils._METRIC_DATA_BATCH_WRITE_SIZE:]])))
     self.assertEqual(messageBusMock.publish.call_args_list[1], call1)
-
 
 
 

@@ -5,15 +5,15 @@
  * following terms and conditions apply:
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 3 as
+ * it under the terms of the GNU Affero Public License version 3 as
  * published by the Free Software Foundation.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
+ * See the GNU Affero Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Affero Public License
  * along with this program.  If not, see http://www.gnu.org/licenses.
  *
  * http://numenta.org/licenses/
@@ -23,13 +23,13 @@
 package com.numenta.taurus.instance;
 
 import com.numenta.core.utils.DataUtils;
-import com.numenta.core.utils.Log;
 import com.numenta.core.utils.Pair;
 import com.numenta.taurus.R;
 import com.numenta.taurus.TaurusApplication;
 import com.numenta.taurus.chart.TimeSliderView;
 import com.numenta.taurus.data.MarketCalendar;
 import com.numenta.taurus.metric.MetricListFragment;
+import com.numenta.taurus.metric.MetricType;
 
 import android.app.Fragment;
 import android.os.AsyncTask;
@@ -43,7 +43,9 @@ import android.widget.CheckBox;
 import android.widget.CompoundButton;
 
 import java.util.Date;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.ListIterator;
 
 public class InstanceDetailPageFragment extends Fragment {
 
@@ -60,6 +62,8 @@ public class InstanceDetailPageFragment extends Fragment {
     private CheckBox _marketHoursCheckbox;
 
     private boolean _scrolling;
+
+    private boolean _collapseAfterHours;
 
     /**
      * Handles date/time scrolling
@@ -100,13 +104,14 @@ public class InstanceDetailPageFragment extends Fragment {
 
         @Override
         public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
-            int distance =  Math.round(distanceX / _pixelsBerBar);
+            int distance = Math.round(distanceX / _pixelsBerBar);
             if (_chartData != null && _chartData.hasData() && distance != 0) {
                 // Calculate valid scroll range
                 long maxDate = _chartData.getLastDbTimestamp();
                 long minDate = maxDate -
                         (TaurusApplication.getNumberOfDaysToSync() - 1) * DataUtils.MILLIS_PER_DAY;
 
+                MarketCalendar marketHours = TaurusApplication.getMarketCalendar();
                 List<Pair<Long, Float>> bars = _chartData.getData();
                 long time;
                 if (distance < 0) {
@@ -116,10 +121,9 @@ public class InstanceDetailPageFragment extends Fragment {
 
                     // Check if collapsing market hours
                     if (_marketHoursCheckbox.isChecked()) {
-                        MarketCalendar marketHours = TaurusApplication.getMarketCalendar();
                         if (!marketHours.isOpen(time)) {
                             // Find previous open hour
-                            List<Pair<Long, Long>> closed = TaurusApplication.getMarketCalendar()
+                            List<Pair<Long, Long>> closed = marketHours
                                     .getClosedHoursForPeriod(time, time);
                             if (closed != null && !closed.isEmpty()) {
                                 time = closed.get(0).first;
@@ -136,10 +140,9 @@ public class InstanceDetailPageFragment extends Fragment {
 
                     // Check if collapsing market hours
                     if (_marketHoursCheckbox.isChecked()) {
-                        MarketCalendar marketHours = TaurusApplication.getMarketCalendar();
                         if (!marketHours.isOpen(time)) {
                             // Find next open hour
-                            List<Pair<Long, Long>> closed = TaurusApplication.getMarketCalendar()
+                            List<Pair<Long, Long>> closed = marketHours
                                     .getClosedHoursForPeriod(time, time);
                             if (closed != null && !closed.isEmpty()) {
                                 time = closed.get(0).second;
@@ -180,8 +183,7 @@ public class InstanceDetailPageFragment extends Fragment {
 
         public TouchListener(View view) {
             _view = view;
-            _gestureDetector = new GestureDetector(getActivity(),
-                    new GestureListener(_view));
+            _gestureDetector = new GestureDetector(getActivity(), new GestureListener(_view));
         }
 
         @Override
@@ -243,6 +245,40 @@ public class InstanceDetailPageFragment extends Fragment {
         }
         _timeView.setAggregation(_chartData.getAggregation());
         _timeView.setEndDate(endTime);
+
+        // Check if need to collapse to market hours
+        if (_collapseAfterHours) {
+            EnumSet<MetricType> anomalousMetrics = _chartData.getAnomalousMetrics();
+            if (anomalousMetrics.contains(MetricType.TwitterVolume)) {
+                // Collapse to market hours if twitter anomalies occurred during market hours
+                MarketCalendar marketCalendar = TaurusApplication.getMarketCalendar();
+                boolean collapsed = true;
+
+                // Check if is there any twitter anomaly on the last visible bars
+                List<Pair<Long, Float>> data = _chartData.getData();
+                ListIterator<Pair<Long, Float>> iterator = data.listIterator(data.size());
+                for (int i = 0;
+                        i < TaurusApplication.getTotalBarsOnChart() && iterator.hasPrevious();
+                        i++) {
+                    Pair<Long, Float> value = iterator.previous();
+                    if (value != null && value.second != null && !Float.isNaN(value.second)) {
+                        double scaled = DataUtils.logScale(value.second);
+                        if (scaled >= TaurusApplication.getYellowBarFloor() &&
+                                !marketCalendar.isOpen(value.first)) {
+                            // Found anomaly, don't collapse
+                            collapsed = false;
+                            break;
+                        }
+                    }
+                }
+                _marketHoursCheckbox.setChecked(collapsed);
+            } else {
+                // Collapse to market hours if we only have stock anomalies
+                _marketHoursCheckbox.setChecked(true);
+            }
+            // Prevent collapsing during scroll
+            _collapseAfterHours = false;
+        }
     }
 
     public void updateRowData() {
@@ -284,6 +320,8 @@ public class InstanceDetailPageFragment extends Fragment {
                     }
                 });
 
+        // Collapse after hours when opening the view
+        _collapseAfterHours = true;
         return view;
     }
 
@@ -324,25 +362,5 @@ public class InstanceDetailPageFragment extends Fragment {
             _instanceLoadTask.cancel(true);
             _instanceLoadTask = null;
         }
-    }
-
-
-    /**
-     * Get the market closed hours enclosing the given time.
-     *
-     * @param time The time to check
-     * @return The start and close time in milliseconds. It will include the  beginning of the
-     * closed period as well as the end of the closed period. Or null if the market is open
-     */
-    Pair<Long, Long> getClosedHoursForTime(long time) {
-        if (!TaurusApplication.getMarketCalendar().isOpen(time)) {
-            List<Pair<Long, Long>> hours = TaurusApplication.getMarketCalendar()
-                    .getClosedHoursForPeriod(time, time);
-            if (hours != null && !hours.isEmpty()) {
-                // Assume we only get one result
-                return hours.get(0);
-            }
-        }
-        return null;
     }
 }

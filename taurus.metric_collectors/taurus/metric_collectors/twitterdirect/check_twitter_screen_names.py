@@ -6,60 +6,50 @@
 # following terms and conditions apply:
 #
 # This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License version 3 as
+# it under the terms of the GNU Affero Public License version 3 as
 # published by the Free Software Foundation.
 #
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-# See the GNU General Public License for more details.
+# See the GNU Affero Public License for more details.
 #
-# You should have received a copy of the GNU General Public License
+# You should have received a copy of the GNU Affero Public License
 # along with this program.  If not, see http://www.gnu.org/licenses.
 #
 # http://numenta.org/licenses/
 # ----------------------------------------------------------------------
 
 """
-Script to check if twitter screen names are still valid. 
-Email notifications are sent for unmapped screen names.  
-Each time a screen name is reported successfully, we add it to a table keeping 
+Service that checks if twitter screen names are still valid.
+Email notifications are sent for unmapped screen names.
+Each time a screen name is reported successfully, we add it to a table keeping
 track of unmapped screen names that were already reported -- to avoid duplicate
-emails reporting the same unmapped screen name. 
-
-This script is intended to be called periodically via crontab or equivalent.
+emails reporting the same unmapped screen name.
 """
 
 import logging
 from optparse import OptionParser
 import os
+import time
 
 import tweepy
 
 from nta.utils import error_reporting
 from taurus.metric_collectors import collectorsdb
 from taurus.metric_collectors import logging_support
-from twitter_direct_agent import loadMetricSpecs
-from twitter_direct_agent import DEFAULT_CONSUMER_KEY
-from twitter_direct_agent import DEFAULT_CONSUMER_SECRET
-from twitter_direct_agent import DEFAULT_ACCESS_TOKEN
-from twitter_direct_agent import DEFAULT_ACCESS_TOKEN_SECRET
+from taurus.metric_collectors.twitterdirect.twitter_direct_agent import (
+  loadMetricSpecs,
+  DEFAULT_CONSUMER_KEY,
+  DEFAULT_CONSUMER_SECRET,
+  DEFAULT_ACCESS_TOKEN,
+  DEFAULT_ACCESS_TOKEN_SECRET
+)
 
 
 
-# For emailing
-ERROR_REPORT_EMAIL_AWS_REGION = os.environ.get(
-  "ERROR_REPORT_EMAIL_AWS_REGION")
-ERROR_REPORT_EMAIL_SES_ENDPOINT = os.environ.get(
-  "ERROR_REPORT_EMAIL_SES_ENDPOINT")
-ERROR_REPORT_EMAIL_SENDER_ADDRESS = os.environ.get(
-  "ERROR_REPORT_EMAIL_SENDER_ADDRESS")
-AWS_ACCESS_KEY_ID = os.environ.get(
-  "AWS_ACCESS_KEY_ID")
-AWS_SECRET_ACCESS_KEY = os.environ.get(
-  "AWS_SECRET_ACCESS_KEY")
-ERROR_REPORT_EMAIL_RECIPIENTS = os.environ.get(
-  "ERROR_REPORT_EMAIL_RECIPIENTS")
+# Interval between processing cycles
+_SLEEP_INTERVAL_SEC = 3600
 
 
 
@@ -69,21 +59,21 @@ g_log = logging.getLogger("check_twitter_screen_names")
 
 
 def _checkTwitterScreenNames(consumerKey,
-                            consumerSecret,
-                            accessToken,
-                            accessTokenSecret,
-                            errorReportEmailAwsRegion,
-                            errorReportEmailSesEndpoint,
-                            errorReportEmailSenderAddress,
-                            awsAccessKeyId,
-                            awsSecretAccessKey,
-                            errorReportEmailRecipients):
-  """ 
-  Check if twitter screen names are still valid. 
-  Email notifications are sent for unmapped screen names.  
+                             consumerSecret,
+                             accessToken,
+                             accessTokenSecret,
+                             errorReportEmailAwsRegion,
+                             errorReportEmailSesEndpoint,
+                             errorReportEmailSenderAddress,
+                             awsAccessKeyId,
+                             awsSecretAccessKey,
+                             errorReportEmailRecipients):
+  """
+  Check if twitter screen names are still valid.
+  Email notifications are sent for unmapped screen names.
   Each time an unmapped screen name is reported successfully, we add it to a
   table keeping track of unmapped screen names that were already reported -- to
-  avoid duplicate emails reporting the same unmapped screen name. 
+  avoid duplicate emails reporting the same unmapped screen name.
 
   :param consumerKey: Twitter consumer key
   :param consumerSecret: Twitter consumer secret
@@ -102,9 +92,9 @@ def _checkTwitterScreenNames(consumerKey,
   :param errorReportEmailRecipients: Recipients error report email
   :type errorReportEmailRecipients: list of strings
   """
-  
+
   authHandler = tweepy.OAuthHandler(consumerKey, consumerSecret)
-  authHandler.set_access_token(accessToken, accessTokenSecret)    
+  authHandler.set_access_token(accessToken, accessTokenSecret)
   tweepyApi = tweepy.API(authHandler)
 
   # list of screen names
@@ -115,23 +105,17 @@ def _checkTwitterScreenNames(consumerKey,
       screenNames.append(screenName.lower())
 
   unmappedScreenNames = _resolveUnmappedScreenNames(tweepyApi, screenNames)
-  
+
   if unmappedScreenNames:
     g_log.error("No mappings for screenNames=%s", unmappedScreenNames)
-    
-    if errorReportEmailRecipients:
-      _reportUnmappedScreenNames(unmappedScreenNames=unmappedScreenNames,
-                                 awsRegion=errorReportEmailAwsRegion,
-                                 sesEndpoint=errorReportEmailSesEndpoint,
-                                 senderAddress=errorReportEmailSenderAddress,
-                                 awsAccessKeyId=awsAccessKeyId,
-                                 awsSecretAccessKey=awsSecretAccessKey,
-                                 recipients=errorReportEmailRecipients)
-    else:
-      g_log.error("Email about unmapped screen names can't be sent. "
-                  "Environment variable ERROR_REPORT_EMAIL_RECIPIENTS is "
-                  "undefined.")
 
+    _reportUnmappedScreenNames(unmappedScreenNames=unmappedScreenNames,
+                               awsRegion=errorReportEmailAwsRegion,
+                               sesEndpoint=errorReportEmailSesEndpoint,
+                               senderAddress=errorReportEmailSenderAddress,
+                               awsAccessKeyId=awsAccessKeyId,
+                               awsSecretAccessKey=awsSecretAccessKey,
+                               recipients=errorReportEmailRecipients)
   else:
     # clearing rows of twitter_handle_failures table
     _deleteScreenNameFailures()
@@ -140,7 +124,7 @@ def _checkTwitterScreenNames(consumerKey,
 
 
 def _resolveUnmappedScreenNames(tweepyApi, screenNames):
-  """ 
+  """
   Map the given Twitter Screen Names to the corresponding User IDs and return
 
   :param tweepyApi: tweepy API object configured with the necessary AuthHandler
@@ -150,7 +134,7 @@ def _resolveUnmappedScreenNames(tweepyApi, screenNames):
   :returns: set of unmapped screen names
   :rtype: set of strings
   """
-  
+
   # Get twitter Ids corresponding to screen names and build a userId-to-metric
   # map
   maxLookupItems = 100  # twitter's users/lookup limit
@@ -186,7 +170,8 @@ def _saveScreenNameFailure(unmappedScreenName):
   :type unmappedScreenName: string
   """
 
-  ins = (collectorsdb.schema.twitterHandleFailures.insert()
+  ins = (collectorsdb.schema  # pylint: disable=E1120
+         .twitterHandleFailures.insert()
          .prefix_with('IGNORE', dialect="mysql")
          .values(handle=unmappedScreenName))
 
@@ -199,11 +184,11 @@ def _saveScreenNameFailure(unmappedScreenName):
 @collectorsdb.retryOnTransientErrors
 def _deleteScreenNameFailures():
   """
-  Clear rows from the twitter_handle_failures table. 
+  Clear rows from the twitter_handle_failures table.
   """
 
   result = collectorsdb.engineFactory().execute(
-    collectorsdb.schema.twitterHandleFailures.delete())
+    collectorsdb.schema.twitterHandleFailures.delete())  # pylint: disable=E1120
 
   if result.rowcount:
     g_log.info("Deleted %s rows from %s table",
@@ -238,7 +223,7 @@ def _reportUnmappedScreenNames(unmappedScreenNames,
                                awsSecretAccessKey,
                                recipients):
   """
-  Report unmapped twitter handles. 
+  Report unmapped twitter handles.
   Notify via email if unmapped screen name has not already been reported.
   After emailing, log unmapped twitter handle in DB to prevent re-reporting.
 
@@ -256,19 +241,19 @@ def _reportUnmappedScreenNames(unmappedScreenNames,
   :type awsSecretAccessKey: string
   :param recipients: Recipients report email
   :type recipients: sequence of strings
-    
+
   """
-  
+
   for unmappedScreenName in unmappedScreenNames:
     if not _screenNameFailureReported(unmappedScreenName):
-  
+
       subject = "Twitter handle '%s' is invalid" % unmappedScreenName
       body = "Twitter handle '%s' needs to be updated." % unmappedScreenName
       try:
         error_reporting.sendEmailViaSES(
-          subject=subject, 
-          body=body, 
-          recipients=recipients, 
+          subject=subject,
+          body=body,
+          recipients=recipients,
           awsRegion=awsRegion,
           sesEndpoint=sesEndpoint,
           senderAddress=senderAddress,
@@ -284,29 +269,18 @@ def _reportUnmappedScreenNames(unmappedScreenNames,
         _saveScreenNameFailure(unmappedScreenName)
     else:
       g_log.info("Invalid twitter handle '%s' already reported. Will not send "
-                 "email again." % unmappedScreenName)
+                 "email again.", unmappedScreenName)
 
 
 
 def _parseArgs():
-  """
-  :returns: dict of arg names and values:
-    consumerKey
-    consumerSecret
-    accessToken
-    accessTokenSecret
-    errorReportEmailAwsRegion
-    errorReportEmailSesEndpoint
-    errorReportEmailSenderAddress
-    awsAccessKeyId
-    awsSecretAccessKey
-    errorReportEmailRecipients
-  """
-  
+  """ Parse command-line args """
+
   helpString = (
-    "%prog [options]\n"
-    "This script sends email notifications to report unmapped screen names, if "
-    "they haven't already been reported.\n"
+    "%prog\n"
+    "Periodically checks for unmapped screen names and sends email "
+    "notifications to report them if they haven't already been reported. This "
+    "script is intended to run as a service under supervisord or similar.\n"
     "/!\ This script depends on the following environment variables:\n"
     "* TAURUS_TWITTER_CONSUMER_KEY: Twitter consumer key.\n"
     "* TAURUS_TWITTER_CONSUMER_SECRET: Twitter consumer secret.\n"
@@ -325,163 +299,89 @@ def _parseArgs():
 
   parser = OptionParser(helpString)
 
-  parser.add_option(
-      "--ckey",
-      action="store",
-      type="string",
-      dest="consumerKey",
-      default=DEFAULT_CONSUMER_KEY,
-      help="Twitter consumer key [default: %default]")
-
-  parser.add_option(
-      "--csecret",
-      action="store",
-      type="string",
-      dest="consumerSecret",
-      default=DEFAULT_CONSUMER_SECRET,
-      help="Twitter consumer secret [default: %default]")
-
-  parser.add_option(
-      "--atoken",
-      action="store",
-      type="string",
-      dest="accessToken",
-      default=DEFAULT_ACCESS_TOKEN,
-      help="Twitter access token [default: %default]")
-
-  parser.add_option(
-      "--atokensecret",
-      action="store",
-      type="string",
-      dest="accessTokenSecret",
-      default=DEFAULT_ACCESS_TOKEN_SECRET,
-      help="Twitter access token secret [default: %default]")
-  
-  parser.add_option(
-      "--awsregion",
-      action="store",
-      type="string",
-      dest="errorReportEmailAwsRegion",
-      default=ERROR_REPORT_EMAIL_AWS_REGION,
-      help="AWS region for error report email [default: %default]")
-  
-  parser.add_option(
-      "--sesendpoint",
-      action="store",
-      type="string",
-      dest="errorReportEmailSesEndpoint",
-      default=ERROR_REPORT_EMAIL_SES_ENDPOINT,
-      help="SES endpoint for error report email [default: %default]")
-  
-  parser.add_option(
-      "--senderaddress",
-      action="store",
-      type="string",
-      dest="errorReportEmailSenderAddress",
-      default=ERROR_REPORT_EMAIL_SENDER_ADDRESS,
-      help="Sender address for error report email [default: %default]")
-  
-  parser.add_option(
-      "--awsid",
-      action="store",
-      type="string",
-      dest="awsAccessKeyId",
-      default=AWS_ACCESS_KEY_ID,
-      help="AWS access key ID for error report email [default: %default]")
-  
-  parser.add_option(
-      "--awssecret",
-      action="store",
-      type="string",
-      dest="awsSecretAccessKey",
-      default=AWS_SECRET_ACCESS_KEY,
-      help="AWS secret access key for error report email [default: %default]")
-  
-  parser.add_option(
-      "--recipients",
-      action="store",
-      type="string",
-      dest="errorReportEmailRecipients",
-      default=ERROR_REPORT_EMAIL_RECIPIENTS,
-      help=("Recipients error report email. Email addresses need to be comma "
-            "separated. Example: "
-            "'recipient1@numenta.com, recipient2@numenta.com' "
-            "[default: %default]"))
-
-  options, remainingArgs = parser.parse_args()
+  _, remainingArgs = parser.parse_args()
   if remainingArgs:
     parser.error("Unexpected remaining args: %r" % (remainingArgs,))
-
-  if options.errorReportEmailAwsRegion:
-    options.errorReportEmailAwsRegion = (
-      options.errorReportEmailAwsRegion.strip())
-  if not options.errorReportEmailAwsRegion:
-    msg = ("Option --awsregion or environment variable "
-           "ERROR_REPORT_EMAIL_AWS_REGION is empty or undefined.")
-    parser.error(msg)
-
-  if options.errorReportEmailSenderAddress:
-    options.errorReportEmailSenderAddress = (
-      options.errorReportEmailSenderAddress.strip())
-  if not options.errorReportEmailSenderAddress:
-    msg = ("Option --senderaddress or environment variable "
-           "ERROR_REPORT_EMAIL_SENDER_ADDRESS is empty or undefined.")
-    parser.error(msg)
-
-  # parsing comma separated list of email
-  parsedErrorReportEmailRecipients = None
-  if options.errorReportEmailRecipients:
-    recipients = options.errorReportEmailRecipients
-    parsedErrorReportEmailRecipients = [
-      addr.strip() for addr in recipients.split(",")
-      if addr.strip()]
-  if not parsedErrorReportEmailRecipients:
-    msg = ("Option --recipients or environment variable "
-           "ERROR_REPORT_EMAIL_RECIPIENTS is empty or undefined.")
-    parser.error(msg)
-
-  if not options.awsAccessKeyId:
-    msg = ("Option --awsid or environment variable "
-           "AWS_ACCESS_KEY_ID is empty or undefined.")
-    parser.error(msg)
-
-  if not options.awsSecretAccessKey:
-    msg = ("Option --awssecret or environment variable "
-           "AWS_SECRET_ACCESS_KEY is empty or undefined.")
-    parser.error(msg)
-
-  return dict(
-    consumerKey=options.consumerKey,
-    consumerSecret=options.consumerSecret,
-    accessToken=options.accessToken,
-    accessTokenSecret=options.accessTokenSecret,
-    errorReportEmailAwsRegion=options.errorReportEmailAwsRegion,
-    errorReportEmailSesEndpoint=options.errorReportEmailSesEndpoint,
-    errorReportEmailSenderAddress=options.errorReportEmailSenderAddress,
-    awsAccessKeyId=options.awsAccessKeyId,
-    awsSecretAccessKey=options.awsSecretAccessKey,
-    errorReportEmailRecipients=parsedErrorReportEmailRecipients
-    )
 
 
 
 def main():
   """ NOTE: main may be used as "console script" entry point by setuptools
   """
-  
-  logging_support.LoggingSupport.initTool()
+
+  logging_support.LoggingSupport.initService()
 
   try:
-    options = _parseArgs()
-    
-    g_log.info("Running with options=%r", options)
-    
-    _checkTwitterScreenNames(**options)
-  except Exception:
-    g_log.exception("%s failed", __name__)
+
+    try:
+      _parseArgs()
+    except SystemExit as e:
+      if e.code == 0:
+        # Suppress exception logging when exiting due to --help
+        return
+
+      raise
+
+    errorReportEmailAwsRegion=os.environ.get("ERROR_REPORT_EMAIL_AWS_REGION")
+    assert errorReportEmailAwsRegion, (
+      "Environment variable ERROR_REPORT_EMAIL_AWS_REGION is empty or "
+      "undefined.")
+
+    errorReportEmailSesEndpoint=os.environ.get(
+      "ERROR_REPORT_EMAIL_SES_ENDPOINT")
+
+    errorReportEmailSenderAddress=os.environ.get(
+      "ERROR_REPORT_EMAIL_SENDER_ADDRESS")
+    assert errorReportEmailSenderAddress, (
+      "Environment variable ERROR_REPORT_EMAIL_SENDER_ADDRESS is empty or "
+      "undefined.")
+
+    errorReportEmailRecipients=os.environ.get("ERROR_REPORT_EMAIL_RECIPIENTS")
+    # parsing comma separated list of email
+    errorReportEmailRecipients = [
+      addr.strip() for addr in errorReportEmailRecipients.split(",")
+      if addr.strip()
+    ]
+    assert errorReportEmailRecipients, (
+      "Environment variable ERROR_REPORT_EMAIL_RECIPIENTS is empty or "
+      "undefined.")
+
+    awsAccessKeyId=os.environ.get("AWS_ACCESS_KEY_ID")
+    assert awsAccessKeyId, (
+      "Environment variable AWS_ACCESS_KEY_ID is empty or undefined.")
+
+    awsSecretAccessKey=os.environ.get("AWS_SECRET_ACCESS_KEY")
+    assert awsSecretAccessKey, (
+      "Environment variable AWS_SECRET_ACCESS_KEY is empty or undefined.")
+
+
+    while True:
+      _checkTwitterScreenNames(
+        consumerKey=DEFAULT_CONSUMER_KEY,
+        consumerSecret=DEFAULT_CONSUMER_SECRET,
+        accessToken=DEFAULT_ACCESS_TOKEN,
+        accessTokenSecret=DEFAULT_ACCESS_TOKEN_SECRET,
+        errorReportEmailAwsRegion=errorReportEmailAwsRegion,
+        errorReportEmailSesEndpoint=errorReportEmailSesEndpoint,
+        errorReportEmailSenderAddress=errorReportEmailSenderAddress,
+        errorReportEmailRecipients=errorReportEmailRecipients,
+        awsAccessKeyId=awsAccessKeyId,
+        awsSecretAccessKey=awsSecretAccessKey
+      )
+
+      time.sleep(_SLEEP_INTERVAL_SEC)
+
+  except KeyboardInterrupt:
+    # Suppress exception that typically results from the SIGINT signal sent by
+    # supervisord to stop the service; log with exception info to help debug
+    # deadlocks
+    g_log.info("Observed KeyboardInterrupt", exc_info=True)
+  except:
+    g_log.exception("Failed!")
+    raise
 
 
 
 if __name__ == "__main__":
   main()
-  
+

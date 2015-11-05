@@ -13,6 +13,21 @@ Installation
   something that ends with "site-packages".  If not specified, system default
   is used.
 
+### Requirements
+
+- Python 2.7, including [setuptools](https://pypi.python.org/pypi/setuptools)
+
+*Note:* `nta.utils` is a mostly generic collection of utilities shared by
+multiple Numenta applications.  For example, there are utilities for
+interacting with an AMQP message broker such as
+[rabbitmq](https://www.rabbitmq.com/download.html), as well as
+[MySQL](https://www.mysql.com/).  You don't necessarily need `rabbitmq` or
+`mysql` installed and running on the same instance as your application, but
+the tests will require _access_ to some `mysql` and `rabbitmq` host.  As such,
+you should be prepared to configure your application to use the following:
+
+- [rabbitmq](https://www.rabbitmq.com/download.html) 3.5 (or higher)
+- [mysql](http://dev.mysql.com/downloads/mysql/) 5.6 (or higher)
 
 Environment Variables
 ---------------------

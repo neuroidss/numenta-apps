@@ -5,15 +5,15 @@
 # following terms and conditions apply:
 #
 # This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License version 3 as
+# it under the terms of the GNU Affero Public License version 3 as
 # published by the Free Software Foundation.
 #
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-# See the GNU General Public License for more details.
+# See the GNU Affero Public License for more details.
 #
-# You should have received a copy of the GNU General Public License
+# You should have received a copy of the GNU Affero Public License
 # along with this program.  If not, see http://www.gnu.org/licenses.
 #
 # http://numenta.org/licenses/
@@ -349,8 +349,14 @@ class SlotAgent(object):
           "%r: {TAG:SWAP.SA.MODEL.STOP.PENDING} modelState=%r",
           self, modelState)
         modelState.modelExitStatus = modelState.modelRunner.stopGracefully()
-        self._logger.info("%r: {TAG:SWAP.SA.MODEL.STOP.DONE} modelState=%r",
-                          self, modelState)
+
+        if modelState.modelExitStatus == 0:
+          self._logger.info("%r: {TAG:SWAP.SA.MODEL.STOP.DONE} modelState=%r",
+                            self, modelState)
+        else:
+          self._logger.error("%r: {TAG:SWAP.SA.MODEL.STOP.DONE} modelState=%r",
+                             self, modelState)
+
         if doCallback:
           modelState.modelFinishedCallback(modelState.modelExitStatus)
 
@@ -423,6 +429,6 @@ class _CurrentModelState(object):
   def __repr__(self):
     return ("%s<modelID=%s, stopPend=%s, stopReq=%s, modelFailed=%s, "
             "exitStatus=%s, modelRunner=%r>") % (
-      self.__class__.__name__, self.modelID, self.stopModelPending,
-      self.stopModelRequested, self.modelFailed, self.modelExitStatus,
-      self.modelRunner)
+              self.__class__.__name__, self.modelID, self.stopModelPending,
+              self.stopModelRequested, self.modelFailed, self.modelExitStatus,
+              self.modelRunner)

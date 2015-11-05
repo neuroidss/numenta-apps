@@ -6,15 +6,15 @@
 # following terms and conditions apply:
 #
 # This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License version 3 as
+# it under the terms of the GNU Affero Public License version 3 as
 # published by the Free Software Foundation.
 #
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-# See the GNU General Public License for more details.
+# See the GNU Affero Public License for more details.
 #
-# You should have received a copy of the GNU General Public License
+# You should have received a copy of the GNU Affero Public License
 # along with this program.  If not, see http://www.gnu.org/licenses.
 #
 # http://numenta.org/licenses/
@@ -23,7 +23,7 @@
 """
 Package products repository into an RPM.
 
-Builds either saltcellar, infrastructure-common, or grok flavored RPMs.
+Builds either saltcellar, infrastructure-common, or htm-it flavored RPMs.
 
 For saltcellar RPMs, unless --internal-only has been specified, only
 includes formulas that have explicitly been marked public by having a
@@ -35,24 +35,13 @@ import os
 import signal
 import sys
 
-from distutils.dir_util import copy_tree, mkpath
-from tempfile import mkdtemp
-
-from infrastructure.utilities import git
-from infrastructure.utilities import logger as log
-from infrastructure.utilities import rpm
-from infrastructure.utilities.exceptions import InvalidParametersError
-from infrastructure.utilities.path import (
-  changeToWorkingDir,
-  purgeDirectory,
-  rmrf)
-from infrastructure.utilities.cli import runWithOutput
+from infrastructure.utilities import diagnostics as log
+from infrastructure.utilities.numenta_rpm import NumentaRPM
 
 # Set up our globals
 g_config = None
-g_fakeroot = None
 g_logger = None
-
+g_cleanupDirectories = None
 
 
 def parseCLA():
@@ -162,10 +151,10 @@ def parseCLA():
 
   parser.add_argument("--rpm-flavor",
                       dest="flavor",
-                      choices=["grok",
+                      choices=["htm-it",
                                "infrastructure",
                                "saltcellar",
-                               "prebuiltgrok"],
+                               "prebuilthtm-it"],
                       help="Set the rpm type")
 
   parser.add_argument("--rpm-name",
@@ -191,7 +180,7 @@ def parseCLA():
 
   parser.add_argument("--site-packages-tarball",
                       dest="sitePackagesTarball",
-                      help="Explode a tarball into grok/lib/python2.7",
+                      help="Explode a tarball into htm-it/lib/python2.7",
                       default=None)
 
   parser.add_argument("--tempdir",
@@ -219,8 +208,8 @@ def parseCLA():
   g_logger.debug("Configuration: %s", g_config)
 
   if g_config.sitePackagesTarball:
-    if g_config.flavor != "grok":
-      failmsg = "--site-packages is only used for grok packages."
+    if g_config.flavor != "htm-it":
+      failmsg = "--site-packages is only used for htm-it packages."
       parser.error(failmsg)
 
   if g_config.flavor == None:
@@ -229,27 +218,14 @@ def parseCLA():
 
   if g_config.artifacts == []:
     failmsg = "You must specify artifacts in the fakeroot to package."
-    if g_config.flavor == "grok":
-      failmsg = failmsg + " Grok rpms should specify opt"
+    if g_config.flavor == "htm-it":
+      failmsg = failmsg + " HTM-IT rpms should specify opt"
     if g_config.flavor == "infrastructure":
       failmsg = failmsg + " Infrastructure rpms should specify opt"
     if g_config.flavor == "saltcellar":
       failmsg = failmsg + " Saltcellar rpms should specify srv"
     parser.error(failmsg)
 
-
-
-def cleanupDirectories():
-  """
-  Nuke any temp files unless preserveFakeroot is set in the configuration.
-  """
-  if not g_config.preserveFakeroot:
-    if g_logger:
-      g_logger.debug("Scrubbing fakeroot in %s", g_fakeroot)
-    rmrf(g_fakeroot, logger=g_logger)
-  else:
-    if g_logger:
-      g_logger.debug("Skipping fakeroot scrub, leaving %s intact.", g_fakeroot)
 
 
 
@@ -265,484 +241,8 @@ def signalHandler(caughtSignal, frame):
   """
   g_logger.error("Caught signal %s in frame %s, terminating...", caughtSignal,
                  frame)
-  cleanupDirectories()
+  g_cleanupDirectories()
   sys.exit(1)
-
-
-
-def sanitizeSrvSalt(saltpath):
-  """
-  Ensure only whitelisted files & directories are installed to /srv/salt by
-  the RPM.
-
-  Numenta convention is to only include explicitly whitelisted formulas
-  and files in RPMs deployed to customer machines.
-
-  We add a PUBLIC file at the top level of a formula's directory tree
-  to add it to the whitelist.
-
-  This prevents us from accidentally publishing internal-only files to
-  customer machines.
-
-  @param saltpath - Path to /srv/salt in the fakeroot
-  """
-
-  fileWhitelist = ["bootstrap.sh",
-                   "top.sls"
-                  ]
-
-  g_logger.debug("Sanitizing %s", saltpath)
-  for artifact in os.listdir(saltpath):
-    artifactPath = "%s/%s" % (saltpath, artifact)
-    if os.path.isfile(artifactPath):
-      if artifact not in fileWhitelist:
-        g_logger.debug("Purging %s", artifact)
-        rmrf(artifactPath)
-    if os.path.isdir(artifactPath):
-      # Formula directories have to be explicitly whitelisted by having
-      # a PUBLIC file or they will be purged from the salt tree.
-      if not os.path.isfile("%s/PUBLIC" % artifactPath):
-        g_logger.debug("Purging %s", artifact)
-        rmrf(artifactPath)
-      else:
-        g_logger.info("packaging formula %s", artifact)
-
-  # AWS requires that we don't include keys in marketplace AMIs.
-  # Purge any pubkeys in the salt tree
-  # Note that we _don't_ quote the wildcard here so that check_call
-  # passes it to find correctly when it is called by runWithOutput.
-  # Same for the {} and ;
-  findPubkeys = """find %s -name *.pub -exec rm -fv {} ;""" % saltpath
-  g_logger.debug("**************************************************")
-  g_logger.debug("Sanitizing %s with %s", saltpath, findPubkeys)
-  runWithOutput(findPubkeys, logger=g_logger)
-
-  # Purge pemfiles
-  findPemFiles = """find %s -name *.pem -exec rm -fv {} ;""" % saltpath
-  g_logger.debug("**************************************************")
-  g_logger.debug("Sanitizing %s with %s", saltpath, findPubkeys)
-  runWithOutput(findPemFiles, logger=g_logger)
-
-
-
-def constructFakeroot(fakeroot, flavor):
-  """
-  Construct a fakeroot.
-
-  @param fakeroot - Path to the fakeroot
-
-  @param flavor - What type of RPM to create - valid options are grok,
-  infrastructure, or saltcellar.
-
-  @returns (iteration, fakerootSHA) where iteration is the total commit count
-  in the repository and fakerootSHA is the SHA in the fakeroot. If we're
-  packaging a branch or tip of master, we're still going to want to know what
-  the SHA was so we can include it in the RPM description.
-
-  @rtype tuple
-  """
-  g_logger.debug("RPM flavor: %s", g_config.flavor)
-
-  if flavor == "grok":
-    return constructGrokFakeroot(fakeroot)
-
-  if flavor == "infrastructure":
-    return constructInfrastructureFakeroot(fakeroot)
-
-  if flavor == "saltcellar":
-    return constructSaltcellarFakeroot(fakeroot)
-
-  if flavor == "prebuiltgrok":
-    return constructPreBuiltGrokFakeroot(fakeroot)
-
-
-def setPythonPath(environment, productsDirectory):
-  """
-    Set any extra pythonpath.
-
-    @environment - current environment variables.
-    @param productsDirectory - products directory path.
-  """
-  pythonpath = ""
-  g_logger.debug("Previous: %s", pythonpath)
-  for extraPythonpath in g_config.pythonpathExtensions:
-    pythonpath = "%s:%s/opt/numenta/products/%s" % (environment["PYTHONPATH"],
-                                                    g_fakeroot,
-                                                    extraPythonpath)
-    g_logger.debug("Setting PYTHONPATH to %s", pythonpath)
-  environment["PYTHONPATH"] = pythonpath
-  g_logger.debug("New PYTHONPATH: %s", pythonpath)
-
-
-def cleanScripts(productsDirectory, environment):
-  """
-    Cleans the grok directory before packaging.
-
-    @param productsDirectory - products directory path
-                               to run cleanup scripts.
-  """
-  g_logger.info("Running cleanup scripts...")
-  for cleaner in g_config.cleanupScripts:
-    cleanerPath = "%s/%s" % (productsDirectory, cleaner)
-    workDirectory = os.path.dirname(cleanerPath)
-    g_logger.debug("Changing to %s", workDirectory)
-    g_logger.debug("Attempting to run %s", cleanerPath)
-    if not os.path.exists(cleanerPath):
-      raise InvalidParametersError("%s does not exist!" % cleanerPath)
-    with changeToWorkingDir(workDirectory):
-      runWithOutput("%s %s" % (cleanerPath, "--destroy-all-my-work"),
-                    env=environment)
-
-
-def purgeBlacklistedStuff(productsDirectory):
-  """
-    Purges anything not whitelisted.
-
-    @param productsDirectory - products directory path
-                               to remove blacklisted stuff.
-  """
-  g_logger.info("Purge anything not whitelisted.")
-  for thing in os.listdir(productsDirectory):
-    if thing not in g_config.whitelisted:
-      rmrf("%s/%s" % (productsDirectory, thing))
-
-
-def constructPreBuiltGrokFakeroot(fakeroot):
-  """
-    construct fakeroot from prebuilt grok
-
-    @param fakeroot - fakeroot to install into that will be packaged later
-                      by fpm
-    @returns SHA of the products repo in the fakeroot
-
-  """
-  numentaPath = "%s/opt/numenta" % fakeroot
-  productsDirectory = os.path.join(numentaPath, "products")
-  g_logger.debug("Creating %s", productsDirectory)
-  mkpath(productsDirectory)
-  environment = dict(os.environ)
-  copy_tree(g_config.productsDir, productsDirectory)
-  iteration = git.getCommitCount(productsDirectory)
-
-  with changeToWorkingDir(productsDirectory):
-    actualSHA = git.getCurrentSha()
-
-  # Set extra python path
-  setPythonPath(environment, productsDirectory)
-
-  # Clean Grok Scripts
-  cleanScripts(productsDirectory, environment)
-
-  # Purge anything not whitelisted
-  purgeBlacklistedStuff(productsDirectory)
-
-  return (iteration, actualSHA)
-
-
-def installProductsIntoGrokFakeroot(fakeroot):
-  """
-  Clone our git repo into the fakeroot directory tree.
-
-  If we're configured to use a site-packages tarball; burst it.
-
-  @param fakeroot - directory to install products and site-packages into
-
-  @returns SHA of the products repo in the fakeroot
-  """
-  numentaPath = "%s/opt/numenta" % fakeroot
-  g_logger.debug("Creating %s", numentaPath)
-  mkpath(numentaPath)
-
-  g_logger.debug("Cloning...")
-  realSHA = rpm.gitCloneIntoFakeroot(fakeroot=fakeroot,
-                                     installDirectory="opt/numenta",
-                                     repoDirectory="products",
-                                     gitURL=g_config.gitURL,
-                                     logger=g_logger,
-                                     sha=g_config.sha)
-
-  g_logger.debug("Creating site-packages if required")
-  libPython = "%s/opt/numenta/products/grok/lib/python2.7" % fakeroot
-  mkpath("%s/site-packages" % libPython)
-
-  # Burst site-packages tarball if set on command line
-  if g_config.sitePackagesTarball:
-    with changeToWorkingDir(libPython):
-      g_logger.debug("Bursting %s in %s",
-                     g_config.sitePackagesTarball,
-                     libPython)
-      runWithOutput("tar xf %s" % g_config.sitePackagesTarball)
-
-  return realSHA
-
-
-
-def constructGrokFakeroot(fakeroot):
-  """
-  Construct a Grok fakeroot directory tree.
-
-  1. Add any directories specified with --extend-pythonpath to the PYTHONPATH
-     we will be using for setup.py, build scripts and the cleanup scripts.
-
-  2. Install any wheels that have been specied by --use-wheel
-
-  3. Run setup.py in any directories that have been specified with
-     --setup-py-dir. Uses the arguments specfied by --setup-py-arguments.
-
-  4. Run any build scripts specified by --build-script
-
-  5. Run any cleanup scripts specified by --cleanup-script
-
-  6. Purge any files or directories at the top level of the checkout that were
-     not whitelisted with --whitelist.
-
-  @param fakeroot - directory to construct the fakeroot in
-
-  @returns (iteration, actualSHA) where iteration is the total commit count
-  in the repository and fakerootSHA is the SHA in the fakeroot. If we're
-  packaging a branch or tip of master, we're still going to want to know what
-  the SHA was so we can include it in the RPM description.
-
-  @rtype tuple
-  """
-
-  g_logger.info("Preparing Grok fakeroot in %s\n", fakeroot)
-
-  actualSHA = installProductsIntoGrokFakeroot(fakeroot)
-
-  productsDirectory = "%s/opt/numenta/products" % g_fakeroot
-  grokPath = "%s/grok" % (productsDirectory)
-  iteration = git.getCommitCount(productsDirectory)
-
-  # Extend PYTHONPATH for setup.py, build & cleanup scripts
-  # pythonpathExtensions
-  g_logger.debug("**************************************************")
-  g_logger.info("Phase 1: Preparing PYTHONPATH and installing wheels")
-  environment = dict(os.environ)
-  # Set extra python path
-  setPythonPath(environment, productsDirectory)
-  sitePackagesDirectory = "%s/grok/lib/python2.7/site-packages" % \
-                          productsDirectory
-
-  # Install wheels if any have been specified
-  with changeToWorkingDir(grokPath):
-    for wheel in g_config.wheels:
-      g_logger.info("Installing %s", os.path.basename(wheel))
-      if not os.path.exists(wheel):
-        raise InvalidParametersError("%s does not exist!" % wheel)
-      pipCommand = "pip install %s --no-deps --target=%s" % \
-        (wheel, sitePackagesDirectory)
-      g_logger.debug("pip command: %s", pipCommand)
-      runWithOutput(pipCommand)
-      g_logger.debug("wheel install complete")
-
-  # Run setup.py if specified
-  g_logger.info("Phase 2: Running setup.py commands")
-
-  for pyDir in g_config.setupPyDirs:
-    pyDirPath = "%s/%s" % (productsDirectory, pyDir)
-    g_logger.debug("Changing to %s", pyDirPath)
-    with changeToWorkingDir(pyDirPath):
-      setupCommand = "python setup.py develop --prefix=%s/grok" % \
-                     productsDirectory
-      g_logger.debug("Running %s", setupCommand)
-      runWithOutput(setupCommand, env=environment)
-
-  # Run any build scripts. We assume that they should be run in the
-  # directory they're in.
-  g_logger.info("Phase 3: Running build scripts...")
-  for builder in g_config.buildScripts:
-    builderPath = "%s/%s" % (g_fakeroot, builder)
-    g_logger.debug("Attempting to run %s", builderPath)
-    if not os.path.exists(builderPath):
-      raise InvalidParametersError("%s does not exist!" % builderPath)
-    workDirectory = os.path.dirname(builderPath)
-    g_logger.debug("Changing to %s", workDirectory)
-    with changeToWorkingDir(workDirectory):
-      runWithOutput(builderPath, env=environment)
-
-  # Run any cleanup scripts. We assume that they should be run in the
-  # directory they're in.
-  g_logger.info("Phase 4: Running cleanup scripts...")
-  # Clean Scripts
-  cleanScripts(productsDirectory, environment)
-
-  g_logger.info("Phase 5: Purge anything not whitelisted.")
-  # Purge anything not whitelisted
-  purgeBlacklistedStuff(productsDirectory)
-
-  return (iteration, actualSHA)
-
-
-
-def constructInfrastructureFakeroot(fakeroot):
-  """
-  Construct our fakeroot directory tree
-
-  @param fakeroot - fakeroot to install into that will be packaged later
-                    by fpm
-
-  @returns (iteration, fakerootSHA) where iteration is the total commit count
-  in the repository and fakerootSHA is the SHA in the fakeroot. If we're
-  packaging a branch or tip of master, we're still going to want to know what
-  the SHA was so we can include it in the RPM description.
-
-  @rtype tuple
-  """
-
-  srvPath = "%s/opt/numenta" % fakeroot
-  g_logger.debug("Creating %s", srvPath)
-  mkpath(srvPath)
-
-  g_logger.debug("Cloning %s into %s...", fakeroot, g_config.gitURL)
-
-  # Collect the SHA from the fakeroot. This way we can put the SHA into
-  # the RPM information even if we are packaging tip of a branch and not
-  # a specific SHA
-  fakerootSHA = rpm.gitCloneIntoFakeroot(fakeroot=fakeroot,
-                                         installDirectory="opt/numenta",
-                                         repoDirectory="products",
-                                         gitURL=g_config.gitURL,
-                                         logger=g_logger,
-                                         sha=g_config.sha)
-
-  productsPath = "%s/opt/numenta/products" % fakeroot
-
-  # Capture the commit count since we're going to trash products once we pull
-  # out the saltcellar
-  iteration = git.getCommitCount(productsPath)
-  g_logger.debug("Commit count in %s is %s", productsPath, iteration)
-  g_logger.debug("SHA in %s is %s", productsPath, fakerootSHA)
-
-  # Clean everything not whitelisted out of products so we don't conflict
-  # with grok or taurus rpms
-  purgeDirectory(path=productsPath,
-                 whitelist=["__init__.py",
-                            "infrastructure" ],
-                 logger=g_logger)
-
-  # Clean out infrastructure, too - we only want the utilities
-  infraPath = "%s/infrastructure" % productsPath
-  purgeDirectory(path=infraPath,
-                 whitelist=["__init__.py",
-                            "DEPENDENCIES.md",
-                            "infrastructure",
-                            "LICENSE",
-                            "README.md",
-                            "requirements.txt",
-                            "setup.py"],
-                 logger=g_logger)
-
-  return (iteration, fakerootSHA)
-
-
-
-def constructSaltcellarFakeroot(fakeroot):
-  """
-  Make a saltcellar fakeroot
-
-  @param fakeroot - Path to the fakeroot
-
-  @returns (iteration, fakerootSHA) where iteration is the total commit count
-  in the repository and fakerootSHA is the SHA in the fakeroot. If we're
-  packaging a branch or tip of master, we're still going to want to know what
-  the SHA was so we can include it in the RPM description.
-
-  @rtype tuple
-  """
-  srvPath = "%s/srv" % fakeroot
-  g_logger.debug("Creating saltcellar fakeroot in %s", srvPath)
-  mkpath(srvPath)
-
-  g_logger.debug("Cloning...")
-
-  # Collect the SHA from the fakeroot. This way we can put the SHA into
-  # the RPM information even if we are packaging tip of a branch and not
-  # a specific SHA
-  fakerootSHA = rpm.gitCloneIntoFakeroot(fakeroot=fakeroot,
-                                         installDirectory="/",
-                                         repoDirectory="products",
-                                         gitURL=g_config.gitURL,
-                                         logger=g_logger,
-                                         sha=g_config.sha)
-
-  # Capture the commit count since we're going to trash products once we pull
-  # out the saltcellar
-  productsPath = "%s/products" % fakeroot
-  iteration = git.getCommitCount(productsPath)
-  g_logger.debug("Commit count in %s is %s", productsPath, iteration)
-
-  # Move the saltcellar to /srv/salt
-  g_logger.debug("Moving saltcellar to %s/salt", srvPath)
-  g_logger.debug("srvPath: %s", srvPath)
-  g_logger.debug("productsPath: %s", productsPath)
-  g_logger.debug("%s/infrastructure/saltcellar", productsPath)
-
-  g_logger.debug("Checking for %s/infrastructure/saltcellar",
-                 productsPath)
-  g_logger.debug(os.path.exists("%s/infrastructure/saltcellar" %
-                                productsPath))
-
-  os.rename("%s/infrastructure/saltcellar" % productsPath,
-            "%s/salt" % srvPath)
-
-  # Now that we have the salt formulas, nuke the rest of products out of
-  # the fakeroot
-  g_logger.debug("Deleting products from fakeroot")
-  rmrf(productsPath)
-
-  # Finally, scrub the private data out of /srv/salt
-  if not g_config.numenta_internal_only:
-    g_logger.debug("Sanitizing /srv/salt")
-    sanitizeSrvSalt("%s/srv/salt" % fakeroot)
-  else:
-    g_logger.critical("Baking numenta-internal rpm, not sanitizing /srv/salt")
-  return (iteration, fakerootSHA)
-
-
-
-def createNumentaRPM():
-  """
-  Create a numenta RPM
-  """
-  global g_fakeroot
-
-  parseCLA()
-
-  # Set up the fakeroot
-  g_fakeroot = mkdtemp(prefix=g_config.tempdir)
-  g_logger.debug("Creating fakeroot in %s", g_fakeroot)
-  (iteration, fakerootSHA) = constructFakeroot(g_fakeroot, g_config.flavor)
-
-  # Add git URL & SHA to description
-  rpmDescription = "%s\nGit origin: %s\nRequested commitish: %s\nSHA %s" % \
-                   (g_config.description,
-                    g_config.gitURL,
-                    g_config.sha,
-                    fakerootSHA)
-
-  # Force architecture to x86_64 for grok rpms if an arch hasn't been set
-  if g_config.flavor == "grok":
-    architecture = "x86_64"
-
-  architecture = g_config.architecture
-
-  # Bake the RPM
-  rpm.bakeRPM(fakeroot=g_fakeroot,
-              rpmName=g_config.rpmName,
-              baseVersion=g_config.baseVersion,
-              architecture=architecture,
-              artifacts=g_config.artifacts,
-              iteration=iteration,
-              epoch=g_config.epoch,
-              logger=g_logger,
-              debug=g_config.debug,
-              description=rpmDescription,
-              postInstall=g_config.postinstallScript)
-
-  # Zap our fakeroot
-  cleanupDirectories()
-
 
 
 if __name__ == "__main__":
@@ -750,8 +250,11 @@ if __name__ == "__main__":
   signal.signal(signal.SIGINT, signalHandler)
   signal.signal(signal.SIGTERM, signalHandler)
 
+  parseCLA()
+  numentaRPM = NumentaRPM(g_config)
+  g_cleanupDirectories = numentaRPM.cleanupDirectories
   try:
-    createNumentaRPM()
+    numentaRPM.create()
   except:
-    cleanupDirectories()
+    numentaRPM.cleanupDirectories()
     raise

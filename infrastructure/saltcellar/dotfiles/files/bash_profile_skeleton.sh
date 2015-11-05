@@ -6,21 +6,28 @@
 # following terms and conditions apply:
 #
 # This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License version 3 as
+# it under the terms of the GNU Affero Public License version 3 as
 # published by the Free Software Foundation.
 #
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-# See the GNU General Public License for more details.
+# See the GNU Affero Public License for more details.
 #
-# You should have received a copy of the GNU General Public License
+# You should have received a copy of the GNU Affero Public License
 # along with this program.  If not, see http://www.gnu.org/licenses.
 #
 # http://numenta.org/licenses/
 # ----------------------------------------------------------------------
 
-# Numenta's standard .bash_profile for ec2-user and root
+# Numenta's standard .bash_profile for user accounts
+
+# If you make changes here, they will not apply to non-interactive sessions.
+# If you want to change the environment in a way that applies to both login
+# and non-login sessions, make your changes in .bashrc
+#
+# If you want changes made globally on an instance, including for already
+# existing accounts, add a fragment file to /etc/profile.d.
 
 # Get the aliases and functions
 if [ -f ~/.bashrc ]; then
@@ -32,14 +39,6 @@ fi
 # set up bash prompt. Leave the single-quotes in place so Bash doesn't
 # break the prompt.
 export PS1=$'[\u@\h \W]\$ '
-
-# Set a sane $PATH
-PATH=/opt/numenta/anaconda/bin
-PATH="${PATH}:/usr/local/git/bin"
-PATH="${PATH}:/usr/local/bin"
-PATH="${PATH}:/usr/local/sbin"
-PATH="${PATH}:/usr/bin:/usr/sbin:/bin:/sbin"
-export PATH
 
 # Use anaconda PYTHONPATH
 export PYTHONPATH=/opt/numenta/anaconda/lib/python2.7/site-packages

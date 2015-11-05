@@ -5,15 +5,15 @@
 # following terms and conditions apply:
 #
 # This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License version 3 as
+# it under the terms of the GNU Affero Public License version 3 as
 # published by the Free Software Foundation.
 #
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-# See the GNU General Public License for more details.
+# See the GNU Affero Public License for more details.
 #
-# You should have received a copy of the GNU General Public License
+# You should have received a copy of the GNU Affero Public License
 # along with this program.  If not, see http://www.gnu.org/licenses.
 #
 # http://numenta.org/licenses/
@@ -32,11 +32,14 @@ import logging
 import unittest
 
 from htmengine import repository
+from htmengine.adapters.datasource import createDatasourceAdapter
+from htmengine.exceptions import MetricAlreadyMonitored
+from htmengine.model_checkpoint_mgr import model_checkpoint_mgr
 from htmengine.repository import schema
 from htmengine.repository.queries import MetricStatus
 import htmengine.exceptions as app_exceptions
 
-from htmengine.model_checkpoint_mgr import model_checkpoint_mgr
+
 
 LOGGER = logging.getLogger(__name__)
 
@@ -96,6 +99,29 @@ class TestCaseBase(unittest.TestCase):
       raise ValueError("Did %r forget to set config member variable " % (
                        self,))
     return self.config
+
+
+  def _deleteMetric(self, metricName):
+    adapter = createDatasourceAdapter("custom")
+    adapter.deleteMetricByName(metricName)
+
+
+  def _deleteModel(self, metricId):
+    adapter = createDatasourceAdapter("custom")
+    adapter.unmonitorMetric(metricId)
+
+
+  def _createModel(self, nativeMetric):
+    adapter = createDatasourceAdapter("custom")
+    try:
+      metricId = adapter.monitorMetric(nativeMetric)
+    except MetricAlreadyMonitored as e:
+      metricId = e.uid
+
+    engine = repository.engineFactory(config=self.config)
+
+    with engine.begin() as conn:
+      return repository.getMetric(conn, metricId)
 
 
   def fastCheckSequenceEqual(self, seq1, seq2):
@@ -279,6 +305,32 @@ class TestCaseBase(unittest.TestCase):
                                 result.anomaly_score,
                                 result.rowid],
                                expected)
+
+  @retry(duration=600, delay=5)
+  def getModelResults(self, uid, resultCount):
+    """Queries MySQL db and returns rows with anomaly results
+
+    :param uid: uid of metric
+    :param resultCount: number of rows expected
+    :return: List of tuples containing timestamp, metric_value,
+     anomaly_score, and rowid
+    """
+    engine = repository.engineFactory(config=self.__config)
+    fields = (schema.metric_data.c.timestamp,
+              schema.metric_data.c.metric_value,
+              schema.metric_data.c.anomaly_score,
+              schema.metric_data.c.rowid)
+
+    with engine.begin() as conn:
+      result = (
+        repository.getMetricData(conn,
+                                 metricId=uid,
+                                 fields=fields,
+                                 sort=schema.metric_data.c.timestamp.desc(),
+                                 score=0.0))
+
+    self.assertEqual(result.rowcount, resultCount)
+    return result.fetchall()
 
 
   @retry()

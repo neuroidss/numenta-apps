@@ -6,34 +6,31 @@
 # following terms and conditions apply:
 #
 # This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License version 3 as
+# it under the terms of the GNU Affero Public License version 3 as
 # published by the Free Software Foundation.
 #
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-# See the GNU General Public License for more details.
+# See the GNU Affero Public License for more details.
 #
-# You should have received a copy of the GNU General Public License
+# You should have received a copy of the GNU Affero Public License
 # along with this program.  If not, see http://www.gnu.org/licenses.
 #
 # http://numenta.org/licenses/
 # ----------------------------------------------------------------------
 
 """
-This script sends email notifications to report invalid company security
-symbols, if they haven't already been reported. 
-
-This script is intended to be called periodically via crontab or equivalent.
+This service sends email notifications to report invalid company security
+symbols, if they haven't already been reported.
 """
 
-from datetime import datetime, timedelta
 import json
 import logging
 from optparse import OptionParser
 import os
+import time
 
-import pytz
 import requests
 from nta.utils import error_handling, error_reporting
 
@@ -41,6 +38,12 @@ from taurus.metric_collectors import collectorsdb
 from taurus.metric_collectors.collectorsdb import schema
 from taurus.metric_collectors import logging_support
 from taurus.metric_collectors import metric_utils
+
+
+
+# Interval between processing cycles
+_SLEEP_INTERVAL_SEC = 3600
+
 
 
 class _SelfCheckError(Exception):
@@ -71,12 +74,12 @@ _RETRY_ON_REQUESTS_ERROR = error_handling.retry(
 
 
 def _checkCompanySymbols(xigniteApiToken):
-  """ 
-  Check if company security symbols are valid. 
-  Email notifications are sent for invalid symbols.  
+  """
+  Check if company security symbols are valid.
+  Email notifications are sent for invalid symbols.
   Each time an invalid symbol is reported successfully, we add it to a table
   keeping track of invalid symbols that were already reported -- to avoid
-  duplicate emails about the same symbol. 
+  duplicate emails about the same symbol.
 
   :param xigniteApiToken: Xignite API Token
   :type xigniteApiToken: string
@@ -95,7 +98,7 @@ def _checkCompanySymbols(xigniteApiToken):
         subject = "%s: Company symbol=%s is unknown" % (__name__, symbol,)
         body = "%s: Company symbol=%s is unknown." % (__name__, symbol,)
         error_reporting.sendErrorEmail(subject=subject, body=body)
-  
+
         # Flag it, so it won't be reported again
         _flagUnknownSymbolAsReported(symbol)
   else:
@@ -110,7 +113,7 @@ def _selfCheck(xigniteApiToken):
   hack in _validateSymbols works. Report error if the self-check fails.
   """
   # NOTE: "WAG" used to be the symbol of "Walgreen Co"
-  expectedUnknownSymbols = ["WAG", "AGN", "ZZZZZZ"]
+  expectedUnknownSymbols = ["WAG", "ZZZZZZ"]
   expectedKnownSymbols = ["AAPL", "F"]
   allSymbols = expectedUnknownSymbols + expectedKnownSymbols
 
@@ -165,7 +168,7 @@ def _flagUnknownSymbolAsReported(symbol):
 
   :param str symbol: symbol of the company's security (e.g., "AAPL")
   """
-  ins = schema.companySymbolFailures.insert(
+  ins = schema.companySymbolFailures.insert(  # pylint: disable=E1120
     ).prefix_with('IGNORE', dialect="mysql").values(symbol=symbol)
 
   collectorsdb.engineFactory().execute(ins)
@@ -176,16 +179,16 @@ def _flagUnknownSymbolAsReported(symbol):
 
 @collectorsdb.retryOnTransientErrors
 def _clearUnknownSymbols():
-    """
-    Remove all rows from the company_symbol_failures table. 
-    """
+  """
+  Remove all rows from the company_symbol_failures table.
+  """
 
-    result = collectorsdb.engineFactory().execute(
-      schema.companySymbolFailures.delete())
+  result = collectorsdb.engineFactory().execute(
+    schema.companySymbolFailures.delete())  # pylint: disable=E1120
 
-    if result.rowcount:
-      g_log.info("Deleted %s rows from %s table",
-                 result.rowcount, schema.companySymbolFailures)
+  if result.rowcount:
+    g_log.info("Deleted %s rows from %s table",
+               result.rowcount, schema.companySymbolFailures)
 
 
 
@@ -237,7 +240,7 @@ def _validateSymbols(symbols, xigniteApiToken):
           sym = quote["Security"]["Symbol"]
           assert sym.lower() == symbols[i].lower(), (sym, symbols[i])
           invalidSymbols.append(symbols[i])
-  
+
   return invalidSymbols
 
 
@@ -246,11 +249,11 @@ def _parseArgs():
   """
   :returns: empty dict
   """
-  
+
   helpString = (
-    "%prog [options]\n"
-    "This script sends email notifications to report invalid company security "
-    "symbols, if they haven't already been reported.\n\n"
+    "%prog\n"
+    "Periodically checks and sends email notifications to report invalid "
+    "company security symbols, if they haven't already been reported.\n\n"
     "/!\ This script depends on the following environment variables:\n"
     "* XIGNITE_API_TOKEN: XIgnite API Token.\n"
     "* ERROR_REPORT_EMAIL_AWS_REGION: AWS region for error report email.\n"
@@ -265,7 +268,7 @@ def _parseArgs():
 
   parser = OptionParser(helpString)
 
-  options, remainingArgs = parser.parse_args()
+  _, remainingArgs = parser.parse_args()
   if remainingArgs:
     parser.error("Unexpected remaining args: %r" % (remainingArgs,))
 
@@ -276,11 +279,18 @@ def _parseArgs():
 def main():
   """ NOTE: main may be used as "console script" entry point by setuptools
   """
-  logging_support.LoggingSupport.initTool()
+  logging_support.LoggingSupport.initService()
 
   try:
-    options = _parseArgs()
-    g_log.debug("Running with options=%r", options)
+
+    try:
+      _parseArgs()
+    except SystemExit as e:
+      if e.code == 0:
+        # Suppress exception logging when exiting due to --help
+        return
+
+      raise
 
     # Validate environment variables for error-reporting
     error_reporting.validateErrorReportingEnvVars()
@@ -292,12 +302,22 @@ def main():
       raise Exception("Empty or undefined environment variable "
                       "XIGNITE_API_TOKEN")
 
-    _checkCompanySymbols(xigniteApiToken)
-  except Exception:
-    g_log.exception("%s failed", __name__)
+    while True:
+      _checkCompanySymbols(xigniteApiToken)
+
+      time.sleep(_SLEEP_INTERVAL_SEC)
+
+  except KeyboardInterrupt:
+    # Suppress exception that typically results from the SIGINT signal sent by
+    # supervisord to stop the service; log with exception info to help debug
+    # deadlocks
+    g_log.info("Observed KeyboardInterrupt", exc_info=True)
+  except:
+    g_log.exception("Failed!")
     raise
+
 
 
 if __name__ == "__main__":
   main()
-  
+

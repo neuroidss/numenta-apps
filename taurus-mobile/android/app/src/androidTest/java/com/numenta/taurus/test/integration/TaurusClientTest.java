@@ -5,15 +5,15 @@
  * following terms and conditions apply:
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 3 as
+ * it under the terms of the GNU Affero Public License version 3 as
  * published by the Free Software Foundation.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
+ * See the GNU Affero Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Affero Public License
  * along with this program.  If not, see http://www.gnu.org/licenses.
  *
  * http://numenta.org/licenses/
@@ -47,7 +47,7 @@ import com.amazonaws.services.dynamodbv2.util.Tables;
 import com.numenta.core.data.InstanceData;
 import com.numenta.core.data.Metric;
 import com.numenta.core.data.MetricData;
-import com.numenta.core.service.GrokException;
+import com.numenta.core.service.HTMException;
 import com.numenta.core.utils.DataUtils;
 import com.numenta.core.utils.Log;
 import com.numenta.taurus.BuildConfig;
@@ -644,7 +644,7 @@ public class TaurusClientTest extends TestCase {
 
     }
 
-    @Test(expected = GrokException.class)
+    @Test(expected = HTMException.class)
     public void testGetMetricData() throws Exception {
         _taurusClient.getMetricData("id.0",
                 new Date(TEST_START_TIMESTAMP),

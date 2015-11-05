@@ -5,15 +5,15 @@
  * following terms and conditions apply:
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 3 as
+ * it under the terms of the GNU Affero Public License version 3 as
  * published by the Free Software Foundation.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
+ * See the GNU Affero Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Affero Public License
  * along with this program.  If not, see http://www.gnu.org/licenses.
  *
  * http://numenta.org/licenses/
@@ -22,8 +22,8 @@
 
 package com.numenta.taurus.service;
 
-import com.numenta.core.service.GrokException;
-import com.numenta.core.service.GrokService;
+import com.numenta.core.service.HTMException;
+import com.numenta.core.service.DataService;
 import com.numenta.core.service.NotificationService;
 import com.numenta.core.utils.DataUtils;
 import com.numenta.core.utils.NotificationUtils;
@@ -77,14 +77,14 @@ import static com.numenta.taurus.preference.TaurusPreferenceConstants.PREF_NOTIF
  */
 public class TaurusNotificationService extends NotificationService {
 
-    public TaurusNotificationService(GrokService service) {
+    public TaurusNotificationService(DataService service) {
         super(service);
     }
 
     /**
      * Check if we need to fire new notifications based on the current application data and state
      */
-    protected void synchronizeNotifications() throws GrokException, IOException {
+    protected void synchronizeNotifications() throws HTMException, IOException {
         Context context = getService().getApplicationContext();
         final SharedPreferences prefs = PreferenceManager
                 .getDefaultSharedPreferences(context);
@@ -170,8 +170,12 @@ public class TaurusNotificationService extends NotificationService {
             // Check for anomalies
             List<Pair<Long, AnomalyValue>> data = database.getInstanceData(instance, from, to);
             for (Pair<Long, AnomalyValue> value : data) {
-                // Check for "red" anomalies (val >= 0.99999)
-                if (value.second != null && value.second.anomaly >= 0.99999f) {
+                if (value.second == null) {
+                    continue;
+                }
+                // Check for "red" anomalies
+                float logScale = (float) DataUtils.logScale(Math.abs(value.second.anomaly));
+                if (logScale >= TaurusApplication.getRedBarFloor()) {
                     // Check if found new stock related anomaly
                     mask = MetricType.fromMask(value.second.metricMask);
                     if (!anomalies.containsKey(instance) &&

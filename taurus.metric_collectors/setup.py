@@ -1,6 +1,6 @@
 from setuptools import setup, find_packages
 
-requirements = map(str.strip, open("requirements.txt").readlines())
+requirements = [line.strip() for line in open("requirements.txt")]
 
 name = "taurus.metric_collectors"
 
@@ -12,6 +12,8 @@ setup(
   install_requires = requirements,
   entry_points = {
     "console_scripts": [
+      ("taurus-collectors-metric-maintenance-agent = "
+       "%s.common_services.metric_maintenance_agent:main" % name),
       "taurus-xignite-agent = %s.xignite.xignite_stock_agent:main" % name,
       ("taurus-xignite-security-news-agent = "
        "%s.xignite.xignite_security_news_agent:main" % name),
@@ -29,6 +31,7 @@ setup(
       "taurus-collectors-set-opmode = %s.set_collectors_opmode:main" % name,
       "taurus-collectors-set-rabbitmq = %s.set_rabbitmq_login:main" % name,
       "taurus-create-models = %s.create_models:main" % name,
+      "taurus-delete-metric = %s.delete_metric:main" % name,
       "taurus-unmonitor-metrics = %s.unmonitor_metrics:main" % name,
       "taurus-monitor-metrics = %s.monitor_metrics:main" % name,
       ("taurus-check-twitter-screen-names = "

@@ -5,15 +5,15 @@
  * following terms and conditions apply:
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 3 as
+ * it under the terms of the GNU Affero Public License version 3 as
  * published by the Free Software Foundation.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
+ * See the GNU Affero Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Affero Public License
  * along with this program.  If not, see http://www.gnu.org/licenses.
  *
  * http://numenta.org/licenses/
@@ -23,7 +23,7 @@
 package com.numenta.core.service;
 
 import com.numenta.core.R;
-import com.numenta.core.app.GrokApplication;
+import com.numenta.core.app.HTMApplication;
 import com.numenta.core.data.CoreDatabase;
 import com.numenta.core.data.Metric;
 import com.numenta.core.data.Notification;
@@ -44,7 +44,7 @@ import java.util.List;
 import static com.numenta.core.preference.PreferencesConstants.PREF_NOTIFICATIONS_ENABLE;
 
 /**
- * This service is managed by {@link GrokService} and is responsible for creating notifications
+ * This service is managed by {@link DataService} and is responsible for creating notifications
  * based on the user's preferences.
  */
 public class NotificationService {
@@ -57,12 +57,12 @@ public class NotificationService {
 
     private static final String TAG = NotificationService.class.getSimpleName();
 
-    private final GrokService _service;
+    private final DataService _service;
 
-    // Grok API Helper
-    private GrokClient _grokCli;
+    // HTM API Helper
+    private HTMClient _htmClient;
 
-    public NotificationService(GrokService service) {
+    public NotificationService(DataService service) {
         this._service = service;
     }
 
@@ -83,9 +83,9 @@ public class NotificationService {
      * @return number of notifications deleted
      */
     public static long deleteAllNotifications() {
-        long deleted = GrokApplication.getDatabase().deleteAllNotifications();
+        long deleted = HTMApplication.getDatabase().deleteAllNotifications();
         if (deleted > 0) {
-            fireNotificationChangedEvent(GrokApplication.getContext());
+            fireNotificationChangedEvent(HTMApplication.getContext());
         }
         return deleted;
     }
@@ -97,9 +97,9 @@ public class NotificationService {
      * @return number of notifications deleted (1 or 0)
      */
     public static long deleteNotification(int notificationId) {
-        long deleted = GrokApplication.getDatabase().deleteNotification(notificationId);
+        long deleted = HTMApplication.getDatabase().deleteNotification(notificationId);
         if (deleted > 0) {
-            fireNotificationChangedEvent(GrokApplication.getContext());
+            fireNotificationChangedEvent(HTMApplication.getContext());
         }
         return deleted;
     }
@@ -107,14 +107,14 @@ public class NotificationService {
     /**
      * Download and fire new notifications from the server
      */
-    protected void synchronizeNotifications() throws GrokException, IOException {
-        final Resources res = GrokApplication.getContext().getResources();
+    protected void synchronizeNotifications() throws HTMException, IOException {
+        final Resources res = HTMApplication.getContext().getResources();
 
-        // Try to connect to Grok
-        if (_grokCli == null) {
-            _grokCli = _service.connectToServer();
+        // Try to connect to server
+        if (_htmClient == null) {
+            _htmClient = _service.connectToServer();
         }
-        if (_grokCli == null) {
+        if (_htmClient == null) {
             throw new IOException("Unable to connect to server");
         }
 
@@ -123,7 +123,7 @@ public class NotificationService {
         boolean newNotification = false;
         long notificationCount;
         ArrayList<String> acknowledge = new ArrayList<String>();
-        final CoreDatabase grokdb = GrokApplication.getDatabase();
+        final CoreDatabase db = HTMApplication.getDatabase();
         final SharedPreferences prefs =
                 PreferenceManager.getDefaultSharedPreferences(_service.getApplicationContext());
 
@@ -132,7 +132,7 @@ public class NotificationService {
         boolean groupNotifications = res.getBoolean(R.bool.group_notifications);
 
         // Download pending notifications from the server
-        List<Notification> pendingNotifications = _grokCli.getNotifications();
+        List<Notification> pendingNotifications = _htmClient.getNotifications();
         if (pendingNotifications == null || pendingNotifications.isEmpty()) {
             return;
         }
@@ -141,7 +141,7 @@ public class NotificationService {
             if (enable) {
                 for (Notification notification : pendingNotifications) {
                     // Add Notification to local database
-                    localId = grokdb.addNotification(notification.getNotificationId(),
+                    localId = db.addNotification(notification.getNotificationId(),
                             notification.getMetricId(),
                             notification.getTimestamp(),
                             notification.getDescription());
@@ -154,10 +154,10 @@ public class NotificationService {
         } else {
             for (Notification notification : pendingNotifications) {
                 // Update notification description;
-                metric = grokdb.getMetric(notification.getMetricId());
+                metric = db.getMetric(notification.getMetricId());
                 if (metric != null) {
                     // Add Notification to local database
-                    localId = grokdb.addNotification(notification.getNotificationId(),
+                    localId = db.addNotification(notification.getNotificationId(),
                             notification.getMetricId(),
                             notification.getTimestamp(),
                             notification.getDescription());
@@ -167,7 +167,7 @@ public class NotificationService {
 
                         // Fire OS notification
                         if (enable) {
-                            notificationCount = grokdb.getUnreadNotificationCount();
+                            notificationCount = db.getUnreadNotificationCount();
                             NotificationUtils.createOSNotification(notification.getDescription(),
                                     notification.getTimestamp(), (int) localId, notificationCount);
                         }
@@ -187,7 +187,7 @@ public class NotificationService {
             }
 
             // Acknowledge notifications
-            _grokCli.acknowledgeNotifications(acknowledge.toArray(new String[acknowledge.size()]));
+            _htmClient.acknowledgeNotifications(acknowledge.toArray(new String[acknowledge.size()]));
         }
 
         // Fire notification event
@@ -199,34 +199,34 @@ public class NotificationService {
     /**
      * Return the background service object
      */
-    public GrokService getService() {
+    public DataService getService() {
         return _service;
     }
 
     /**
      * Returns the API client connection
      */
-    public GrokClient getClient() throws IOException, GrokException {
-        if (_grokCli == null) {
-            _grokCli = _service.connectToServer();
+    public HTMClient getClient() throws IOException, HTMException {
+        if (_htmClient == null) {
+            _htmClient = _service.connectToServer();
         }
-        if (_grokCli == null) {
+        if (_htmClient == null) {
             throw new IOException("Unable to connect to server");
         }
-        return _grokCli;
+        return _htmClient;
     }
 
     /**
      * Close Client API connection forcing the service to reopen a new connection upon request
      */
     public void disconnect() {
-        _grokCli = null;
+        _htmClient = null;
     }
 
     /**
      * Start the notification service.
      * <p>
-     * Should only be called by {@link GrokService}
+     * Should only be called by {@link DataService}
      * </p>
      */
     protected void start() {
@@ -235,7 +235,7 @@ public class NotificationService {
     /**
      * Stop the notification service.
      * <p>
-     * Should only be called by {@link GrokService}
+     * Should only be called by {@link DataService}
      * </p>
      */
     protected void stop() {

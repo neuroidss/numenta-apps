@@ -5,35 +5,33 @@
 # following terms and conditions apply:
 #
 # This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License version 3 as
+# it under the terms of the GNU Affero Public License version 3 as
 # published by the Free Software Foundation.
 #
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-# See the GNU General Public License for more details.
+# See the GNU Affero Public License for more details.
 #
-# You should have received a copy of the GNU General Public License
+# You should have received a copy of the GNU Affero Public License
 # along with this program.  If not, see http://www.gnu.org/licenses.
 #
 # http://numenta.org/licenses/
 # ----------------------------------------------------------------------
 
 import contextlib
-from collections import namedtuple
 from datetime import datetime, timedelta
 import json
 import logging
 import os
-import requests
-import socket
-import sys
 import time
 
+import requests
 import sqlalchemy as sql
 
-from nta.utils import message_bus_connector
+from nta.utils.error_handling import retry
 from nta.utils import date_time_utils
+from nta.utils import message_bus_connector
 
 from taurus import metric_collectors
 from taurus.metric_collectors import collectorsdb
@@ -75,6 +73,12 @@ class MetricDeleteRequestError(Exception):
 
 
 
+class MetricNotFound(Exception):
+  """Specified metric was not found"""
+  pass
+
+
+
 class GetModelsRequestError(Exception):
   """ Generic exception for non-specific error while getting all models
   """
@@ -92,6 +96,39 @@ g_log = logging.getLogger("metric_collectors.metric_utils")
 
 
 
+# Retry decorator for specific `requests` errors
+def _retryOnRequestsErrors(timeoutSec=10, pauseSec=0.2):
+
+  def retryFilter(exc, _args, _kwargs):
+    if isinstance(exc, requests.exceptions.HTTPError):
+      # Retry on:
+      # 500 Internal Server Error
+      # 502 Server Error: Bad Gateway
+      # 503 Service Unavailable
+      # 504 Gateway Timeout
+      if (exc.response is not None and
+          exc.response.status_code in [500, 502, 503, 504]):
+        return True
+      else:
+        return False
+
+    return True
+
+  return retry(
+    timeoutSec=timeoutSec,
+    initialRetryDelaySec=pauseSec,
+    maxRetryDelaySec=pauseSec,
+    retryExceptions=(
+      # requests retries on DNS errors, but not on connection errors
+      requests.exceptions.ConnectionError,
+      requests.exceptions.HTTPError,
+      requests.exceptions.Timeout,
+    ),
+    retryFilter=retryFilter,
+    logger=g_log)
+
+
+
 def getMetricsConfiguration():
   """ Get metric configuration object that defines all instances and metrics for
   all data collectors.
@@ -103,6 +140,20 @@ def getMetricsConfiguration():
   metricsConfPath = os.path.join(metric_collectors.CONF_DIR, "metrics.json")
   with open(metricsConfPath) as fileObj:
     return json.load(fileObj)
+
+
+
+def getMetricNamesFromConfig(metricsConfig):
+  """Return all metric names from the given metrics configuration
+
+  :param dict metricsConfig: metrics configuration as returned by
+    `getMetricsConfiguration()`
+
+  :returns: all metric names from the given metricsConfig
+  :rtype: sequence
+  """
+  return tuple(key for resource in metricsConfig.itervalues()
+               for key in resource["metrics"].iterkeys())
 
 
 
@@ -136,11 +187,15 @@ def getMetricSymbolsForProvider(provider):
 
 def createHtmModel(host, apiKey, modelParams):
   """ Create a model for a metric;
+
   :param host: API server's hostname or IP address
   :param apiKey: API server's API Key
   :param modelParams: model parameters dict per _models POST API
 
-  :returns: dictionary result of the _models POST request on success;
+  :returns: model info dictionary from the result of the _models POST request on
+    success;
+  :rtype: dict
+
   :raises: ModelQuotaExceededError if quota limit was exceeded
   :raises: ModelMonitorRequestError for non-specific error in request
   :raises: RetriesExceededError if retries were exceeded
@@ -157,7 +212,7 @@ def createHtmModel(host, apiKey, modelParams):
         verify=False)
 
       if response.status_code == 201:
-        return json.loads(response.text)
+        return json.loads(response.text)[0]
 
       # TODO: this check for "Server limit exceeded" is temporary for MER-1366
       if (response.status_code == 500 and
@@ -185,16 +240,20 @@ def createCustomHtmModel(host,
                          userInfo,
                          modelParams):
   """ Create a model for a metric;
+
   :param host: API server's hostname or IP address
   :param apiKey: API server's API Key
   :param metricName: Name of the metric
   :param resourceName: Name of the resource with which the metric is associated
   :param userInfo: A dict containing custom user info to be included in
     metricSpec
-  :param modelParams: A dict containing custom model params be included in
+  :param modelParams: A dict containing custom model params to be included in
     modelSpec
 
-  :returns: dictionary result of the _models POST request on success;
+  :returns: model info dictionary from the result of the _models POST request on
+    success;
+  :rtype: dict
+
   :raises: ModelQuotaExceededError if quota limit was exceeded
   :raises: ModelMonitorRequestError for non-specific error in request
   :raises: RetriesExceededError if retries were exceeded
@@ -213,30 +272,61 @@ def createCustomHtmModel(host,
 
 
 
-def createAllModels(host, apiKey):
+def createAllModels(host, apiKey, onlyMetricNames=None):
   """ Create models corresponding to all metrics in the metrics configuration.
 
   NOTE: Has no effect on metrics that have already been promoted to models.
 
-  :param host: API server's hostname or IP address
-  :param apiKey: API server's API Key
+  :param str host: API server's hostname or IP address
+  :param str apiKey: API server's API Key
+  :param onlyMetricNames: None to create models for all configured metrics; an
+    iterable of metric names to limit creation of models only to metrics with
+    those names - the metric names in the iterable MUST be a non-empty subset of
+    the configured metrics.
+  :type onlyMetricNames: None or iterable
 
-  :returns: List of models that were created
+  :returns: List of models that were created; each element is a model info
+    dictionary from the successful result of the _models POST request
   :rtype: list of dicts
 
   :raises: ModelQuotaExceededError if quota limit was exceeded
   :raises: ModelMonitorRequestError for non-specific error in request
   :raises: RetriesExceededError if retries were exceeded
   """
-  metricsConfiguration = getMetricsConfiguration()
+  metricsConfig = getMetricsConfiguration()
+
+  configuredMetricNames = set(getMetricNamesFromConfig(metricsConfig))
+
+  if onlyMetricNames is not None:
+    # Validate onlyMetricNames and convert it to set
+
+    if not onlyMetricNames:
+      raise ValueError("onlyMetricNames is empty")
+
+    asSet = set(onlyMetricNames)
+
+    onlyMetricNames = asSet
+
+    unknownMetricNames = (onlyMetricNames -
+                          configuredMetricNames)
+    if unknownMetricNames:
+      raise ValueError(
+        "{count} elements in onlyMetricNames are not in metrics configuration: "
+        "{unknown}".format(count=len(unknownMetricNames),
+                           unknown=unknownMetricNames)
+      )
+  else:
+    onlyMetricNames = configuredMetricNames
 
   allModels = []
 
-  totalModels = sum(len(resVal["metrics"])
-                    for resVal in metricsConfiguration.itervalues())
   i = 0
-  for resName, resVal in metricsConfiguration.iteritems():
+  for resName, resVal in metricsConfig.iteritems():
     for metricName, metricVal in resVal["metrics"].iteritems():
+
+      if metricName not in onlyMetricNames:
+        continue
+
       i += 1
 
       userInfo = {
@@ -248,20 +338,18 @@ def createAllModels(host, apiKey):
       modelParams = metricVal.get("modelParams", {})
 
       try:
-        result = createCustomHtmModel(host=host,
-                                      apiKey=apiKey,
-                                      metricName=metricName,
-                                      resourceName=resName,
-                                      userInfo=userInfo,
-                                      modelParams=modelParams)
+        model = createCustomHtmModel(host=host,
+                                     apiKey=apiKey,
+                                     metricName=metricName,
+                                     resourceName=resName,
+                                     userInfo=userInfo,
+                                     modelParams=modelParams)
       except ModelQuotaExceededError as e:
         g_log.error("Model quota exceeded: %r", e)
         raise
 
-      model = result[0]
-
-      g_log.info("Enabled monitoring of metric=%s (%d of %d)",
-                 model["uid"], i, totalModels)
+      g_log.info("Enabled monitoring of metric=%s; uid=%s (%d of %d)",
+                 model["name"], model["uid"], i, len(onlyMetricNames))
 
       allModels.append(model)
 
@@ -301,15 +389,16 @@ def unmonitorMetric(host, apiKey, modelId):
     raise RetriesExceededError("Unmonitor-metric retries exceeded")
 
 
+
 def deleteMetric(host, apiKey, metricName):
   """ Delete a metric
 
   :param host: API server's hostname or IP address
   :param apiKey: API server's API Key
-  :param modelId: id of the metric to be deleted
+  :param metricName: name of the metric to be deleted
 
-  :raises: RetriesExceededError
-  :raises: MetricDeleteRequestError
+  :raises RetriesExceededError:
+  :raises MetricNotFound:
   """
   for _retries in xrange(20):
     try:
@@ -320,17 +409,70 @@ def deleteMetric(host, apiKey, metricName):
 
       if response.status_code == 200:
         g_log.debug("Deleteted metric=%s", metricName)
-        return
+        break
+
+      if response.status_code == 404:
+        raise MetricNotFound(response.text)
 
       raise MetricDeleteRequestError(
         "Unable to delete metric=%s: %s (%s)" % (
           metricName, response, response.text))
+    except MetricNotFound as exc:
+      g_log.warning(repr(exc))
+      raise
     except Exception:  # pylint: disable=W0703
       g_log.exception("Assuming transient error while deleting metric=%s",
                       metricName)
       time.sleep(0.2)
   else:
-    raise RetriesExceededError("Unmonitor-metric retries exceeded")
+    raise RetriesExceededError("Unmonitor-metric retries exceeded for {metric}"
+                               .format(metric=metricName))
+
+
+
+def filterCompanyMetricNamesBySymbol(metricNames, tickerSymbol):
+  """Filter company metric names by stock symbol
+
+  :param sequence metricNames: custom metric names
+  :param str tickerSymbol: Stock symbol; only company metric names matching
+    this stock symbol will be returned.
+
+  :returns: sequence of company metric names matching `tickerSymbol`
+  :rtype: sequence
+  """
+  tickerSymbol = tickerSymbol.upper()
+
+  # Example company metric names:
+  # TWITTER.TWEET.HANDLE.AET.VOLUME
+  # XIGNITE.TWC.CLOSINGPRICE
+  # XIGNITE.AMZN.VOLUME
+  # XIGNITE.NEWS.AMZN.VOLUME
+  return tuple(
+    name for name in metricNames
+    if all(name.split(".")) and
+    len(name.split(".")) >= 3 and
+    name.split(".")[-2] == tickerSymbol)
+
+
+
+@_retryOnRequestsErrors()
+def getAllCustomMetrics(host, apiKey):
+  """Retrieve all custom metrics
+
+  :param host: API server's hostname or IP address
+  :param apiKey: API server's API Key
+
+  :returns: a sequence of objects returned by the HTM server's
+    GET _metrics/custom API
+  """
+  url = "https://%s/_metrics/custom" % (host,)
+
+  g_log.info("Retrieving custom metrics")
+
+  response = requests.get(url, auth=(apiKey, ""), verify=False)
+  response.raise_for_status()
+
+  return tuple(metric for metric in json.loads(response.text))
 
 
 
@@ -424,44 +566,6 @@ def getAllModelIds(host, apiKey):
 
 
 
-def getSymbolModels(host, apiKey, symbol):
-  """ Retrieve IDs of all models associated with a particular symbol
-
-  :param host: API server's hostname or IP address
-  :param apiKey: API server's API Key
-  :param symbol: Stock symbol to look up
-
-  :returns: a sequence of namedtuples containing information about the model
-      modelResult.uid = uid of the model
-      modelResult.name = name of the model
-
-  :raises: GetModelsRequestError
-  :raises: RetriesExceededError
-  """
-  modelResult = namedtuple("modelResult", "uid name")
-  return tuple(modelResult(obj["uid"], obj["name"])
-               for obj in getAllModels(host, apiKey)
-               if ".{symbol}.".format(symbol=symbol) in obj["name"])
-
-
-
-def getSymbolModelNames(host, apiKey, symbol):
-  """ Retrieve IDs of all models associated with a particular symbol
-
-  :param host: API server's hostname or IP address
-  :param apiKey: API server's API Key
-  :param symbol: Stock symbol to look up
-
-  :returns: a sequence of unique model id strings
-
-  :raises: GetModelsRequestError
-  :raises: RetriesExceededError
-  """
-  return tuple(obj["uid"] for obj in getAllModels(host, apiKey)
-               if ".%s." % symbol in obj["name"])
-
-
-
 @collectorsdb.retryOnTransientErrors
 def establishLastEmittedSampleDatetime(key, aggSec):
   """ Query UTC timestamp of the last emitted sample batch; if one hasn't been
@@ -482,10 +586,9 @@ def establishLastEmittedSampleDatetime(key, aggSec):
   lastEmittedTimestamp = (datetime.utcnow().replace(microsecond=0) -
                           timedelta(seconds=aggSec))
   collectorsdb.engineFactory().execute(
-    schema.emittedSampleTracker.insert(
-      ).prefix_with("IGNORE", dialect="mysql"
-      ).values(key=key,
-               sample_ts=lastEmittedTimestamp))
+    schema.emittedSampleTracker.insert()  # pylint: disable=E1120
+    .prefix_with("IGNORE", dialect="mysql")
+    .values(key=key, sample_ts=lastEmittedTimestamp))
 
   # Query again after saving to account for mysql's loss of accuracy
   return queryLastEmittedSampleDatetime(key)
@@ -516,7 +619,7 @@ def updateLastEmittedSampleDatetime(key, sampleDatetime):
   :param datetime sampleDatetime: UTC datetime of last successfully-emitted
     sample batch
   """
-  update = schema.emittedSampleTracker.update(
+  update = schema.emittedSampleTracker.update(  # pylint: disable=E1120
     ).values(
       sample_ts=sampleDatetime
     ).where(
@@ -550,7 +653,7 @@ def updateLastEmittedNonMetricSequence(key, seq):
   :param str key: caller's key in schema.emittedNonMetricTracker
   :param int seq: sequence of last successfully-emitted non-metric
   """
-  update = schema.emittedNonMetricTracker.update(
+  update = schema.emittedNonMetricTracker.update(  # pylint: disable=E1120
     ).values(
       last_seq=seq
     ).where(
@@ -566,7 +669,8 @@ def updateLastEmittedNonMetricSequence(key, seq):
   if result.rowcount == 0:
     # The row didn't exist, so create it
     collectorsdb.engineFactory().execute(
-      schema.emittedNonMetricTracker.insert().values(key=key, last_seq=seq))
+      schema.emittedNonMetricTracker.insert()  # pylint: disable=E1120
+      .values(key=key, last_seq=seq))
 
 
 
@@ -632,7 +736,7 @@ def metricDataBatchWrite(log):
 
   Usage example:
 
-    with metricDataBatchWrite() as putSample:
+    with metricDataBatchWrite(logger) as putSample:
       putSample(metricName1, value1, epochTimestamp1)
       putSample(metricName2, value2, epochTimestamp2)
       . . .

@@ -6,28 +6,156 @@
 # following terms and conditions apply:
 #
 # This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License version 3 as
+# it under the terms of the GNU Affero Public License version 3 as
 # published by the Free Software Foundation.
 #
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-# See the GNU General Public License for more details.
+# See the GNU Affero Public License for more details.
 #
-# You should have received a copy of the GNU General Public License
+# You should have received a copy of the GNU Affero Public License
 # along with this program.  If not, see http://www.gnu.org/licenses.
 #
 # http://numenta.org/licenses/
 # ----------------------------------------------------------------------
 #
-# This script updates a running pair of taurus server and metric collector
-# instances.  This is not destructive, and requires only minimal downtime for
-# the collector instance and a brief period of time during which the collector
-# remains in "hot_stanby" mode while the taurus server is updated.
+
+USAGE="Usage: `basename ${0}` [-t destructive-tests]
+
+This script updates and reconfigures a pair of Taurus Server and Metric
+Collector instances in which the taurus services are already running,
+preserving the already-monitored metrics.
+
+☆ ★ ☆ ★ ☆ ★ ☆ ★ ☆ ★ ☆ ★ ☆ ★ ☆ ★ ☆ ★ ☆ ★ ☆ ★ ☆ ★ ☆ ★ ☆ ★ ☆ ★ ☆ ★ ☆ ★ ☆ ★ ☆ ★ ☆ ★
+
+The following environment variables are required to configure a pair of Taurus
+instances!
+
+Git commit:
+
+  ☞  GIT_COMMIT
+
+DynamoDB credentials:
+
+  ☞  DYNAMODB_HOST
+  ☞  DYNAMODB_PORT
+  ☞  DYNAMODB_TABLE_SUFFIX
+
+MySQL credentials:
+
+  ☞  MYSQL_HOST
+  ☞  MYSQL_PASSWD
+  ☞  MYSQL_USER
+
+RabbitMQ credentials:
+
+  ☞  RABBITMQ_HOST
+  ☞  RABBITMQ_PASSWD
+  ☞  RABBITMQ_USER
+
+Taurus instance credentials:
+
+  ☞  TAURUS_COLLECTOR_USER
+  ☞  TAURUS_COLLECTOR_HOST
+  ☞  TAURUS_SERVER_USER
+  ☞  TAURUS_SERVER_HOST
+  ☞  TAURUS_SERVER_HOST_PRIVATE
+
+AWS credentials
+  ☞  AWS_ACCESS_KEY_ID
+  ☞  AWS_SECRET_ACCESS_KEY
+
+Taurus Collector configuration details:
+
+  ☞  XIGNITE_API_TOKEN
+  ☞  TAURUS_TWITTER_ACCESS_TOKEN
+  ☞  TAURUS_TWITTER_ACCESS_TOKEN_SECRET
+  ☞  TAURUS_TWITTER_CONSUMER_KEY
+  ☞  TAURUS_TWITTER_CONSUMER_SECRET
+  ☞  ERROR_REPORT_EMAIL_AWS_REGION
+  ☞  ERROR_REPORT_EMAIL_RECIPIENTS
+  ☞  ERROR_REPORT_EMAIL_SENDER_ADDRESS
+  ☞  ERROR_REPORT_EMAIL_SES_ENDPOINT
+
+Taurus Server configuration details:
+
+  ☞  TAURUS_RMQ_METRIC_DEST
+  ☞  TAURUS_RMQ_METRIC_PREFIX
+  ☞  TAURUS_API_KEY
+
+SSL self-signed certificate details:
+
+  ☞  SSL_ORG_NAME
+  ☞  SSL_LOCALITY
+  ☞  SSL_DOMAIN_NAME
+  ☞  SSL_ORGANIZATIONAL_UNIT_NAME
+  ☞  SSL_EMAIL_ADDRESS
+
+☆ ★ ☆ ★ ☆ ★ ☆ ★ ☆ ★ ☆ ★ ☆ ★ ☆ ★ ☆ ★ ☆ ★ ☆ ★ ☆ ★ ☆ ★ ☆ ★ ☆ ★ ☆ ★ ☆ ★ ☆ ★ ☆ ★ ☆ ★
+
+This script will push the local numenta-apps repository to the remote Taurus
+instances, and reset to the commit sha specified in \$GIT_COMMIT.  The
+requisite python packages will be installed, configuration commands executed,
+and services started.  The end result upon successful completion of this script
+(as evidenced by a return code of 0), will be a fully configured, and running
+pair of Taurus instances suitable for use and/or testing.
+
+OPTIONS:
+
+-t destructive-tests: run all unit/integration tests, some of which may create
+   adverse side-effects on metrics, models, and data; e.g., you don't want
+   to run such tests on production and staging servers; on the other hand, you
+   may want to run all unit/integration tests on the continuous integration test
+   pipeline. If omitted, defaults to no unit/integration tests.
+"
 
 set -o errexit
 set -o pipefail
-set -o verbose
+
+
+# Parse command line arguments
+RUN_UNIT_AND_INTEGRATION_TESTS=0
+
+while getopts ":ht:" opt; do
+  case $opt in
+    h)
+      echo "${USAGE}"
+      exit 0
+      ;;
+    t)
+      if [[ $OPTARG == "destructive-tests" ]]; then
+        RUN_UNIT_AND_INTEGRATION_TESTS=1
+      else
+        echo "-$opt was triggered with invalid parameter: $OPTARG" >&2
+        exit 1
+      fi
+      ;;
+    \?)
+      echo "Invalid option: -$OPTARG" >&2
+      exit 1
+      ;;
+    :)
+      echo "Option -$OPTARG requires an argument." >&2
+      exit 1
+      ;;
+  esac
+done
+
+
+if [ "${DEBUG}" ]; then
+  set -o verbose
+  set -o xtrace
+fi
+
+if [ ! "${GIT}" ]; then
+  GIT=`which git`
+fi
+
+if [ ! "${SSH_ARGS}" ]; then
+  SSH_ARGS=""
+fi
+
 set -o nounset
 
 SCRIPT=`which $0`
@@ -35,45 +163,228 @@ REPOPATH=`dirname "${SCRIPT}"`/../../..
 
 pushd "${REPOPATH}"
 
-  # Sync git histories with collector
-  git fetch "${TAURUS_COLLECTOR_USER}"@"${TAURUS_COLLECTOR_HOST}":/opt/numenta/products
-  git push "${TAURUS_COLLECTOR_USER}"@"${TAURUS_COLLECTOR_HOST}":/opt/numenta/products HEAD
+  mkdir -p taurus/pipeline/scripts/ssl/
 
-  # Reset metric collector state, apply database schema updates
-  ssh -v -t "${TAURUS_COLLECTOR_USER}"@"${TAURUS_COLLECTOR_HOST}" \
-    "cd /opt/numenta/products &&
+  if [ ! -f "taurus/pipeline/scripts/ssl/${TAURUS_SERVER_HOST}.crt" ]; then
+    subj=`echo "
+    C=US
+    ST=CA
+    O=${SSL_ORG_NAME}
+    localityName=${SSL_LOCALITY}
+    commonName=${SSL_DOMAIN_NAME}
+    organizationalUnitName=${SSL_ORGANIZATIONAL_UNIT_NAME}
+    emailAddress=${SSL_EMAIL_ADDRESS}
+    " | sed -e 's/^[ \t]*//'`
+
+    PASSWD=`openssl passwd $RANDOM`
+
+    # Generate the server private key
+    openssl genrsa \
+      -des3 \
+      -out taurus/pipeline/scripts/ssl/${TAURUS_SERVER_HOST}.key \
+      -passout pass:${PASSWD} \
+      1024
+
+    # Generate the CSR
+    openssl req \
+        -new \
+        -batch \
+        -subj "$(echo -n "${subj}" | tr "\n" "/")" \
+        -key taurus/pipeline/scripts/ssl/${TAURUS_SERVER_HOST}.key \
+        -out taurus/pipeline/scripts/ssl/${TAURUS_SERVER_HOST}.csr \
+        -passin pass:${PASSWD}
+    cp \
+      taurus/pipeline/scripts/ssl/${TAURUS_SERVER_HOST}.key \
+      taurus/pipeline/scripts/ssl/${TAURUS_SERVER_HOST}.key.bak
+
+    # Strip the password so we don't have to type it every time we restart nginx
+    openssl rsa \
+      -in taurus/pipeline/scripts/ssl/${TAURUS_SERVER_HOST}.key.bak \
+      -out taurus/pipeline/scripts/ssl/${TAURUS_SERVER_HOST}.key \
+      -passin pass:${PASSWD}
+
+    # Generate the cert (good for 1 year)
+    openssl x509 \
+      -req \
+      -days 365 \
+      -in taurus/pipeline/scripts/ssl/${TAURUS_SERVER_HOST}.csr \
+      -signkey taurus/pipeline/scripts/ssl/${TAURUS_SERVER_HOST}.key \
+      -out taurus/pipeline/scripts/ssl/${TAURUS_SERVER_HOST}.crt
+
+  fi
+
+  # Put metric collectors into hot_standby mode while we update everything
+  ssh -v -t ${SSH_ARGS} "${TAURUS_COLLECTOR_USER}"@"${TAURUS_COLLECTOR_HOST}" \
+    "cd /opt/numenta/products/taurus.metric_collectors &&
      taurus-collectors-set-opmode hot_standby &&
-     supervisorctl -s http://127.0.0.1:8001 restart all &&
-     git reset --hard ${COMMIT_SHA} &&
-     ./install-taurus-metric-collectors.sh /opt/numenta/anaconda/lib/python2.7/site-packages /opt/numenta/anaconda/bin &&
-     cd /opt/numenta/products/taurus.metric_collectors/taurus/metric_collectors/collectorsdb &&
-     python migrate.py"
+     if [ -f supervisord.pid ]; then
+       supervisorctl --serverurl http://localhost:8001 restart all
+     fi"
 
-  # Stop taurus services
-  ssh -v -t "${TAURUS_SERVER_USER}"@"${TAURUS_COLLECTOR_HOST}" \
+  # Stop taurus server instance
+  ssh -v -t ${SSH_ARGS} "${TAURUS_SERVER_USER}"@"${TAURUS_SERVER_HOST}" \
     "cd /opt/numenta/products/taurus &&
-     supervisorctl -s http://127.0.0.1:9001 shutdown &&
-     sudo /usr/sbin/nginx -p . -c conf/nginx-taurus.conf -s stop"
+     if [ -f taurus-supervisord.pid ]; then
+       supervisorctl --serverurl http://localhost:9001 stop all
+       nta-wait-for-supervisord-processes-stopped --supervisorApiUrl=http://localhost:9001
+       supervisorctl --serverurl http://localhost:9001 shutdown
+     fi  &&
+     if [ -f /var/run/nginx.pid ]; then
+       sudo /usr/sbin/nginx -p . -c conf/nginx-taurus.conf -s stop;
+     fi"
 
-  # Sync git histories with taurus server
-  git fetch "${TAURUS_SERVER_USER}"@"${TAURUS_SERVER_HOST}":/opt/numenta/products
-  git push "${TAURUS_SERVER_USER}"@"${TAURUS_SERVER_HOST}":/opt/numenta/products HEAD
+  # Sync git histories with taurus server for current HEAD
+  ${GIT} push --force \
+    "${TAURUS_SERVER_USER}"@"${TAURUS_SERVER_HOST}":/opt/numenta/products \
+    `git rev-parse --abbrev-ref HEAD`
 
-  # Reset server state, apply database schema, start taurus services
-  ssh -v -t "${TAURUS_SERVER_USER}"@"${TAURUS_SERVER_HOST}" \
+  # Reset server git state
+  ssh -v -t ${SSH_ARGS} "${TAURUS_SERVER_USER}"@"${TAURUS_SERVER_HOST}" \
     "cd /opt/numenta/products &&
-     git reset --hard ${COMMIT_SHA} &&
-     ./install-taurus.sh /opt/numenta/anaconda/lib/python2.7/site-packages /opt/numenta/anaconda/bin &&
-     cd /opt/numenta/products/taurus/taurus/repository &&
+     git reset --hard ${GIT_COMMIT}"
+
+  # Sync git histories with taurus collector for current HEAD
+  ${GIT} push --force \
+    "${TAURUS_COLLECTOR_USER}"@"${TAURUS_COLLECTOR_HOST}":/opt/numenta/products \
+    `git rev-parse --abbrev-ref HEAD`
+
+  # Reset collector git state
+  ssh -v -t ${SSH_ARGS} "${TAURUS_COLLECTOR_USER}"@"${TAURUS_COLLECTOR_HOST}" \
+    "cd /opt/numenta/products &&
+     git reset --hard ${GIT_COMMIT}"
+
+  # Re-generate env.sh credential files, to be copied to respective remote
+  # instances later
+  echo "
+    export PATH=/opt/numenta/anaconda/bin:\$PATH
+    export PYTHONPATH=/opt/numenta/anaconda/lib/python2.7/site-packages:\$PYTHONPATH
+    export APPLICATION_CONFIG_PATH=/opt/numenta/products/taurus.metric_collectors/conf
+    export TAURUS_HTM_SERVER=${TAURUS_SERVER_HOST_PRIVATE}
+    export TAURUS_API_KEY=${TAURUS_API_KEY}
+    export XIGNITE_API_TOKEN=${XIGNITE_API_TOKEN}
+    export TAURUS_TWITTER_ACCESS_TOKEN=${TAURUS_TWITTER_ACCESS_TOKEN}
+    export TAURUS_TWITTER_ACCESS_TOKEN_SECRET=${TAURUS_TWITTER_ACCESS_TOKEN_SECRET}
+    export TAURUS_TWITTER_CONSUMER_KEY=${TAURUS_TWITTER_CONSUMER_KEY}
+    export TAURUS_TWITTER_CONSUMER_SECRET=${TAURUS_TWITTER_CONSUMER_SECRET}
+    export ERROR_REPORT_EMAIL_AWS_REGION=${ERROR_REPORT_EMAIL_AWS_REGION}
+    export ERROR_REPORT_EMAIL_RECIPIENTS=${ERROR_REPORT_EMAIL_RECIPIENTS}
+    export ERROR_REPORT_EMAIL_SENDER_ADDRESS=${ERROR_REPORT_EMAIL_SENDER_ADDRESS}
+    export ERROR_REPORT_EMAIL_SES_ENDPOINT=${ERROR_REPORT_EMAIL_SES_ENDPOINT}
+    export AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+    export AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}" | \
+    sed -e 's/^[ \t]*//' > \
+    taurus/pipeline/scripts/taurus.metric_collectors-env.sh
+
+  echo "
+    export PATH=/opt/numenta/anaconda/bin:\$PATH
+    export PYTHONPATH=/opt/numenta/anaconda/lib/python2.7/site-packages:\$PYTHONPATH
+    export APPLICATION_CONFIG_PATH=/opt/numenta/products/taurus/conf
+    export TAURUS_RMQ_METRIC_DEST=${TAURUS_RMQ_METRIC_DEST}
+    export TAURUS_RMQ_METRIC_PREFIX=${TAURUS_RMQ_METRIC_PREFIX}
+    export TAURUS_API_KEY=${TAURUS_API_KEY}
+    export AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+    export AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}" | \
+    sed -e 's/^[ \t]*//' > \
+    taurus/pipeline/scripts/taurus-env.sh
+
+  # Copy self-signed cert
+  scp ${SSH_ARGS} -r \
+    taurus/pipeline/scripts/ssl/${TAURUS_SERVER_HOST}.crt \
+    "${TAURUS_SERVER_USER}"@"${TAURUS_SERVER_HOST}":/opt/numenta/products/taurus/conf/ssl/localhost.crt
+  scp ${SSH_ARGS} -r \
+    taurus/pipeline/scripts/ssl/${TAURUS_SERVER_HOST}.key \
+    "${TAURUS_SERVER_USER}"@"${TAURUS_SERVER_HOST}":/opt/numenta/products/taurus/conf/ssl/localhost.key
+
+  # Copy manual overrides
+  scp ${SSH_ARGS} -r \
+    taurus/pipeline/scripts/overrides/taurus/* \
+    "${TAURUS_SERVER_USER}"@"${TAURUS_SERVER_HOST}":/opt/numenta/products/taurus/
+  scp ${SSH_ARGS} -r \
+    taurus/pipeline/scripts/taurus.metric_collectors-env.sh \
+    "${TAURUS_COLLECTOR_USER}"@"${TAURUS_COLLECTOR_HOST}":/opt/numenta/products/taurus.metric_collectors/env.sh
+  scp ${SSH_ARGS} -r \
+    taurus/pipeline/scripts/taurus-env.sh \
+    "${TAURUS_SERVER_USER}"@"${TAURUS_SERVER_HOST}":/opt/numenta/products/taurus/env.sh
+
+  # Perform Engine update
+  TAURUS_ENGINE_TESTS="py.test tests/deployment"
+  if [[ ${RUN_UNIT_AND_INTEGRATION_TESTS} == 1 ]]; then
+    TAURUS_ENGINE_TESTS="
+      py.test ../nta.utils/tests &&
+      py.test ../htmengine/tests &&
+      py.test tests/unit &&
+      py.test tests/integration &&
+      ${TAURUS_ENGINE_TESTS}";
+  fi
+
+  ssh -v -t ${SSH_ARGS} "${TAURUS_SERVER_USER}"@"${TAURUS_SERVER_HOST}" \
+    "cd /opt/numenta/products &&
+     ./taurus/pipeline/scripts/uninstall_nupic.py &&
+     ./install-taurus.sh \
+        /opt/numenta/anaconda &&
+     taurus-set-rabbitmq \
+        --host=${RABBITMQ_HOST} \
+        --user=${RABBITMQ_USER} \
+        --password=${RABBITMQ_PASSWD} &&
+     taurus-set-sql-login \
+        --host=${MYSQL_HOST} \
+        --user=${MYSQL_USER} \
+        --password=${MYSQL_PASSWD} &&
+     taurus-set-dynamodb \
+        --host=${DYNAMODB_HOST} \
+        --port=${DYNAMODB_PORT} \
+        --table-suffix=${DYNAMODB_TABLE_SUFFIX} &&
+     cd /opt/numenta/products/taurus/taurus/engine/repository &&
      python migrate.py &&
      cd /opt/numenta/products/taurus &&
-     sudo /usr/sbin/nginx -p . -c conf/nginx-taurus.conf &&
-     supervisord -c conf/supervisord.conf"
+     if [ -f /var/run/nginx.pid ]; then
+       sudo /usr/sbin/nginx -p . -c conf/nginx-taurus.conf -s reload
+     else
+       sudo /usr/sbin/nginx -p . -c conf/nginx-taurus.conf
+     fi &&
+     if [ -f taurus-supervisord.pid ]; then
+       supervisorctl --serverurl http://localhost:9001 reload
+     else
+       supervisord -c conf/supervisord.conf
+     fi &&
+     ${TAURUS_ENGINE_TESTS}"
 
-  # Return metric collector to active state
-  ssh -v -t "${TAURUS_COLLECTOR_USER}"@"${TAURUS_COLLECTOR_HOST}" \
-    "taurus-collectors-set-opmode active
-     cd /opt/numenta/products/taurus.metric_collectors/
-     supervisorctl -s http://127.0.0.1:8001 restart all"
+
+  # Perform Collector update
+  if [[ ${RUN_UNIT_AND_INTEGRATION_TESTS} == 1 ]]; then
+    TAURUS_COLLECTOR_UNIT_AND_INTEGRATION_TESTS="
+      py.test ../nta.utils/tests &&
+      py.test tests/unit &&
+      py.test tests/integration";
+  else
+    TAURUS_COLLECTOR_UNIT_AND_INTEGRATION_TESTS=":";
+  fi
+
+  ssh -v -t ${SSH_ARGS} "${TAURUS_COLLECTOR_USER}"@"${TAURUS_COLLECTOR_HOST}" \
+    "cd /opt/numenta/products &&
+     ./install-taurus-metric-collectors.sh \
+        /opt/numenta/anaconda &&
+     taurus-set-collectorsdb-login \
+        --host=${MYSQL_HOST} \
+        --user=${MYSQL_USER} \
+        --password=${MYSQL_PASSWD} &&
+     taurus-collectors-set-rabbitmq \
+        --host=${RABBITMQ_HOST} \
+        --user=${RABBITMQ_USER} \
+        --password=${RABBITMQ_PASSWD} &&
+     cd /opt/numenta/products/taurus.metric_collectors/taurus/metric_collectors/collectorsdb &&
+     python migrate.py &&
+     cd /opt/numenta/products/taurus.metric_collectors &&
+     supervisorctl --serverurl http://localhost:8001 shutdown &&
+     nta-wait-for-supervisord-stopped http://localhost:8001 &&
+     py.test tests/deployment/resource_accessibility_test.py &&
+     supervisord -c conf/supervisord.conf &&
+     nta-wait-for-supervisord-running http://localhost:8001 &&
+     py.test tests/deployment/health_check_test.py &&
+     ${TAURUS_COLLECTOR_UNIT_AND_INTEGRATION_TESTS} &&
+     taurus-collectors-set-opmode active &&
+     supervisorctl --serverurl http://localhost:8001 restart all"
 
 popd
+
+echo "Done!"

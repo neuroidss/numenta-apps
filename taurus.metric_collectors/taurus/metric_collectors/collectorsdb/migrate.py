@@ -6,15 +6,15 @@
 # following terms and conditions apply:
 #
 # This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License version 3 as
+# it under the terms of the GNU Affero Public License version 3 as
 # published by the Free Software Foundation.
 #
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-# See the GNU General Public License for more details.
+# See the GNU Affero Public License for more details.
 #
-# You should have received a copy of the GNU General Public License
+# You should have received a copy of the GNU Affero Public License
 # along with this program.  If not, see http://www.gnu.org/licenses.
 #
 # http://numenta.org/licenses/
@@ -22,6 +22,7 @@
 
 """Perform database migration."""
 
+import logging
 import optparse
 import os
 import sys
@@ -29,6 +30,8 @@ import sys
 import alembic
 import alembic.config
 import pkg_resources
+
+from taurus.metric_collectors import logging_support
 
 
 def migrate(version="head", offline=False):
@@ -46,6 +49,12 @@ def migrate(version="head", offline=False):
 
 
 if __name__ == "__main__":
+  logging_support.LoggingSupport.initTool()
+
+  # Enable sqlalchemy engine logging at INFO level for more granular progress
+  # report during migration.
+  logging.getLogger("sqlalchemy.engine").setLevel(logging.INFO)
+
   parser = optparse.OptionParser()
   parser.add_option("--version", default="head")
   parser.add_option(

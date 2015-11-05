@@ -5,15 +5,15 @@
 # following terms and conditions apply:
 #
 # This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License version 3 as
+# it under the terms of the GNU Affero Public License version 3 as
 # published by the Free Software Foundation.
 #
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-# See the GNU General Public License for more details.
+# See the GNU Affero Public License for more details.
 #
-# You should have received a copy of the GNU General Public License
+# You should have received a copy of the GNU Affero Public License
 # along with this program.  If not, see http://www.gnu.org/licenses.
 #
 # http://numenta.org/licenses/
@@ -84,12 +84,12 @@ def launchInstance(amiID, config, logger):
 
   # Make sure we have the right security groups setup for the instance. We use
   # `basic_server` to allow SSH access from our office and specified secure IPs.
-  # `grok_server` allows access to the server from ports 80 & 443 universally,
+  # `htm_it_server` allows access to the server from ports 80 & 443 universally,
   # but can be limited if necessary.
   if config["REGION"] == "us-west-2":
-    securityGroups = ["basic_server", "grok_server"]
+    securityGroups = ["basic_server", "htm_it_server"]
   if config["REGION"] == "us-east-1":
-    securityGroups = ["basic_server", "grok_server_east"]
+    securityGroups = ["basic_server", "htm_it_server_east"]
 
   conn = getEC2Connection(config)
   image = conn.get_image(amiID)
@@ -120,7 +120,7 @@ def launchInstance(amiID, config, logger):
   instanceTags = {}
   if os.environ.get("JENKINS_HOME"):
     instanceTags["Name"] = "%s-%s" % (os.environ["JOB_NAME"],
-                                      jenkins.getBuildNumber())
+                                      jenkins.getBuildNumber(logger=logger))
   else:
     instanceTags["Name"] = "running-locally-by-user:%s" % os.getlogin()
 
@@ -232,6 +232,42 @@ def loadInstanceTags(instanceId,
   except IndexError:
     raise InstanceNotFoundError("Could not find instance %s in %s",
                                 instanceId, region)
+
+
+def setEC2TerminationProtection(instanceId, status, config, logger):
+  """
+  Set termination protection for an instance to a specific value.
+
+  If the instance's termination protection is already in the desired state,
+  it will still return True even though the status is unchanged.
+
+  :param str instanceId: The instance ID to change termination protection for.
+  :param bool status: New termination protection status for instance. True
+    enables termination protection and False disables it.
+  :param dict config: boto connection configuration dict. It must contain the
+    following keys - AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY and REGION.
+  :param logger: An initialized logger object
+
+  :returns: Whether the status was successfully changed
+  :rtype: bool
+  """
+  assert isinstance(instanceId, basestring)
+  assert isinstance(status, bool)
+  assert isinstance(config, dict)
+  assert "AWS_ACCESS_KEY_ID" in config.keys(), (
+    "config dictionary is missing the AWS_ACCESS_KEY_ID key")
+  assert "AWS_SECRET_ACCESS_KEY" in config.keys(), (
+    "config dictionary is missing the AWS_SECRET_ACCESS_KEY key")
+  assert "REGION" in config.keys(), (
+    "config dictionary is missing the REGION key")
+  assert logger, "setEC2TerminationProtection requires an initialized logger"
+
+  conn = getEC2Connection(config)
+  logger.debug("Setting termination protection on %s in %s to %s", instanceId,
+               config["REGION"], status)
+  return conn.modify_instance_attribute(instance_id=instanceId,
+                                        attribute="disableApiTermination",
+                                        value=status)
 
 
 def stopInstance(instanceId, config, logger):

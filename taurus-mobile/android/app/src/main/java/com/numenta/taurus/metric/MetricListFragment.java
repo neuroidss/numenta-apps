@@ -5,15 +5,15 @@
  * following terms and conditions apply:
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 3 as
+ * it under the terms of the GNU Affero Public License version 3 as
  * published by the Free Software Foundation.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
+ * See the GNU Affero Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Affero Public License
  * along with this program.  If not, see http://www.gnu.org/licenses.
  *
  * http://numenta.org/licenses/
@@ -25,7 +25,9 @@ package com.numenta.taurus.metric;
 import com.numenta.core.data.Metric;
 import com.numenta.core.ui.chart.LineChartView;
 import com.numenta.core.utils.DataUtils;
+import com.numenta.core.utils.Pair;
 import com.numenta.taurus.R;
+import com.numenta.taurus.TaurusApplication;
 import com.numenta.taurus.TaurusBaseActivity;
 import com.numenta.taurus.instance.InstanceAnomalyChartData;
 import com.numenta.taurus.twitter.TwitterDetailActivity;
@@ -69,7 +71,7 @@ public class MetricListFragment extends ListFragment {
     public void onListItemClick(ListView l, View v, int position, long id) {
         MetricAnomalyChartData item = _adapter.getItem(position);
 
-        // Open "Twitter Detail" activity if the user clicks on the "Twitter Volume" metric
+        // Open "Twitter Detail" activity when the user clicks on the "Twitter Volume" metric
         Metric metric = item.getMetric();
         if (MetricType.valueOf(metric) == MetricType.TwitterVolume) {
             // Check for network connection before opening twitter detail screen
@@ -82,18 +84,68 @@ public class MetricListFragment extends ListFragment {
             Intent twitterIntent = new Intent(getActivity(), TwitterDetailActivity.class);
             twitterIntent.setFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);
             twitterIntent.putExtra(TwitterDetailActivity.METRIC_ID_ARG, metric.getId());
-            twitterIntent
-                    .putExtra(TwitterDetailActivity.TIMESTAMP_ARG, item.getEndDate().getTime());
             LineChartView lineChart = (LineChartView) v.findViewById(R.id.line_chart_view);
+            long timestamp = item.getEndDate().getTime();
+            long selectedTime = -1;
+
+            // Find selected timestamp based on user selection.
             int selection = lineChart.getSelection();
             if (selection != -1) {
-                long selectedTimestamp = item.getStartTimestamp()
-                        + DataUtils.METRIC_DATA_INTERVAL * selection;
-                twitterIntent.putExtra(TwitterDetailActivity.SELECTED_TIMESTAMP_ARG,
-                        selectedTimestamp);
-                // Clear selection
-                lineChart.setSelection(-1);
+                // When the chart is collapsed we need to expand the selected period first
+                if (_collapsed) {
+                    // Calculate collapsed data to extract selected period
+                    List<Pair<Long, Float>> data = _chartData.getCollapsedData();
+
+                    // Get selected hourly bucket. Assumes 12 data points per bucket (5 min)
+                    int firstBucket = data.size() - TaurusApplication.getTotalBarsOnChart();
+                    int selectedBucket = firstBucket + selection / 12;
+                    Pair<Long, Float> value = data.get(selectedBucket);
+
+                    // Calculate selected time based on the selected bucket
+                    if (value.first != null) {
+                        selectedTime = value.first
+                                + (selection % 12) * DataUtils.METRIC_DATA_INTERVAL;
+                    }
+
+                    // Find end of collapsed period to be expanded
+                    while (selectedBucket < data.size() - 1) {
+                        if (value.first == null) {
+                            selectedBucket--;
+                            value = data.get(selectedBucket);
+                            break;
+                        }
+                        selectedBucket++;
+                        value = data.get(selectedBucket);
+                    }
+
+                    // Check if selected collapsed bar
+                    if (value.first == null) {
+                        if (selectedBucket > 0) {
+                            // Get previous bar instead
+                            selectedBucket--;
+                            value = data.get(selectedBucket);
+                        }
+                    }
+
+                    // Use end of period as end date (right most bar)
+                    if (value.first != null) {
+                        timestamp = value.first;
+                    }
+                } else {
+                    // Not collapsed, use line chart item start timestamp and user selection
+                    selectedTime = item.getStartTimestamp()
+                            + DataUtils.METRIC_DATA_INTERVAL * selection;
+                }
             }
+            if (selectedTime == -1) {
+                // The selection is unknown, use end of period instead.
+                selectedTime = timestamp;
+            }
+            twitterIntent.putExtra(TwitterDetailActivity.TIMESTAMP_ARG, timestamp);
+            twitterIntent.putExtra(TwitterDetailActivity.SELECTED_TIMESTAMP_ARG, selectedTime);
+
+            // Clear selection
+            lineChart.setSelection(-1);
             startActivity(twitterIntent);
         }
     }

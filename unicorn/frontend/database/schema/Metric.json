@@ -1,0 +1,36 @@
+{
+  "$schema": "http://json-schema.org/schema#",
+  "id": "/Metric",
+  "type": "object",
+  "properties": {
+    "uid": {
+      "type": "string",
+      "maxLength": 40,
+      "minLength": 1
+    },
+    "file_uid": {
+      "type": "string",
+      "maxLength": 40,
+      "minLength": 1
+    },
+    "model_uid": {
+      "type": ["string", "null"],
+      "maxLength": 40
+    },
+    "name": {
+      "type": "string",
+      "maxLength": 255
+    },
+    "type": {
+      "enum": ["date", "number", "string"],
+      "type": "string"
+    },
+    "min": {
+      "type": "number"
+    },
+    "max": {
+      "type": "number"
+    }
+  },
+  "required": ["uid", "file_uid", "name", "type"]
+}

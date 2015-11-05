@@ -5,15 +5,15 @@
 # following terms and conditions apply:
 #
 # This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License version 3 as
+# it under the terms of the GNU Affero Public License version 3 as
 # published by the Free Software Foundation.
 #
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-# See the GNU General Public License for more details.
+# See the GNU Affero Public License for more details.
 #
-# You should have received a copy of the GNU General Public License
+# You should have received a copy of the GNU Affero Public License
 # along with this program.  If not, see http://www.gnu.org/licenses.
 #
 # http://numenta.org/licenses/
@@ -47,7 +47,7 @@ persistent=no
 
 # List of plugins (as comma separated values of python modules names) to load,
 # usually to register additional checkers.
-load-plugins=nupic.support.lint.executable
+load-plugins=
 
 
 [MESSAGES CONTROL]
@@ -62,11 +62,6 @@ load-plugins=nupic.support.lint.executable
 # multiple time (only on the command line, not in the configuration file where
 # it should appear only once).
 #
-# TODO: Remove this check if possible.
-# E1101 - Enforces that all class attribute references are defined in the class
-#     which is not true for classes that have dynamic attributes.
-# E1103 - Checks that object types has accessed member attribute or method.
-#     Sometimes fails to correctly infer the type of an object.
 # W0142 - Using * or ** magic.
 # W0105 - String statement has no effect. Disabled to allow for doc strings.
 # W0231 - __init__ method from base class is not called.
@@ -78,7 +73,7 @@ load-plugins=nupic.support.lint.executable
 # R0904 - Too many public methods.
 # R0911 - Too many return statements
 # R0912 - Too many branches
-disable=E1101,E1103,W0142,W0105,W0231,W0621,C0111,C0302,C0322,R0902,R0904,R0911,R0912
+disable=W0142,W0105,W0231,W0621,C0111,C0302,C0322,R0902,R0904,R0911,R0912
 
 
 [REPORTS]
@@ -86,9 +81,6 @@ disable=E1101,E1103,W0142,W0105,W0231,W0621,C0111,C0302,C0322,R0902,R0904,R0911,
 # Set the output format. Available formats are text, parseable, colorized, msvs
 # (visual studio) and html
 output-format=text
-
-# Include message's id in output
-include-ids=yes
 
 # Put messages in a separate file for each module / package specified on the
 # command line instead of printing them on stdout. Reports (if any) will be
@@ -146,7 +138,7 @@ argument-rgx=_?[a-z][A-Za-z0-9]*$
 
 # Regular expression which should only match correct variable names
 variable-rgx=_{0,2}[a-z][A-Za-z0-9]*$
- 
+
 # Regular expression which should only match correct attribute names in class
 # bodies
 class-attribute-rgx=([A-Za-z_][A-Za-z0-9_]{2,30}|(__.*__))$
@@ -176,6 +168,10 @@ max-line-length=80
 
 # String used as indentation unit (2 spaces).
 indent-string='  '
+
+# Number of spaces of indent required inside a hanging or continued line.
+indent-after-paren=2
+
 
 
 [MISCELLANEOUS]

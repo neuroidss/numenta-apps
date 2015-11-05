@@ -6,15 +6,15 @@
 # following terms and conditions apply:
 #
 # This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License version 3 as
+# it under the terms of the GNU Affero Public License version 3 as
 # published by the Free Software Foundation.
 #
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-# See the GNU General Public License for more details.
+# See the GNU Affero Public License for more details.
 #
-# You should have received a copy of the GNU General Public License
+# You should have received a copy of the GNU Affero Public License
 # along with this program.  If not, see http://www.gnu.org/licenses.
 #
 # http://numenta.org/licenses/
@@ -59,6 +59,8 @@ from taurus.metric_collectors.collectorsdb.schema import (xigniteSecurity,
 from taurus.metric_collectors.xignite import xignite_agent_utils
 
 
+
+URLOPEN_TIMEOUT_SEC = 240
 
 DATE_FMT = "%m/%d/%Y %I:%M:%S %p"
 DEFAULT_BARLENGTH = 5
@@ -279,7 +281,8 @@ def getData(symbol, apitoken, barlength, startTime, endTime, fields):
 
   queryString = urllib.urlencode(query)
 
-  response = urllib2.urlopen(_API_URL + queryString)
+  response = urllib2.urlopen(_API_URL + queryString,
+                             timeout=URLOPEN_TIMEOUT_SEC)
 
   return json.loads(response.read())
 
@@ -449,7 +452,7 @@ def poll(metricSpecs, apitoken, barlength, days):
 def forward(metricSpecs, data, security, server=DEFAULT_SERVER,
             port=DEFAULT_PORT,
             dryrun=DEFAULT_DRYRUN):
-  """ Forward stock data to Grok/Taurus instance via custom metric
+  """ Forward stock data to HTM-IT/Taurus instance via custom metric
 
   :param metricSpecs: Sequence of one or more StockMetricSpec objects associated
     with the same stock symbol for which polling was conducted
@@ -534,9 +537,7 @@ def forward(metricSpecs, data, security, server=DEFAULT_SERVER,
     if g_opMode != ApplicationConfig.OP_MODE_ACTIVE:
       return
 
-    _transmitMetricData(metricSpecs=metricSpecs,
-                        symbol=symbol,
-                        engine=engine)
+    transmitMetricData(metricSpecs=metricSpecs, symbol=symbol, engine=engine)
 
   except Exception:
     _LOG.exception("forward failed for metricSpecs=%s", metricSpecs)
@@ -544,8 +545,12 @@ def forward(metricSpecs, data, security, server=DEFAULT_SERVER,
 
 
 
-def _transmitMetricData(metricSpecs, symbol, engine):
+def transmitMetricData(metricSpecs, symbol, engine):
   """ Send unsent metric data samples for the given symbol to Taurus
+
+  NOTE: this is also used externally by friends of the agent; e.g.,
+  `resymbol_metrics.py`.
+
   :param metricSpecs: Sequence of one or more StockMetricSpec objects associated
     with the same stock symbol for which polling was conducted
   :param symbol: stock symbol
@@ -604,12 +609,12 @@ def _transmitMetricData(metricSpecs, symbol, engine):
               _EASTERN_TZ.localize(
                 datetime.datetime.combine(sample.StartDate, sample.StartTime)))
             value = sample[spec.sampleKey]
-  
+
             _LOG.info("Sending: %s %r %d", spec.metricName, value, epochTs)
             putSample(metricName=spec.metricName,
                       value=value,
                       epochTimestamp=epochTs)
-  
+
       # Update history of emitted samples
       #
       # NOTE: If this fails once in a while and we end up resending the samples,
@@ -670,16 +675,16 @@ def _purgeOldRecords():
       _EASTERN_TZ)
     deleteBeforeDatetime -= datetime.timedelta(days=RETAIN_DAYS)
     # NOTE: old emittedStockPrice and emittedStockVolume get removed as the
-    # result of the foreign key relationships with xigniteSecurityBars 
+    # result of the foreign key relationships with xigniteSecurityBars
     cleanupQuery = (
       xigniteSecurityBars.delete()
       .where(xigniteSecurityBars.c.EndDate < deleteBeforeDatetime.date())
     )
-  
+
     @collectorsdb.retryOnTransientErrors
     def runQueryWithRetries():
       return collectorsdb.engineFactory().execute(cleanupQuery).rowcount
-  
+
     deletedRowCount = runQueryWithRetries()
     if deletedRowCount > 0:
       _LOG.info("Garbage-collected numRows=%d from table=%s",
@@ -725,7 +730,7 @@ def main():
       for security, data in pool.imap_unordered(
           pollFn,
           symbolToMetricSpecs.itervalues()):
-        # Forward result (if available) to Grok/Taurus instance
+        # Forward result (if available) to HTM-IT/Taurus instance
         if data:
           pendingAsyncResults.append(
             pool.apply_async(
@@ -767,7 +772,7 @@ def _parseArgs():
   helpString = (
     "./%prog [options]\n\n"
     "This queries XIgnite using the bundled CLI client, feeds the"
-    " data into Grok, and continues to feed in new stock data as it arrives.")
+    " data into HTM-IT, and continues to feed in new stock data as it arrives.")
 
   parser = OptionParser(helpString)
 
@@ -784,14 +789,14 @@ def _parseArgs():
       action="store",
       type="string",
       default=DEFAULT_SERVER,
-      help="Server running Grok to send data to [default: %default]")
+      help="Server running HTM-IT to send data to [default: %default]")
 
   parser.add_option(
       "--port",
       action="store",
       type="string",
       default=DEFAULT_PORT,
-      help="Server running Grok to send data to [default: %default]")
+      help="Server running HTM-IT to send data to [default: %default]")
 
   parser.add_option(
       "--days",

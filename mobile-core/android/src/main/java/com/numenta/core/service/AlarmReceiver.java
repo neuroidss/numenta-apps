@@ -5,15 +5,15 @@
  * following terms and conditions apply:
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 3 as
+ * it under the terms of the GNU Affero Public License version 3 as
  * published by the Free Software Foundation.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
+ * See the GNU Affero Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Affero Public License
  * along with this program.  If not, see http://www.gnu.org/licenses.
  *
  * http://numenta.org/licenses/
@@ -29,11 +29,11 @@ import android.content.Intent;
 import android.support.v4.content.WakefulBroadcastReceiver;
 
 /**
- * Wake up {@link GrokService} every 15 minutes.
+ * Wake up {@link DataService} every 15 minutes.
  * <p>
  * When the alarm fires, this WakefulBroadcastReceiver receives the broadcast Intent and execute
  * the
- * alarm code {@link GrokService}
+ * alarm code {@link DataService}
  */
 public class AlarmReceiver extends WakefulBroadcastReceiver {
 
@@ -45,7 +45,7 @@ public class AlarmReceiver extends WakefulBroadcastReceiver {
 
     @Override
     public void onReceive(Context context, Intent intent) {
-        Intent service = new Intent(context, GrokService.class);
+        Intent service = new Intent(context, DataService.class);
         startWakefulService(context, service);
     }
 

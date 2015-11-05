@@ -5,15 +5,15 @@
 # following terms and conditions apply:
 #
 # This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License version 3 as
+# it under the terms of the GNU Affero Public License version 3 as
 # published by the Free Software Foundation.
 #
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-# See the GNU General Public License for more details.
+# See the GNU Affero Public License for more details.
 #
-# You should have received a copy of the GNU General Public License
+# You should have received a copy of the GNU Affero Public License
 # along with this program.  If not, see http://www.gnu.org/licenses.
 #
 # http://numenta.org/licenses/
@@ -22,416 +22,588 @@
 """
   Many git utilities needed by the pipelines
 """
-import subprocess
-
-from infrastructure.utilities.exceptions import CommandFailedError
-from infrastructure.utilities.path import changeToWorkingDir
 from infrastructure.utilities.cli import executeCommand
+from infrastructure.utilities.exceptions import (CommandFailedError,
+                                                 DetachedHeadError)
+from infrastructure.utilities.path import changeToWorkingDir
 
 
 
-def checkIfOptionSet(option, **kwargs):
+def checkKwargs(kwargs, validKwargs):
+  invalidKwargs = set(kwargs) - validKwargs
+  if invalidKwargs:
+    raise TypeError("Invalid parameters passed %r" % invalidKwargs)
+
+
+
+def checkIfOptionSet(option, kwargs):
   """
   Convenience function to check if a keyword arg exists and is set to True
   by the caller.
 
-  @param option: The option that is being looked up.
+  :param option: The option that is being looked up.
 
-  @param kwargs: Dict containing all the arguments passed to the function.
+  :param kwargs: Dict containing all the arguments passed to the function.
 
-  @return: True if option is present in kwargs and is set to True.
-  @rtype: boolean
+  :returns: True if option is present in kwargs and is set to True.
+
+  :rtype: boolean
   """
   return option in kwargs and kwargs[option]
 
 
 
-def getCommitCount(path):
+def getCommitCount(path, logger):
   """
   Get the commit count from a git directory tree
 
-  @param: path to git directory
+  :param str path: path to git directory
 
-  @raises: infrastructure.utilities.exceptions.CommandFailedError:
-  if path isn't in a git checkout
+  :param logger: logger for additional debug info
 
-  @returns: total commit count for the git directory
+  :raises infrastructure.utilities.exceptions.CommandFailedError:
+    if path isn't in a git checkout
 
-  @rtype: string
+  :returns: total commit count for the git directory
+
+  :rtype: str
   """
   with changeToWorkingDir(path):
-    return executeCommand("git rev-list HEAD --count")
+    command = ("git", "rev-list", "HEAD", "--count")
+    return executeCommand(command=command, logger=logger)
 
 
 
-def getGitRootFolder():
+def getGitRootFolder(logger):
   """
   Return the root folder of the current git repo
 
-  @raises:
-    infrastructure.utilities.exceptions.CommandFailedError if
-    the command fails
+  :param logger: logger for additional debug info
 
-  @returns: The full path of the root folder of the current git repo
-  @rtype: string
+  :raises infrastructure.utilities.exceptions.CommandFailedError:
+    if the command fails
+
+  :returns: The full path of the root folder of the current git repo
+
+  :rtype: str
   """
-  return executeCommand("git rev-parse --show-toplevel")
+  command = ("git", "rev-parse", "--show-toplevel")
+  return executeCommand(command=command, logger=logger)
 
 
 
-def getModifiedFilesBetweenRevisions(startSha, endSha):
+def getModifiedFilesBetweenRevisions(startSha, endSha, logger):
   """
   Get a list of all files modified between revisions
 
-  @param startSha: SHA to start searching from
+  :param str startSha: SHA to start searching from
 
-  @param endSha: SHA to search until
+  :param str endSha: SHA to search until
 
-  @raises:
-    infrastructure.utilities.exceptions.CommandFailedError if
-    the command fails; typically because you are not executing from within a
+  :param logger: logger for additional debug info
+
+  :raises infrastructure.utilities.exceptions.CommandFailedError:
+    if the command fails; typically because you are not executing from within a
     git repository
 
-  @returns: A `set` of modified files or None if the command fails
-  @rtype: set
+  :returns: A `set` of modified files or None if the command fails
+
+  :rtype: set
   """
-  return set(executeCommand(
-             "git diff --name-only %s...%s" % (startSha, endSha)).split("\n"))
+  command = ("git", "diff", "--name-only", "%s...%s" % (startSha, endSha))
+  return set(executeCommand(command=command,
+                            logger=logger).split("\n"))
 
 
 
-def getCurrentSha():
+def getCurrentSha(logger):
   """
   Get the current SHA of a given repo
 
-  @raises:
-    infrastructure.utilities.exceptions.CommandFailedError if
-    the command fails; typically because you are not executing from within a
+  :param logger: logger for additional debug info
+
+  :raises infrastructure.utilities.exceptions.CommandFailedError:
+    if the command fails; typically because you are not executing from within a
     git repository
 
-  @returns: The current SHA
-  @rtype: string
+  :returns: The current SHA
+
+  :rtype: str
   """
-  return executeCommand("git log -n1 --pretty=%H")
+  command = ("git", "log", "-n1", "--pretty=%H")
+  return executeCommand(command=command, logger=logger)
 
 
 
-def getActiveBranch():
+def getActiveBranch(logger):
   """
   Get the active branch name for the repository
 
-  @raises
-    infrastructure.utilities.exceptions.CommandFailedError: if
-    the command fails
+  :param logger: logger for additional debug info
 
-  @returns: The active branch name or the current SHA if in a detached head
+  :raises infrastructure.utilities.exceptions.CommandFailedError:
+    if the command fails
+  :raises infrastructure.utilities.exceptions.DetachedHeadError:
+    if the git checkout is in a detached head state
+
+  :returns: The active branch name or the current SHA if in a detached head
     state
-  @rtype: string
+
+  :rtype: str
   """
-  branch = executeCommand("git rev-parse --abbrev-ref HEAD")
+  command = ("git", "rev-parse", "--abbrev-ref", "HEAD")
+  branch = executeCommand(command=command, logger=logger)
   if branch == "HEAD":
-    branch = getCurrentSha()
+    raise DetachedHeadError("There is no active branch; the head is detached.")
 
   return branch
 
 
+def clean(path, arguments, logger):
+  """
+  Changes to path, then runs git clean.
 
-def clone(gitURL, **kwargs):
+  :param str path: git directory to clean
+
+  :param str arguments: str containing optional extra command line arguments
+    for git clean, as you would type them on the command line. If you wanted
+    to do `git clean -fd`, you'd set arguments to "-fd".
+
+  :param logger: An initialized logger object
+
+  :raises CommandFailedError: if git clean fails
+  """
+  assert logger
+  assert isinstance(arguments, basestring), (
+    "arguments must be a string, but is %r" % arguments)
+  assert isinstance(path, basestring), "path must be a string, but is %r" % path
+
+  command = ["git", "clean"]
+  if arguments:
+    command.append(arguments)
+  logger.debug("* Running %s in %s", command, path)
+  with changeToWorkingDir(path):
+    return executeCommand(command=command, logger=logger)
+
+
+def setRemoteURL(remote, url, path, logger):
+  """
+  Sets a git remote's url.
+
+  :param str remote: Which git remote to alter
+
+  :param str url: What to set the url to
+
+  :param str path: git directory to reset
+
+  :param logger: An initialized logger object
+
+  :raises CommandFailedError: if git set-url fails
+  """
+  assert logger
+  assert isinstance(path, basestring), (
+    "path must be a string, but is %r" % path)
+  assert isinstance(remote, basestring), (
+    "remote must be a string, but is %r" % (remote))
+  assert isinstance(url, basestring), "url must be a string, but is %r" % (url)
+
+  logger.debug("* Setting url for %s to %s in %s", remote, url, path)
+  with changeToWorkingDir(path):
+    return executeCommand(command="git set-url %s %s" % (remote, url),
+                          logger=logger)
+
+
+def clone(gitURL, logger, **kwargs):
   """
   Clones the given git repository
 
-  @param gitURL: The repository URL.
-  @param kwargs: Various options to git clone gitURL can be passed as keyword
-    arguments. For now only directory option is handled.
-  e.g.
-  clone(gitURL, directory=nameOfDirectory)
+  :param str gitURL: The repository URL.
 
-  @raises
-    infrastructure.utilities.exceptions.CommandFailedError: if
-    the command fails
+  :param str logger: logger for additional debug info
 
-  @returns: The blob output of git clone
-  @rtype: string
+  :param str directory: Optional. If passed, name of the directory where
+    repository will be cloned.
+
+  :raises infrastructure.utilities.exceptions.CommandFailedError:
+    if the command fails
+
+  :returns: The blob output of git clone
+
+  :rtype: str
   """
-  command = "git clone %s" % gitURL
-  if checkIfOptionSet("directory", **kwargs):
-    command += " " + kwargs["directory"]
-  return executeCommand(command)
+  validKwargs = {"directory"}
+  checkKwargs(kwargs=kwargs, validKwargs=validKwargs)
+  command = ["git", "clone", gitURL]
+  if checkIfOptionSet("directory", kwargs):
+    command.append(kwargs["directory"])
+  return executeCommand(command=command, logger=logger)
 
 
 
-def checkout(pathspec, **kwargs):
+def checkout(pathspec, logger, **kwargs):
   """
   Switches to a given commit-ish
 
-  @param pathspec: The name of the branch (commit-ish)
+  :param str pathspec: The name of the branch (commit-ish)
 
-  @param kwargs:
+  :param logger: logger for additional debug info
 
-  @raises
-    infrastructure.utilities.exceptions.CommandFailedError: if
-    the command fails
+  :param bool new: Boolean. Defaults to False. If True, create a new branch.
 
-  @returns: The text blob output of git checkout
-  @rtype: string
+  :param bool orphan: Boolean. Defaults to False. If True, create a new orphan
+    branch.
+
+  :param bool theirs: Boolean. Defaults to False. If True, when checking out
+    paths from the index, check out stage #3 (theirs) for unmerged paths.
+
+  :raises infrastructure.utilities.exceptions.CommandFailedError:
+    if the command fails
+
+  :raises TypeError: Raised in following cases.
+    - If invalid parameter is passed in **kwargs
+    - More than one arguments are passed in **kwargs
+
+  :returns: The text blob output of git checkout
+
+  :rtype: str
   """
-  command = "git checkout"
-  if checkIfOptionSet("new", **kwargs):
-    command += " -b "
-  elif checkIfOptionSet("orphan", **kwargs):
-    command += " --orphan"
-  elif checkIfOptionSet("theirs", **kwargs):
-    command += " --theirs"
+  validKwargs = {"new", "orphan", "theirs"}
+  checkKwargs(kwargs=kwargs, validKwargs=validKwargs)
+  command = ["git", "checkout"]
+  if len(kwargs) > 1:
+    raise TypeError("Invalid parameters passed.")
+  if checkIfOptionSet("new", kwargs):
+    command.append("-b")
+  elif checkIfOptionSet("orphan", kwargs):
+    command.append("--orphan")
+  elif checkIfOptionSet("theirs", kwargs):
+    command.append("--theirs")
 
-  command += " %s" % pathspec
-  return executeCommand(command)
+  command.append(pathspec)
+  return executeCommand(command=command, logger=logger)
 
 
 
-def checkoutNewBranch(pathspec):
+def checkoutNewBranch(pathspec, logger):
   """
   Convenience function to create and switch to a new branch.
 
-  @param pathspec: Name of the branch to be checked out.
+  :param str pathspec: Name of the branch to be checked out.
 
-  @raises
-    infrastructure.utilities.exceptions.CommandFailedError: if
-    the command fails
+  :param logger: logger for additional debug info
+
+  :raises infrastructure.utilities.exceptions.CommandFailedError:
+    if the command fails
+
+  :returns: The text blob output of git checkout
+
+  :rtype: str
   """
-  return checkout(pathspec, new=True)
+  return checkout(pathspec=pathspec, new=True, logger=logger)
 
 
 
-def checkoutOrphan(pathspec):
+def checkoutOrphan(pathspec, logger):
   """
   Convenience function to create a orphan branch and switch to it.
 
-  @param pathspec: Branch name.
+  :param str pathspec: Branch name.
 
-  @raises
-    infrastructure.utilities.exceptions.CommandFailedError: if
-    the command fails
+  :param logger: logger for additional debug info
+
+  :raises infrastructure.utilities.exceptions.CommandFailedError:
+    if the command fails
+
+  :returns: The text blob output of git checkout
+
+  :rtype: str
   """
-  return checkout(pathspec, orphan=True)
+  return checkout(pathspec=pathspec, orphan=True, logger=logger)
 
 
 
-def reset(sha="", **kwargs):
+def reset(sha, logger, **kwargs):
   """
   Resets the repository to a optional SHA. Optional argument for --hard
 
-  @param kwargs:
+  :param logger: logger for additional debug info
 
-  @raises
-    infrastructure.utilities.exceptions.CommandFailedError: if
-    the command fails
+  :param bool hard: Boolean. Defaults to False. If true, resets the index and
+    working tree. Any changes to tracked files in the working tree since
+    <commit> are discarded.
 
-  @returns: The exit code
-  @rtype: int
+  :raises infrastructure.utilities.exceptions.CommandFailedError: if the
+    command fails
+
+  :returns: The exit code
+
+  :rtype: int
   """
-  command = "git reset "
-  if checkIfOptionSet("hard", **kwargs):
-    command += "--hard"
-  command += " %s" % sha
-  return executeCommand(command)
+  assert logger
+  validKwargs = {"hard"}
+  checkKwargs(kwargs=kwargs, validKwargs=validKwargs)
+  command = ["git", "reset"]
+  if checkIfOptionSet("hard", kwargs):
+    command.append("--hard")
+  command.append(sha)
+  return executeCommand(command=command, logger=logger)
 
 
 
-def resetHard(sha=""):
+def resetHard(sha, logger):
   """
   A convenience function that runs 'git reset --hard' for the given SHA.
   Calls reset(SHA, **kwargs).
 
-  @params SHA: The SHA or commit-sh to which the code needs to be reset to.
+  :param str SHA: The SHA or commit-sh to which the code needs to be reset to.
 
-  @raises
+  :param logger: logger for additional debug info
+
+  :raises:
     infrastructure.utilities.exceptions.CommandFailedError: if
     the command fails
 
-  @returns: The exit code
-  @rtype: int
+  :returns: The exit code
+
+  :rtype: int
   """
-  return reset(sha, hard=True)
+  assert logger
+  return reset(sha=sha, logger=logger, hard=True)
 
 
 
-def revParse(commitish, **kwargs):
+def revParse(commitish, logger, **kwargs):
   """
   Helper method to execute git rev-parse commands. Used to print the SHA1
   given a revision specifier (e.g HEAD). This function can return the output
   of the command executed or the exit code of the command executed if
   "exitcode" = True is passed as a keyword argument.
 
-  @param commitish: The commit-ish.
+  :param str commitish: The commit-ish.
 
-  @param kwargs: Various options to git rev-parse can be passed as keyword
-  arguments. The following options are currently supported:
+  :param logger: logger for additional debug info
 
-  verify: Verify that exactly one parameter is provided, and that it
-  can be turned into a raw 20-byte SHA-1 that can be used to access the object
-  database.
+  :param bool verify: Boolean. Defaults to False. If True, verify that exactly
+    one parameter is provided, and that it can be turned into a raw
+    20-byte SHA-1 that can be used to access the object database.
 
-  quiet: Only valid with verify. Do not output an error message if the
-  first argument is not a valid object name; instead exit with non-zero status
-  silently.
+  :param bool quiet: Boolean. Defaults to False. Only valid with verify. If
+    True, do not output an error message if the first argument is not a valid
+    object name; instead exit with non-zero status silently. 'verify' must be
+    True.
 
-  abbrevRef: A non-ambiguous short name of the objects name
+  :param bool abbrevRef: Boolean. Defaults to False. If True, a non-ambiguous
+    short name of the objects name. 'TypeError' exception will be raised if
+    'verify' and/or 'quiet' parameters are passed.
 
-  @raises
-    infrastructure.utilities.exceptions.CommandFailedError: if
-    the command fails
+  :raises infrastructure.utilities.exceptions.CommandFailedError: if the
+    command fails
 
-  @returns: A `string` representing a SHA or the exit code of the command.
+  :raises TypeError: Raised in following cases.
+    - Invalid parameter is passed in **kwargs
+    - "quiet" parameter is set without setting "verify" parameter
+    - Both "verify" and "abbrevRef" parameters are set.
 
-  @rtype: string or int
+  :returns: A `string` representing a SHA or the exit code of the command.
+
+  :rtype: str or int
   """
-  command = "git rev-parse"
-  if checkIfOptionSet("verify", **kwargs):
-    command += " --verify"
-  elif checkIfOptionSet("quiet", **kwargs):
-    command += " --quiet"
-  elif checkIfOptionSet("abbrevRef", **kwargs):
-    command += " --abbrev-ref"
+  validKwargs = {"verify", "quiet", "abbrevRef"}
+  checkKwargs(kwargs=kwargs, validKwargs=validKwargs)
+  if (("quiet" in kwargs and "verify" not in kwargs)
+      or ("abbrevRef" in kwargs and "verify" in kwargs)):
+    raise TypeError("Invalid parameters passed.")
 
-  command += " %s" % commitish
-  return executeCommand(command)
+  command = ["git", "rev-parse"]
+  if checkIfOptionSet("verify", kwargs):
+    command.append("--verify")
+    if checkIfOptionSet("quiet", kwargs):
+      command.append("--quiet")
+  elif checkIfOptionSet("abbrevRef", kwargs):
+    command.append("--abbrev-ref")
+
+  command.append(commitish)
+  return executeCommand(command=command, logger=logger)
 
 
-
-def fetch(repository, refspec):
+def fetch(repository, refspec, logger):
   """
   Download objects and refs from another repository
 
-  @param repository: Name of git repository (e.g origin)
+  :param str repository: Name of git repository (e.g origin)
 
-  @param refspec: Name of the refspec (e.g. master)
+  :param str refspec: Name of the refspec (e.g. master)
 
-  @raises
+  :param logger: logger for additional debug info
+
+  :raises:
     infrastructure.utilities.exceptions.CommandFailedError: if
     the command fails
   """
-  command = "git fetch %s %s" % (repository, refspec)
-  return executeCommand(command)
+  command = ("git", "fetch", repository, refspec)
+  return executeCommand(command=command, logger=logger)
 
 
+def pull(logger, arguments=None):
+  """
+  Do a git pull, with optional parameters.
 
-def showRef(refList, **kwargs):
+  Example usage:
+
+    pull(arguments=["origin", "next"])
+    pull(arguments=["origin", "next", "--ff-only"])
+    pull(arguments=["git@github.com:username/repo.git", "next"])
+
+  :param str arguments: Any extra arguments you want to pass to git pull
+  :param logger: An initialized logger object
+  """
+  if arguments:
+    assert (isinstance(arguments, basestring) or
+            isinstance(arguments, tuple) or
+            isinstance(arguments, list)), (
+              "arguments must be a string or list, but is %r" % arguments)
+  assert logger
+  gitCommand = ["git", "pull"]
+  if arguments:
+    if isinstance(arguments, list) or isinstance(arguments, tuple):
+      gitCommand.extend(arguments)
+    if isinstance(arguments, basestring):
+      arguments.extend(str.split(arguments))
+  return executeCommand(command=gitCommand, logger=logger)
+
+
+def showRef(refList, logger, **kwargs):
   """
   List references in a local repository
 
 
-  @param refList: Reference available in the local repository.
+  :param str refList: Reference available in the local repository.
 
-  @param kwargs: Optional switches to git show-ref. Following switches are
-  supported at the moment.
+  :param logger: logger for additional debug info
 
-    --verify: Enable stricter reference checking by requiring an exact
-    ref path.
-    --quiet: Aside from returning an error code of 1, it will also print an
-    error message, if --quiet was not specified.
+  :param bool verify: Boolean. Defaults to False. If True, enable stricter
+    reference checking by requiring an exact ref path.
 
-  @raises
-    infrastructure.utilities.exceptions.CommandFailedError if
-    the command fails
+  :raises infrastructure.utilities.exceptions.CommandFailedError: if the
+    command fails
   """
-  command = "git show-ref"
-  if checkIfOptionSet("verify", **kwargs):
-    command += " --verify"
-  command += " %s" % refList
-  return executeCommand(command)
+  validKwargs = {"verify"}
+  checkKwargs(kwargs=kwargs, validKwargs=validKwargs)
+  command = ["git", "show-ref"]
+  if checkIfOptionSet("verify", kwargs):
+    command.append("--verify")
+  command.append(refList)
+  return executeCommand(command=command, logger=logger)
 
 
 
-def add(pathspec):
+def add(pathspec, logger):
   """
   Add file contents to the index
 
-  @param pathspec: The file that is to be added to git.
+  :param str pathspec: The file that is to be added to git.
 
-  @raises
+  :param logger: logger for additional debug info
+
+  :raises:
     infrastructure.utilities.exceptions.CommandFailedError: if
     the command fails
   """
-  command = "git add %s" % pathspec
-  return executeCommand(command)
+  command = ("git", "add", pathspec)
+  return executeCommand(command=command, logger=logger)
 
 
 
-def commit(message, **kwargs):
+def commit(message, logger, **kwargs):
   """
   Record changes to the repository
   Current implementation is supporting options like --amend
   This could be extended for other options as when required
 
-  @param message: Commit message.
+  :param str message: Commit message.
 
-  @raises
-    infrastructure.utilities.exceptions.CommandFailedError: if
-    the command fails
+  :param logger: logger for additional debug info
+
+  :param bool amend: Boolean. Defaults to False. If True, replace the tip of the
+    current branch by creating a new commit.
+
+  :raises infrastructure.utilities.exceptions.CommandFailedError:
+    if the command fails
   """
-  command = "git commit "
-  if checkIfOptionSet("amend", **kwargs):
-    command += " --amend"
-  command += " %s" % message
-  return executeCommand(command)
+  validKwargs = {"amend"}
+  checkKwargs(kwargs=kwargs, validKwargs=validKwargs)
+  command = ["git", "commit"]
+  if checkIfOptionSet("amend", kwargs):
+    command.append("--amend")
+  command.append(message)
+  return executeCommand(command=command, logger=logger)
 
 
 
-def merge(path, message, **kwargs):
+def merge(path, message, logger, **kwargs):
   """
   Join two or more development histories together
   Current implementation supports --no-ff
   This could be extended for other options as when required.
 
-  @param path:
+  :param str path: The file or path that has to be removed.
 
-  @param message: Merge commit message.
+  :param str message: Merge commit message.
 
-  @raises
-    infrastructure.utilities.exceptions.CommandFailedError: if
-    the command fails
+  :param logger: logger for additional debug info
+
+  :raises infrastructure.utilities.exceptions.CommandFailedError:
+    if the command fails
   """
-  command = "git merge "
-  if checkIfOptionSet("noFF", **kwargs):
-    command += " --no-ff"
-  command += " -m %s %s" % (message, path)
-  return executeCommand(command)
+  validKwargs = {"noFF"}
+  checkKwargs(kwargs=kwargs, validKwargs=validKwargs)
+  command = ["git", "merge"]
+  if checkIfOptionSet("noFF", kwargs):
+    command.append("--no-ff")
+  command.extend(["-m", message, path])
+  return executeCommand(command=command, logger=logger)
 
 
 
-def removeFileFromGit(path):
+def removeFileFromGit(path, logger):
   """
   Remove files from the working tree and from the index.
 
-  @param path: The file or path that has to be removed.
+  :param str path: The file or path that has to be removed.
 
-  @raises:
-  infrastructure.utilities.exceptions.CommandFailedError: if
-  the command fails
+  :param logger: logger for additional debug info
 
-  @returns output of git rm
+  :raises infrastructure.utilities.exceptions.CommandFailedError: if the
+    command fails
 
-  @rtype: str
+  :returns: output of git rm
+
+  :rtype: str
   """
-  command = "git rm -rf %s" % path
-  return executeCommand(command)
+  command = ("git", "rm", "-rf", path)
+  return executeCommand(command=command, logger=logger)
 
 
 
-def getShaFromRemoteBranch(gitRemoteRepo, gitRemoteBranch):
+def getShaFromRemoteBranch(gitRemoteRepo, gitRemoteBranch, logger):
   """
   Get the actual SHA of the current HEAD of a remote repo / branch.
 
-  @param gitRemoteRepo: The URL of the remote repo,
+  :param str gitRemoteRepo: The URL of the remote repo,
     e.g., git@github.com:numenta/nupic.git
-  @param gitRemoteBranch: The name of the remote branch, e.g., master
+  :param str gitRemoteBranch: The name of the remote branch, e.g., master
 
-  @raises:
+  :param logger: logger for additional debug info
 
-  @return: A `String` representing the SHA
-  @rtype: String
+  :raises infrastructure.utilities.exceptions.CommandFailedError: if the
+    command fails
+
+  :returns: A `String` representing the SHA
+
+  :rtype: str
   """
-  shaList = executeCommand("git ls-remote %s" % gitRemoteRepo)
+  command = ("git", "ls-remote", gitRemoteRepo)
+  shaList = executeCommand(command=command, logger=logger)
   if gitRemoteBranch == "master":
     return shaList.split("\t")[0]
   else:

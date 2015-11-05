@@ -55,7 +55,7 @@
         "sleep 30",
         "mkdir -p /etc/numenta",
         "mkdir -p /srv/salt",
-        "rm -f /etc/yum.repos.d/grok*repo",
+        "rm -f /etc/yum.repos.d/htm-it*repo",
         "echo",
         "echo Engraving products SHA and build timestamp into AMI",
         "echo",

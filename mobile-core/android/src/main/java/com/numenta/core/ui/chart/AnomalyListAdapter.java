@@ -5,15 +5,15 @@
  * following terms and conditions apply:
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 3 as
+ * it under the terms of the GNU Affero Public License version 3 as
  * published by the Free Software Foundation.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
+ * See the GNU Affero Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Affero Public License
  * along with this program.  If not, see http://www.gnu.org/licenses.
  *
  * http://numenta.org/licenses/
@@ -23,7 +23,7 @@
 package com.numenta.core.ui.chart;
 
 import com.numenta.core.R;
-import com.numenta.core.app.GrokApplication;
+import com.numenta.core.app.HTMApplication;
 import com.numenta.core.data.AggregationType;
 import com.numenta.core.utils.DataUtils;
 
@@ -134,7 +134,7 @@ public abstract class AnomalyListAdapter<T extends AnomalyChartData> extends Bas
      * <code><pre>
      * new Filter(new Predicate<InstanceAnomalyChartData, CharSequence>() {
      *     public boolean test(InstanceAnomalyChartData instance, CharSequence constraint) {
-     *         return GrokApplication.isInstanceFavorite(instance.getId());
+     *         return HTMApplication.isInstanceFavorite(instance.getId());
      *     }
      * }
      * </pre></code>
@@ -276,7 +276,7 @@ public abstract class AnomalyListAdapter<T extends AnomalyChartData> extends Bas
         // Load data in the background
         AsyncTask task = getDataLoadingTask();
         if (task != null) {
-            task.executeOnExecutor(GrokApplication.getWorkerThreadPool(), values);
+            task.executeOnExecutor(HTMApplication.getWorkerThreadPool(), values);
             if (_taskList == null) {
                 _taskList = new ConcurrentLinkedQueue<AsyncTask>();
             }
@@ -304,9 +304,9 @@ public abstract class AnomalyListAdapter<T extends AnomalyChartData> extends Bas
      */
     public void setEndDate(Date endDate) {
         // Make sure the date does not exceed the data boundaries
-        long maxDate = DataUtils.floorTo5minutes(GrokApplication.getDatabase().getLastTimestamp());
+        long maxDate = DataUtils.floorTo5minutes(HTMApplication.getDatabase().getLastTimestamp());
         long minDate = maxDate
-                - (GrokApplication.getNumberOfDaysToSync() - 1) * DataUtils.MILLIS_PER_DAY;
+                - (HTMApplication.getNumberOfDaysToSync() - 1) * DataUtils.MILLIS_PER_DAY;
         // Check max date and no date
         if (endDate == null || endDate.getTime() > maxDate) {
             _endDate = new Date(maxDate);

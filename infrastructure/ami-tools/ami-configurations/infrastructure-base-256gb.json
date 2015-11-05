@@ -18,7 +18,7 @@
         {
           "device_name": "/dev/sda1",
           "delete_on_termination" : true,
-          "volume_size": 128
+          "volume_size": 256
         }
       ],
       "type": "amazon-ebs"
@@ -42,7 +42,7 @@
     },
     {
       "destination": "/tmp/devtools-pathaddition.sh",
-      "source": "repos/devtools-pathaddition.sh",
+      "source": "files/devtools-pathaddition.sh",
       "type": "file"
     },
     {
@@ -51,8 +51,8 @@
       "type": "file"
     },
     {
-      "destination": "/tmp/grok-development.repo",
-      "source": "repos/grok-development.repo",
+      "destination": "/tmp/htm-it-development.repo",
+      "source": "repos/htm-it-development.repo",
       "type": "file"
     },
     {
@@ -67,12 +67,12 @@
     },
     {
       "destination": "/tmp/bootstrap-salt.sh",
-      "source": "bootstrap-salt.sh",
+      "source": "packer-scripts/bootstrap-salt.sh",
       "type": "file"
     },
     {
       "destination": "/tmp/yum-s3-0.2.4-1.noarch.rpm",
-      "source": "yum-s3-0.2.4-1.noarch.rpm",
+      "source": "files/yum-s3-0.2.4-1.noarch.rpm",
       "type": "file"
     },
     {
@@ -81,8 +81,8 @@
         "sleep 30",
         "mkdir -p /etc/numenta",
         "echo",
-        "echo Purging grok-specific repo files",
-        "rm -fv /etc/yum.repos.d/grok*repo",
+        "echo Purging htm-it-specific repo files",
+        "rm -fv /etc/yum.repos.d/htm-it*repo",
         "echo Engraving products SHA and build timestamp into AMI",
         "echo",
         "mv /tmp/products.sha /etc/numenta",

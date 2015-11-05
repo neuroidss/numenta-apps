@@ -5,15 +5,15 @@
  * following terms and conditions apply:
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 3 as
+ * it under the terms of the GNU Affero Public License version 3 as
  * published by the Free Software Foundation.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
+ * See the GNU Affero Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Affero Public License
  * along with this program.  If not, see http://www.gnu.org/licenses.
  *
  * http://numenta.org/licenses/
@@ -24,9 +24,9 @@ package com.numenta.taurus.service;
 
 import com.numenta.core.data.InstanceData;
 import com.numenta.core.service.DataSyncService;
-import com.numenta.core.service.GrokClient;
-import com.numenta.core.service.GrokException;
-import com.numenta.core.service.GrokService;
+import com.numenta.core.service.HTMClient;
+import com.numenta.core.service.HTMException;
+import com.numenta.core.service.DataService;
 import com.numenta.core.utils.DataUtils;
 import com.numenta.core.utils.Log;
 import com.numenta.taurus.TaurusApplication;
@@ -70,7 +70,7 @@ public class TaurusDataSyncService extends DataSyncService {
     public static final String INSTANCE_DATA_CHANGED_EVENT
             = "com.numenta.taurus.data.InstanceDataChangedEvent";
 
-    public TaurusDataSyncService(GrokService service) {
+    public TaurusDataSyncService(DataService service) {
         super(service);
     }
 
@@ -78,7 +78,7 @@ public class TaurusDataSyncService extends DataSyncService {
      * Load all instance data from the database
      */
     @Override
-    protected void loadAllData() throws GrokException, IOException {
+    protected void loadAllData() throws HTMException, IOException {
 
         Context context = TaurusApplication.getContext();
         if (context == null) {
@@ -188,7 +188,7 @@ public class TaurusDataSyncService extends DataSyncService {
             Log.d(TAG, "Start downloading data from " + from);
             TaurusClient client = getClient();
             client.getAllInstanceData(new Date(from), new Date(now), false,
-                    new GrokClient.DataCallback<InstanceData>() {
+                    new HTMClient.DataCallback<InstanceData>() {
                         @Override
                         public boolean onData(InstanceData data) {
                             // enqueue data for saving
@@ -226,7 +226,7 @@ public class TaurusDataSyncService extends DataSyncService {
      */
     @Override
     protected int loadAllMetrics()
-            throws InterruptedException, ExecutionException, GrokException, IOException {
+            throws InterruptedException, ExecutionException, HTMException, IOException {
         // Check last time the metric list was loaded
         Context context = TaurusApplication.getContext();
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
@@ -252,7 +252,7 @@ public class TaurusDataSyncService extends DataSyncService {
     }
 
     @Override
-    protected void loadAllAnnotations() throws IOException, GrokException {
+    protected void loadAllAnnotations() throws IOException, HTMException {
 
     }
 

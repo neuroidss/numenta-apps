@@ -1,6 +1,7 @@
 This is the umbrella project for all of the components that make up the
 Numenta product-line.
 
+
 ## Installation
 
 All python packages include a setuptools-compatible
@@ -22,30 +23,31 @@ You can see coverage across multiple projects as follows:
 
 ## Licenses
 
-Each code directory defined below contains its own `LICENSE.txt` file and defines program dependencies within a `DEPENDENCIES.md` file.
+Each code directory defined below contains its own `LICENSE.txt` file and
+defines program dependencies within a `DEPENDENCIES.md` file.
 
 
 ## Main Products
 
 
-### Grok
+### HTM-IT
 
-See http://numenta.com/grok. 
+See http://numenta.com/htm-it.
 
-### [`/grok`](grok)
+#### [`/htm-it`](htm-it)
 
 AWS/Cloudwatch integration for HTM Engine.
 
 **Languages**: Python, JavaScript, HTML
 
-### [`/grok-mobile`](grok-mobile)
+#### [`/htm-it-mobile`](htm-it-mobile)
 
-Grok mobile client.
+HTM-IT mobile client.
 
 **Languages**: Java
 
 
-### Grok for Stocks
+### HTM-IT for Stocks
 
 Code name: _**Taurus**_. Application for tracking company data.
 
@@ -57,24 +59,37 @@ Server-side code for Taurus.
 
 #### [`/taurus-mobile`](taurus-mobile)
 
-Grok for Stocks mobile client.
+HTM-IT for Stocks mobile client.
 
 **Languages**: Java
 
 #### [`/taurus.metric_collectors`](taurus.metric_collectors)
 
-Custom metric collectors for Grok for Stocks data providers.
+Custom metric collectors for HTM-IT for Stocks data providers.
 
 **Languages**: Python
 
 #### [`/taurus.monitoring`](taurus.monitoring)
 
-Monitoring scripts and related utilities for monitoring Grok for Stocks 
+Monitoring scripts and related utilities for monitoring HTM-IT for Stocks
 (Code name: Taurus).
 
 **Languages**: Python
 
+
+### Unicorn
+
+#### [`/unicorn`](unicorn)
+
+Cross-platform Desktop Application to demonstrate basic HTM functionality
+to users using their own data files.
+
+**Languages**: Javascript, Python
+
+
+
 ## Support Code
+
 
 #### [`/nta.utils`](nta.utils)
 
@@ -85,7 +100,7 @@ configuration, logging, and other common operations.
 
 #### [`/htmengine`](htmengine)
 
-HTM Engine Framework upon which Grok and Grok for Stocks are built.
+HTM Engine Framework upon which HTM-IT and HTM-IT for Stocks are built.
 Implements basic infrastructure for receiving data and running models, including
 support for custom metrics.
 
@@ -93,6 +108,6 @@ support for custom metrics.
 
 #### [`/mobile-core`](mobile-core)
 
-Shared library used in taurus-mobile and grok-mobile mobile applications.
+Shared library used in taurus-mobile and htm-it-mobile mobile applications.
 
 **Languages**: Java

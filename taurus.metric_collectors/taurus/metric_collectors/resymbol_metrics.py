@@ -6,15 +6,15 @@
 # following terms and conditions apply:
 #
 # This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License version 3 as
+# it under the terms of the GNU Affero Public License version 3 as
 # published by the Free Software Foundation.
 #
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-# See the GNU General Public License for more details.
+# See the GNU Affero Public License for more details.
 #
-# You should have received a copy of the GNU General Public License
+# You should have received a copy of the GNU Affero Public License
 # along with this program.  If not, see http://www.gnu.org/licenses.
 #
 # http://numenta.org/licenses/
@@ -27,35 +27,38 @@ NOTE: this script may be configured as "console" app by the package
 installer.
 """
 
-from datetime import timedelta
+from collections import namedtuple
+from datetime import datetime, timedelta
 import logging
-import math
 from optparse import OptionParser
 import os
 
 from sqlalchemy import sql
 
-from nta.utils.date_time_utils import epochFromNaiveUTCDatetime
 from taurus.metric_collectors import (
-    ApplicationConfig,
-    collectorsdb,
-    config,
-    logging_support,
-    metric_utils)
-from taurus.metric_collectors.collectorsdb.schema import (
-    twitterTweetSamples as tweetSamplesSchema
-)
+  collectorsdb,
+  config,
+  delete_companies,
+  logging_support,
+  metric_utils)
+from taurus.metric_collectors.collectorsdb import schema
+from taurus.metric_collectors import gen_metrics_config
 from taurus.metric_collectors.twitterdirect import migrate_tweets_to_dynamodb
+
+from taurus.metric_collectors.twitterdirect import twitter_direct_agent
+from taurus.metric_collectors.xignite import xignite_stock_agent
+
 from taurus.metric_collectors.twitterdirect.twitter_direct_agent import (
-    MetricDataForwarder,
-    loadMetricSpecs
+  _EMITTED_TWEET_VOLUME_SAMPLE_TRACKER_KEY
 )
 
 
 
 DEFAULT_HTM_SERVER = os.environ.get("TAURUS_HTM_SERVER")
-_EMITTED_TWEET_VOLUME_SAMPLE_TRACKER_KEY = "twitter-tweets-volume"
 
+
+# Maximum window for forwarded metric data samples
+MAX_METRIC_SAMPLE_BACKLOG_DAYS = 90
 
 
 g_log = logging.getLogger(__name__)
@@ -71,83 +74,237 @@ def _parseArgs():
     migrate_tweets - boolean specifying whether to keep historical twitter data
   """
   helpString = (
-      "%%prog [options]"
-      "Tool to rename a metric's symbol and migrate the historical data to the "
-      "new metric.")
+    "%%prog [options]"
+    "Tool to rename a metric's symbol and migrate the historical data to the "
+    "new metric.")
 
   parser = OptionParser(helpString)
 
   parser.add_option(
-      "--server",
-      action="store",
-      type="string",
-      dest="htmServer",
-      default=DEFAULT_HTM_SERVER,
-      help="Hostname or IP address of server running HTM Engine API to create "
-      "models [default: %default]")
+    "--server",
+    action="store",
+    type="string",
+    dest="htmServer",
+    default=DEFAULT_HTM_SERVER,
+    help="Hostname or IP address of server running HTM Engine API to create "
+    "models [default: %default]")
 
   parser.add_option(
-      "--apikey",
-      action="store",
-      type="string",
-      dest="apikey",
-      default="taurus",
-      help="API Key of HTM Engine to create models [default: %default]")
+    "--apikey",
+    action="store",
+    type="string",
+    dest="apikey",
+    default="taurus",
+    help="API Key of HTM Engine to create models [default: %default]")
 
   parser.add_option(
-      "--period",
-      action="store",
-      type="int",
-      dest="aggPeriod",
-      default=300,
-      help="Volume aggregation period in seconds [default: %default]")
+    "--period",
+    action="store",
+    type="int",
+    dest="aggPeriod",
+    default=300,
+    help="Volume aggregation period in seconds [default: %default]")
 
   parser.add_option(
-      "--oldsymbol",
-      action="store",
-      type="string",
-      dest="old_symbol",
-      help="Original ticker symbol currently used by metric_collector")
+    "--oldsymbol",
+    action="store",
+    type="string",
+    dest="oldSymbol",
+    help="Original ticker symbol currently used by metric_collector")
 
   parser.add_option(
-      "--newsymbol",
-      action="store",
-      type="string",
-      dest="new_symbol",
-      help="New ticker symbol to be used")
-
-  parser.add_option(
-      "-t", "--twitteronly",
-      action="store_false",
-      dest="stocks",
-      default=True,
-      help="Only migrate twitter metric data"
-  )
-
-  parser.add_option(
-      "-x", "--stocksonly",
-      action="store_false",
-      dest="twitter",
-      default=True,
-      help="Only migrate xignite stock metric data"
-  )
+    "--newsymbol",
+    action="store",
+    type="string",
+    dest="newSymbol",
+    help="New ticker symbol to be used")
 
 
   options, remainingArgs = parser.parse_args()
   if remainingArgs:
     parser.error("Unexpected remaining args: %r" % (remainingArgs,))
 
-  if options.old_symbol is None:
+  if options.oldSymbol is None:
     parser.error("Required \"--oldsymbol\" option was not specified")
-  if options.new_symbol is None:
+  if options.newSymbol is None:
     parser.error("Required \"--newsymbol\" option was not specified")
 
-  if (not options.twitter) and (not options.stocks):
-    parser.error("Flags specifying a single type of metric to migrate can "
-                 "only be used exclusively. Forwarding all metrics is already "
-                 "the default behavior of this tool.")
+  optionsTuple = namedtuple("optionsTuple", "htmServer "
+                                            "apikey "
+                                            "aggPeriod "
+                                            "oldSymbol "
+                                            "newSymbol ")
 
-  return options
+  return optionsTuple(htmServer=options.htmServer,
+                      apikey=options.apikey,
+                      aggPeriod=options.aggPeriod,
+                      oldSymbol=options.oldSymbol.upper(),
+                      newSymbol=options.newSymbol.upper())
+
+
+
+def _resymbolTweetVolumeMetric(oldSymbol, newSymbol, aggPeriod):
+  """ Perform the workflow of resymboling a tweet volume metric that consists of
+  the following steps:
+    1. Reassign bufferred tweet samples in collectorsdb to the new metric.
+    2. Forward the new metric data samples to HTM Engine
+    3. Forward the tweet media to dynamodb
+
+  :param str oldSymbol: old stock symbol, upper case
+  :param str newSymbol: new stock symbol, upper case
+  :param int aggPeriod: metric aggregation period in seconds
+  """
+  g_log.info(
+    "Renaming tweet sample metric: oldSymbol=%s, newSymbol=%s, aggPeriod=%s",
+    oldSymbol, newSymbol, aggPeriod)
+
+  oldMetricName = gen_metrics_config.getTweetVolumeMetricName(oldSymbol)
+  newMetricName = gen_metrics_config.getTweetVolumeMetricName(newSymbol)
+
+  sqlEngine = collectorsdb.engineFactory()
+
+  # Rename the metric in tweet sample rows
+
+  with sqlEngine.begin() as conn:
+    # Verify that metric samples with new symbol don't overlap with with samples
+    # corresponding to the old symbol
+    g_log.info("Verifying that newMetric=%s in table=%s doesn't overlap with "
+               "the oldMetric=%s.",
+               newMetricName, schema.twitterTweetSamples, oldMetricName)
+
+    maxOldMetricAggTimestamp = conn.execute(
+      sql.select([sql.func.max(schema.twitterTweetSamples.c.agg_ts)])
+    ).scalar()
+
+    if maxOldMetricAggTimestamp is not None:
+      overlappingRow = conn.execute(
+        sql.select([schema.twitterTweetSamples.c.metric])
+        .where(schema.twitterTweetSamples.c.metric == newMetricName)
+        .where(schema.twitterTweetSamples.c.agg_ts <= maxOldMetricAggTimestamp)
+        .order_by(schema.twitterTweetSamples.c.agg_ts.asc())
+        .limit(1)).first()
+      assert overlappingRow is None, overlappingRow
+
+    # Re-symbol the tweet sample metric rows
+    g_log.info("Renaming tweet sample metric %s with %s",
+               oldMetricName, newMetricName)
+    conn.execute(
+      schema.twitterTweetSamples  # pylint: disable=E1120
+      .update()
+      .where(schema.twitterTweetSamples.c.metric == oldMetricName)
+      .values(metric=newMetricName))
+
+
+  # Forward tweet metric samples to Taurus Engine
+
+  g_log.info("Forwarding new tweet metric=%s samples to Taurus engine...",
+             newMetricName)
+
+  # Get the aggregation timestamp of the starting tweet sample to forward
+  #
+  # NOTE: prior to March 2015, tweet samples didn't have a consistent reference
+  # between twitter agent's restarts. This issue was address with the
+  # introduction of emitted_sample_tracker table.
+  #
+  timestampScanLowerBound = (datetime.utcnow() -
+                             timedelta(days=MAX_METRIC_SAMPLE_BACKLOG_DAYS))
+
+  aggStartDatetime = sqlEngine.execute(
+    sql.select([schema.twitterTweetSamples.c.agg_ts],
+               order_by=schema.twitterTweetSamples.c.agg_ts.asc())
+    .where(schema.twitterTweetSamples.c.metric == newMetricName)
+    .where(schema.twitterTweetSamples.c.agg_ts > timestampScanLowerBound)
+    .limit(1)).scalar()
+
+  # Get the timestamp of the most recent sample batch emitted to Taurus engine
+  lastEmittedAggTime = metric_utils.queryLastEmittedSampleDatetime(
+    key=_EMITTED_TWEET_VOLUME_SAMPLE_TRACKER_KEY)
+
+  if lastEmittedAggTime is None:
+    # Last emitted sample datetime has not been established yet; we'll rely
+    # on the twitter agent to forward all metric samples to HTM engine
+    g_log.info("Last emitted sample datetime has not been established yet; "
+               "deferring metric sample forwarding to Twitter Agent.")
+    return
+
+  metricDataForwarder = twitter_direct_agent.MetricDataForwarder(
+    metricSpecs=twitter_direct_agent.loadMetricSpecs(),
+    aggSec=aggPeriod)
+
+  metricDataForwarder.aggregateAndForward(
+    aggStartDatetime=aggStartDatetime,
+    stopDatetime=lastEmittedAggTime + timedelta(seconds=aggPeriod),
+    metrics=[newMetricName])
+
+
+  # Forward tweet media to dynamodb
+  g_log.info("Forwarding twitter tweets to dynamodb using new symbol...")
+  migrate_tweets_to_dynamodb.migrate(metrics=[newMetricName])
+
+
+
+def _resymbolStockMetrics(oldSymbol, newSymbol):
+  """ Resymbol stock metrics
+
+  :param str oldSymbol: old stock symbol, upper case
+  :param str newSymbol: new stock symbol, upper case
+  """
+  g_log.info("Renaming stock metrics: oldSymbol=%s, newSymbol=%s",
+             oldSymbol, newSymbol)
+
+  sqlEngine = collectorsdb.engineFactory()
+
+
+  with sqlEngine.begin() as conn:
+    # NOTE: the foreign key cascade-on-update relationship between
+    # emitted_stock_price, emitted_stock_volume, xignite_security_bars, and the
+    # xignite_security tables causes the symbol to be automatically updated or
+    # the corresponding rows to be deleted in the former tables when the symbol
+    # in xignite_security table is updated or deleted.
+
+    # Delete emitted stock price rows for old symbol
+    conn.execute(
+      schema.emittedStockPrice  # pylint: disable=E1120
+      .delete()
+      .where(schema.emittedStockPrice.c.symbol == oldSymbol)
+    )
+
+    # Delete emitted stock volume rows for old symbol
+    conn.execute(
+      schema.emittedStockVolume  # pylint: disable=E1120
+      .delete()
+      .where(schema.emittedStockVolume.c.symbol == oldSymbol)
+    )
+
+    # Re-symbol xignite security row associated with the old symbol
+    #
+    # NOTE: we use IGNORE to ignore integrity errors (most likely duplicate),
+    # because stock agent might insert a security row for the new symbol before
+    # we do.
+    conn.execute(
+      schema.xigniteSecurity  # pylint: disable=E1120
+      .update().prefix_with('IGNORE', dialect="mysql")
+      .where(schema.xigniteSecurity.c.symbol == oldSymbol)
+      .values(symbol=newSymbol)
+    )
+    # Delete old xignite security row just in case the rename aborted due to
+    # integrity error
+    conn.execute(
+      schema.xigniteSecurity  # pylint: disable=E1120
+      .delete()
+      .where(schema.xigniteSecurity.c.symbol == oldSymbol)
+    )
+
+  # Forward stock metric data samples to Taurus Engine
+  g_log.info("Forwarding new stock metric data samples for symbol=%s to Taurus "
+             "engine...", newSymbol)
+  xignite_stock_agent.transmitMetricData(
+    metricSpecs=[spec for spec
+                 in xignite_stock_agent.loadMetricSpecs()
+                 if spec.symbol == newSymbol],
+    symbol=newSymbol,
+    engine=sqlEngine
+  )
 
 
 
@@ -159,105 +316,43 @@ def main():
 
   try:
     options = _parseArgs()
+    allSymbols = set(stockData["symbol"] for stockData in
+                     metric_utils.getMetricsConfiguration().itervalues() )
 
     g_log.info("Verifying that agents are in hot_standby mode")
     for section in config.sections():
-      try:
-        assert(config.get(section, "opmode") == ApplicationConfig.OP_MODE_HOT_STANDBY)
-      except Exception, e:
-        raise
+      assert config.get(section, "opmode") == config.OP_MODE_HOT_STANDBY
 
     g_log.info("Verifying that the old symbol has been removed from the "
                "metrics configuration")
-    for stockData in metric_utils.getMetricsConfiguration().itervalues():
-      assert(stockData["symbol"] != options.old_symbol)
+    assert options.oldSymbol not in allSymbols
 
-    if options.twitter and (not options.stocks):
-      g_log.info("Migrating ONLY twitter data from old-symbol=%s "
-                 "to new-symbol=%s",
-                 options.old_symbol, options.new_symbol)
-    elif options.stocks and (not options.twitter):
-      g_log.info("Migrating ONLY xignite stock data from old-symbol=%s "
-                 "to new-symbol=%s",
-                 options.old_symbol, options.new_symbol)
-      raise NotImplementedError
-    else:
-      g_log.info("Migrating BOTH twitter and xignite stock data from "
-                 "old-symbol=%s to new-symbol=%s",
-                 options.old_symbol, options.new_symbol)
-      raise NotImplementedError
+    g_log.info("Verifying that the new symbol is present in the metrics "
+               "configuration")
+    assert options.newSymbol in allSymbols
 
-    oldSymbolTweetPrefix = "TWITTER.TWEET.HANDLE.{symbol}.".format(symbol=options.old_symbol)
-    newSymbolTweetPrefix = "TWITTER.TWEET.HANDLE.{symbol}.".format(symbol=options.new_symbol)
-    oldSymbolTweetMetricsList = []
+    g_log.info("Migrating BOTH twitter and xignite stock data from "
+               "old-symbol=%s to new-symbol=%s",
+               options.oldSymbol, options.newSymbol)
 
-    with collectorsdb.engineFactory().begin() as conn:
+    # Rename the metrics in collectorsdb and forward new metric samples to HTM
+    # Engine
+    g_log.info("Modifying old metrics with new symbol")
 
-      g_log.info("Renaming metrics to new symbol")
-      if options.twitter:
-        oldSymbolTweetsQuery = (sql.select([tweetSamplesSchema])
-                                .where(tweetSamplesSchema.c.metric
-                                       .contains(oldSymbolTweetPrefix)))
-        oldSymbolTweets = conn.execute(oldSymbolTweetsQuery)
-        for tweetSample in oldSymbolTweets:
-          newMetricName = "{newPrefix}{metric}".format(
-              newPrefix=newSymbolTweetPrefix,
-              metric=tweetSample.metric[len(oldSymbolTweetPrefix):])
-          if tweetSample.metric not in oldSymbolTweetMetricsList:
-            oldSymbolTweetMetricsList.append(tweetSample.metric)
+    _resymbolTweetVolumeMetric(oldSymbol=options.oldSymbol,
+                               newSymbol=options.newSymbol,
+                               aggPeriod=options.aggPeriod)
 
-          updateSampleQuery = (tweetSamplesSchema
-                               .update()
-                               .where(tweetSamplesSchema.c.seq == tweetSample.seq)
-                               .values(metric=newMetricName))
-
-          conn.execute(updateSampleQuery)
+    _resymbolStockMetrics(oldSymbol=options.oldSymbol,
+                          newSymbol=options.newSymbol)
 
 
-      g_log.info("Forwarding new twitter metric data to Taurus engine...")
-      if options.twitter:
-        oldestRecordTs = conn.execute(sql.select(
-            [tweetSamplesSchema.c.agg_ts],
-            order_by=tweetSamplesSchema.c.agg_ts.asc())).first()[0]
-        lastEmittedAggTime = metric_utils.establishLastEmittedSampleDatetime(
-          key=_EMITTED_TWEET_VOLUME_SAMPLE_TRACKER_KEY,
-          aggSec=options.aggPeriod)
-        aggOffset = math.ceil(
-          (epochFromNaiveUTCDatetime(lastEmittedAggTime) -
-           epochFromNaiveUTCDatetime(oldestRecordTs)) / options.aggPeriod) * options.aggPeriod
-        aggStartDatetime = (lastEmittedAggTime -
-                            timedelta(seconds=aggOffset) -
-                            timedelta(seconds=options.aggPeriod))
-
-        metric_utils.updateLastEmittedSampleDatetime(
-            key=_EMITTED_TWEET_VOLUME_SAMPLE_TRACKER_KEY,
-            sampleDatetime=aggStartDatetime)
-
-        MetricDataForwarder.runInThread(
-            metricSpecs=loadMetricSpecs(),
-            aggSec=options.aggPeriod,
-            symbolList=[options.new_symbol],
-            forwardOnlyBacklog=True)
-
-        metric_utils.updateLastEmittedSampleDatetime(
-            key=_EMITTED_TWEET_VOLUME_SAMPLE_TRACKER_KEY,
-            sampleDatetime=lastEmittedAggTime)
-
-
-    g_log.info("Forwarding metrics to dynamodb using new symbol...")
-    if options.twitter:
-      migrate_tweets_to_dynamodb.main(symbolList=[options.new_symbol])
-
-
-    g_log.info("Unmonitoring and deleting existing metrics associated with "
-               "symbol=%s", options.old_symbol)
-    oldModels = metric_utils.getSymbolModels(options.htmServer,
-                                             options.apikey,
-                                             options.old_symbol)
-    for model in oldModels:
-      metric_utils.unmonitorMetric(options.htmServer, options.apikey, model.uid)
-      metric_utils.deleteMetric(options.htmServer, options.apikey, model.name)
-
+    # Delete metrics linked to old stock symbol from Taurus Engine
+    delete_companies.deleteCompanies(
+      tickerSymbols=[options.oldSymbol],
+      engineServer=options.htmServer,
+      engineApiKey=options.apikey,
+      warnAboutDestructiveAction=False)
   except SystemExit as e:
     if e.code != 0:
       g_log.exception("Failed!")
@@ -265,6 +360,7 @@ def main():
   except Exception:
     g_log.exception("Failed!")
     raise
+
 
 
 if __name__ == "__main__":

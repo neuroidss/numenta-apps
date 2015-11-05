@@ -5,15 +5,15 @@
 # following terms and conditions apply:
 #
 # This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License version 3 as
+# it under the terms of the GNU Affero Public License version 3 as
 # published by the Free Software Foundation.
 #
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-# See the GNU General Public License for more details.
+# See the GNU Affero Public License for more details.
 #
-# You should have received a copy of the GNU General Public License
+# You should have received a copy of the GNU Affero Public License
 # along with this program.  If not, see http://www.gnu.org/licenses.
 #
 # http://numenta.org/licenses/
@@ -26,11 +26,16 @@
 # Numenta style requires we lock to specific versions so we don't get
 # burned again by mystery bugs when new module versions come out.
 
+{% if grains['os_family'] == 'RedHat' and grains['osmajorrelease'][0] == '6' %}
+
+include:
+  - devtools
+  - nta-nucleus
+
 anaconda-python:
-  pkg:
-    - installed
-    - pkgs:
-      - gs-anaconda
+  pkg.installed:
+    - name: gs-anaconda
+    - version: 2.7.10-20151013.20.45.31
     - require:
       - pkg: compiler-toolchain
     - watch_in:
@@ -49,17 +54,7 @@ anaconda-paver:
 
 anaconda-pip:
   pip.installed:
-    - name: pip == 7.1.0
-    - bin_env: /opt/numenta/anaconda/bin/pip
-    - watch_in:
-      - cmd: enforce-anaconda-permissions
-    - require:
-      - pkg: anaconda-python
-
-# Install this from an S3 wheel so we don't need devtools on everything
-anaconda-psutil:
-  pip.installed:
-    - name: psutil == 1.0.1
+    - name: pip == 7.1.2
     - bin_env: /opt/numenta/anaconda/bin/pip
     - watch_in:
       - cmd: enforce-anaconda-permissions
@@ -68,16 +63,8 @@ anaconda-psutil:
 
 anaconda-setuptools:
   pip.installed:
-    - name: setuptools == 18.0.1
-    - bin_env: /opt/numenta/anaconda/bin/pip
-    - watch_in:
-      - cmd: enforce-anaconda-permissions
-    - require:
-      - pkg: anaconda-python
-
-anaconda-supervisor:
-  pip.installed:
-    - name: supervisor == 3.1.3
+    - name: setuptools
+    - upgrade: True
     - bin_env: /opt/numenta/anaconda/bin/pip
     - watch_in:
       - cmd: enforce-anaconda-permissions
@@ -93,31 +80,31 @@ anaconda-wheel:
     - require:
       - pkg: anaconda-python
 
-anaconda-yaml:
-  pip.installed:
-    - name: PyYAML == 3.10
-    - bin_env: /opt/numenta/anaconda/bin/pip
-    - watch_in:
-      - cmd: enforce-anaconda-permissions
-    - require:
-      - pip: anaconda-pip
-      - pkg: anaconda-python
-
 # Install a python2.7 symlink so /usr/bin/env python2.7 will work
 python-27-symlink:
   file.symlink:
     - target: /opt/numenta/anaconda/bin/python
     - name: /usr/local/bin/python2.7
     - require:
-      - cmd: enforce-anaconda-permissions
       - pkg: anaconda-python
+
+correct-anaconda-ownership-tool:
+  file.managed:
+    - name: /usr/local/sbin/correct-anaconda-ownership
+    - source: salt://numenta-python/files/correct-anaconda-ownership
+    - user: root
+    - group: wheel
+    - mode: 0755
 
 # Once we have installed our packages, make sure that the anaconda python
 # directory tree has the correct ownership.
 enforce-anaconda-permissions:
   cmd.wait:
-    - name: chown -R ec2-user:ec2-user /opt/numenta/anaconda
+    - name: /usr/local/sbin/correct-anaconda-ownership
     - require:
+      - file: correct-anaconda-ownership-tool
       - group: ec2-user
       - pkg: anaconda-python
       - user: ec2-user
+
+{% endif %}

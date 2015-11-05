@@ -5,22 +5,23 @@
 # following terms and conditions apply:
 #
 # This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License version 3 as
+# it under the terms of the GNU Affero Public License version 3 as
 # published by the Free Software Foundation.
 #
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-# See the GNU General Public License for more details.
+# See the GNU Affero Public License for more details.
 #
-# You should have received a copy of the GNU General Public License
+# You should have received a copy of the GNU Affero Public License
 # along with this program.  If not, see http://www.gnu.org/licenses.
 #
 # http://numenta.org/licenses/
 # ----------------------------------------------------------------------
 # Formula: devtools
 #
-# Install developer tools repository and updated developer tools
+{% if grains['os_family'] == 'RedHat' and grains['osmajorrelease'][0] == '6' %}
+# Install developer tools repository and updated developer tools for CentOS
 
 # Install devtool repo - v2
 install-devtools-repo:
@@ -29,7 +30,7 @@ install-devtools-repo:
     - group: root
     - source: salt://devtools/files/devtools-2.repo
     - name: /etc/yum.repos.d/devtools-2.repo
-    - mode: 644
+    - mode: 0644
     - watch_in:
       - cmd: reload-yum-database
 
@@ -62,7 +63,7 @@ compiler-toolchain:
 /etc/.sh_fragments.d/00-add-devtools-to-path.sh:
   file.managed:
     - source: salt://devtools/files/00-add-devtools-to-path.sh
-    - mode: 644
+    - mode: 0644
     - user: ec2-user
     - group: ec2-user
 
@@ -71,7 +72,8 @@ compiler-toolchain:
 # First, client tools. If they need a server, they should include mysql.server
 # in their machine role, or use an RDS instance for anything long-lived.
 include:
-- mysql.client
+  - mysql.client
+  - nta-yum
 
 # And development tools
 mysql-development-tools:
@@ -79,3 +81,5 @@ mysql-development-tools:
     - name: mysql-community-devel
     - require:
       - cmd: mysql-community-repository
+
+{% endif %}

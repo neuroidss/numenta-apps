@@ -5,15 +5,15 @@
  * following terms and conditions apply:
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 3 as
+ * it under the terms of the GNU Affero Public License version 3 as
  * published by the Free Software Foundation.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
+ * See the GNU Affero Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Affero Public License
  * along with this program.  If not, see http://www.gnu.org/licenses.
  *
  * http://numenta.org/licenses/
@@ -23,8 +23,8 @@
 package com.numenta.taurus.twitter;
 
 import com.numenta.core.data.Metric;
-import com.numenta.core.service.GrokClient;
-import com.numenta.core.service.GrokException;
+import com.numenta.core.service.HTMClient;
+import com.numenta.core.service.HTMException;
 import com.numenta.core.ui.chart.LineChartView;
 import com.numenta.core.utils.DataUtils;
 import com.numenta.core.utils.Log;
@@ -96,9 +96,13 @@ public class TwitterDetailActivity extends TaurusBaseActivity {
     public static final String SELECTED_TIMESTAMP_ARG = "selected";
 
     /** Sort tweets by time > retweet count > retweet total > id */
-    static Comparator<Tweet> SORT_BY_DATE = new Comparator<Tweet>() {
+    public static Comparator<Tweet> SORT_BY_DATE = new Comparator<Tweet>() {
         @Override
         public int compare(Tweet lhs, Tweet rhs) {
+            if (lhs.equals(rhs)) {
+                return 0;
+            }
+
             // First Sort by time
             int res = (int) (rhs.getAggregated() - lhs.getAggregated());
             if (res == 0) {
@@ -118,7 +122,7 @@ public class TwitterDetailActivity extends TaurusBaseActivity {
     };
 
     /** Sort tweets by text and filter retweets */
-    static Comparator<Tweet> SORT_BY_TEXT = new Comparator<Tweet>() {
+    public static Comparator<Tweet> SORT_BY_TEXT = new Comparator<Tweet>() {
         @Override
         public int compare(Tweet lhs, Tweet rhs) {
             // Compare tweets based on text
@@ -277,7 +281,7 @@ public class TwitterDetailActivity extends TaurusBaseActivity {
                         _listView.post(new Runnable() {
                             @Override
                             public void run() {
-                                _listView.setSelection(totalItemCount - 2);
+                                _listView.smoothScrollToPosition(totalItemCount - 2);
                             }
                         });
                     }
@@ -628,7 +632,7 @@ public class TwitterDetailActivity extends TaurusBaseActivity {
                             connection.getTweets(_metric.getName(),
                                     new Date(selectedTimestamp),
                                     new Date(selectedTimestamp + DataUtils.METRIC_DATA_INTERVAL),
-                                    new GrokClient.DataCallback<Tweet>() {
+                                    new HTMClient.DataCallback<Tweet>() {
                                         @Override
                                         public boolean onData(Tweet tweet) {
                                             publishProgress(tweet);
@@ -644,7 +648,7 @@ public class TwitterDetailActivity extends TaurusBaseActivity {
                                 connection.getTweets(_metric.getName(),
                                         new Date(range.first),
                                         new Date(selectedTimestamp),
-                                        new GrokClient.DataCallback<Tweet>() {
+                                        new HTMClient.DataCallback<Tweet>() {
                                             @Override
                                             public boolean onData(Tweet tweet) {
                                                 publishProgress(tweet);
@@ -660,7 +664,7 @@ public class TwitterDetailActivity extends TaurusBaseActivity {
                                 connection.getTweets(_metric.getName(),
                                         new Date(selectedTimestamp),
                                         new Date(range.second),
-                                        new GrokClient.DataCallback<Tweet>() {
+                                        new HTMClient.DataCallback<Tweet>() {
                                             @Override
                                             public boolean onData(Tweet tweet) {
                                                 publishProgress(tweet);
@@ -672,7 +676,7 @@ public class TwitterDetailActivity extends TaurusBaseActivity {
                             // Load everything, no need to load selection first
                             connection.getTweets(_metric.getName(),
                                     new Date(range.first), new Date(range.second),
-                                    new GrokClient.DataCallback<Tweet>() {
+                                    new HTMClient.DataCallback<Tweet>() {
                                         @Override
                                         public boolean onData(Tweet tweet) {
                                             publishProgress(tweet);
@@ -683,7 +687,7 @@ public class TwitterDetailActivity extends TaurusBaseActivity {
                     }
                 } catch (IOException e) {
                     Log.e(TAG, "Failed to get tweets from the server", e);
-                } catch (GrokException e) {
+                } catch (HTMException e) {
                     Log.e(TAG, "Failed to get tweets from the server", e);
                 }
             }

@@ -6,15 +6,15 @@
 # following terms and conditions apply:
 #
 # This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License version 3 as
+# it under the terms of the GNU Affero Public License version 3 as
 # published by the Free Software Foundation.
 #
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-# See the GNU General Public License for more details.
+# See the GNU Affero Public License for more details.
 #
-# You should have received a copy of the GNU General Public License
+# You should have received a copy of the GNU Affero Public License
 # along with this program.  If not, see http://www.gnu.org/licenses.
 #
 # http://numenta.org/licenses/
@@ -26,6 +26,16 @@
 if [ -f /etc/bashrc ]; then
   . /etc/bashrc
 fi
+
+# Set a sane $PATH
+ORIGINAL_PATH="${PATH}"
+PATH=/opt/numenta/anaconda/bin
+PATH="${PATH}:/usr/local/bin"
+PATH="${PATH}:/usr/local/sbin"
+PATH="${PATH}:/usr/bin:/usr/sbin:/bin:/sbin"
+PATH="${PATH}:${ORIGINAL_PATH}"
+export PATH
+unset ORIGINAL_PATH
 
 # Source any files in the global bashrc fragments directory. This allows
 # roles to override the values in the default .bashrc, while still permitting

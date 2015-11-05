@@ -5,15 +5,15 @@
 # following terms and conditions apply:
 #
 # This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License version 3 as
+# it under the terms of the GNU Affero Public License version 3 as
 # published by the Free Software Foundation.
 #
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-# See the GNU General Public License for more details.
+# See the GNU Affero Public License for more details.
 #
-# You should have received a copy of the GNU General Public License
+# You should have received a copy of the GNU Affero Public License
 # along with this program.  If not, see http://www.gnu.org/licenses.
 #
 # http://numenta.org/licenses/
@@ -300,7 +300,7 @@ class Config(ConfigParser, object):
   def clearAllConfigOverrides(self):
     """ Delete all configuration override objects
     WARNING: this deletes user-provisioned and user-specific information (e.g.,
-    AWS credentials, API key, grok server ID, etc.)
+    AWS credentials, API key, htm-it server ID, etc.)
     """
     configOverrideDir = self._getConfigOverrideDir()
     if os.path.exists(configOverrideDir):
