@@ -34,10 +34,10 @@ from htmengine.utils import roundUpDatetime
 
 # AWS CloudWatch returns error if number of returned data records would
 # exceed 1,440
-_CLOUDWATCH_MAX_DATA_RECORDS = 1440
+CLOUDWATCH_MAX_DATA_RECORDS = 1440
 
 # AWS CloudWatch only keeps 2 weeks worth of data. Limit range to 14 days
-_CLOUDWATCH_DATA_MAX_STORAGE_TIMEDELTA = datetime.timedelta(days=14)
+CLOUDWATCH_DATA_MAX_STORAGE_TIMEDELTA = datetime.timedelta(days=14)
 
 
 
@@ -150,47 +150,50 @@ def getMetricCollectionBackoffSeconds(period):
 
 
 
-def getMetricCollectionTimeRange(startTime, endTime, period):
+def normalizeMetricCollectionTimeRange(startTime, endTime, period):
   """
   :param startTime: UTC start time of planned metric data collection; may be
     None when called for the first time, in which case a start time will be
-    calculated and returned in the result (even if there is not enough time for
-    at least one period of metric data collection)
+    calculated and returned in the result
   :type startTime: datetime.datetime
 
   :param endTime: UTC end time of the metric data range. The end value is
     exclusive; results will include datapoints predating the end time. If set to
-    None, will base the resulting end time on the current UTC time
+    None, will base the resulting end time on the current UTC time offset by an
+    empirically-determined backoff period to help ensure stability of the data
+    source.
   :type endTime: datetime.datetime
 
   :param period: Metric aggregation period in seconds; must be multiple of 60
   :type period: integer
 
   :returns: time range for collecting metrics adjusted for integral number of
-    periods. If there is not enough time for at least one period, then end-time
-    will be set equal to start-time
+    periods, not to exceed CLOUDWATCH_MAX_DATA_RECORDS. If there is not enough
+    time for at least one period, then end-time will be set equal to start-time
   :rtype: two-tuple of datetime.datetime values, where the first element is the
     start time and the second element is the end time of the range
   """
-  now = datetime.datetime.utcnow()
+  if startTime is None or endTime is None:
+    now = datetime.datetime.utcnow()
 
-  if startTime is None:
-    # AWS CloudWatch only keeps 2 weeks worth of data. Limit range to 14 days
-    startTime = now - _CLOUDWATCH_DATA_MAX_STORAGE_TIMEDELTA
-    # Round up start time to the nearest period to align time buckets between
-    # different metrics
-    startTime = roundUpDatetime(startTime, period)
+    if startTime is None:
+      # AWS CloudWatch only keeps 2 weeks worth of data. Limit range to 14 days
+      startTime = now - CLOUDWATCH_DATA_MAX_STORAGE_TIMEDELTA
+      # Round up start time to the nearest period to align time buckets between
+      # different metrics
+      startTime = roundUpDatetime(startTime, period)
 
-  # Metrics in CloudWatch don't appear to be aligned on any specific time
-  # boundary and there is presently no API to introspect their alignment.
-  if endTime is None:
-    endTime = (
-      now -
-      datetime.timedelta(seconds=getMetricCollectionBackoffSeconds(period)))
+    # Metrics in CloudWatch don't appear to be aligned on any specific time
+    # boundary and there is presently no API to introspect their alignment.
+    if endTime is None:
+      endTime = (
+        now -
+        datetime.timedelta(seconds=getMetricCollectionBackoffSeconds(period)))
 
+  # Limit the range to CLOUDWATCH_MAX_DATA_RECORDS
   numPeriods = min(
     (endTime - startTime).total_seconds() // period,
-    _CLOUDWATCH_MAX_DATA_RECORDS)
+    CLOUDWATCH_MAX_DATA_RECORDS)
 
   if numPeriods > 0:
     # Truncate end-time by the number of expected periods

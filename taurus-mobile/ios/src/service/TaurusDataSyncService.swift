@@ -21,16 +21,20 @@ import Foundation
 
 
 public class TaurusDataSyncService: DataSyncService{
-    
+    /**
+     * This Event is fired on instance data changes
+     */
+    public static let INSTANCE_DATA_CHANGED_EVENT = "com.numenta.taurus.data.InstanceDataChangedEvent"
+
     /** loads  instance data
     */
     override func loadAllData() {
-        
-            let db = TaurusApplication.getTaurusDatabase()
-            var from = db.getLastTimestamp()
-        
-            let nowDate = NSDate()
-            let now = DataUtils.timestampFromDate( nowDate )
+    
+        let db = TaurusApplication.getTaurusDatabase()
+        var from = db.getLastTimestamp()
+    
+        let nowDate = NSDate()
+        let now = DataUtils.timestampFromDate( nowDate )
         // The server updates the instance data table into hourly buckets as the models process
         // data. This may leave the last hour with outdated values when the server updates the
         // instance data table after we start loading the new hourly bucket.
@@ -48,16 +52,16 @@ public class TaurusDataSyncService: DataSyncService{
         if (now >= DataUtils.timestampFromDate(date!)) {
             // Download the previous hour
             from -= DataUtils.MILLIS_PER_HOUR;
-            var units : NSCalendarUnit = [NSCalendarUnit.NSYearCalendarUnit,
-                NSCalendarUnit.NSMonthCalendarUnit     ,
-                NSCalendarUnit.NSDayCalendarUnit ,
-                NSCalendarUnit.NSHourCalendarUnit ,
-                NSCalendarUnit.NSMinuteCalendarUnit]
+            let units : NSCalendarUnit = [NSCalendarUnit.Year,
+                NSCalendarUnit.Month,
+                NSCalendarUnit.Day,
+                NSCalendarUnit.Hour,
+                NSCalendarUnit.Minute]
             
             
            
             var newDate =  NSCalendar.currentCalendar().dateByAddingUnit(
-                NSCalendarUnit.NSHourCalendarUnit, // adding hours
+                NSCalendarUnit.Hour, // adding hours
                 value: 1,
                 toDate: nowDate ,
                 options: []
@@ -93,8 +97,9 @@ public class TaurusDataSyncService: DataSyncService{
             (instance: InstanceData?) in
             
             if (instance == nil ){
-                if (results.count > 0){
-                     db.addInstanceDataBatch( results )
+                if (results.count > 0) {
+                    db.addInstanceDataBatch( results )
+                    self.fireInstanceDataChangedEvent()
                 }
                 
                 return nil
@@ -103,6 +108,7 @@ public class TaurusDataSyncService: DataSyncService{
             
             if (results.count > 50 ){
                 db.addInstanceDataBatch( results )
+                self.fireInstanceDataChangedEvent()
                 results.removeAll()
             }
             
@@ -110,6 +116,16 @@ public class TaurusDataSyncService: DataSyncService{
             }
             
         )
+    }
+    /** Broadcast the ANNOTATION_CHANGED_EVENT notification
+     */
+    func fireInstanceDataChangedEvent() {
+        NSNotificationCenter.defaultCenter().postNotificationName(TaurusDataSyncService.INSTANCE_DATA_CHANGED_EVENT, object: self)
+    }
+
+
+    override func synchronizeNotification (){
+        TaurusNotificationService().syncNotifications()
     }
     
 

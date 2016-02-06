@@ -96,8 +96,10 @@ class WufooHandler(object):
 
 def sendWelcomeEmail(toAddress):
   subject = config.get("registration", "subject")
-  body = open(resource_filename(htm.it.__name__, os.path.join("../conf",
-    config.get("registration", "body")))).read()
+  body = open(
+    resource_filename(
+      htm.it.__name__,
+      os.path.join("../../conf", config.get("registration", "body")))).read()
   body = body.replace("\n", "\r\n") # Ensure windows newlines
 
   serverUrl = web.ctx.env['HTTP_HOST']

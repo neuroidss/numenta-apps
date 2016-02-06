@@ -25,7 +25,7 @@ Unittest of taurus/monitoring/models_monitor/taurus_models_monitor.py
 """
 import unittest
 
-from mock import patch, Mock
+from mock import patch, Mock, ANY
 import requests
 
 from htmengine.repository.queries import MetricStatus
@@ -46,7 +46,7 @@ class TaurusModelsMonitorTest(unittest.TestCase):
 
 
   @patch("taurus.monitoring.models_monitor.taurus_models_monitor."
-         "_removeIssueFlag")
+         "removeErrorFlag")
   @patch("taurus.monitoring.models_monitor.taurus_models_monitor._reportIssue")
   @patch("requests.get")
   def testConnectAndCheckModelsRequestsException(self,
@@ -73,7 +73,7 @@ class TaurusModelsMonitorTest(unittest.TestCase):
 
 
   @patch("taurus.monitoring.models_monitor.taurus_models_monitor."
-         "_removeIssueFlag")
+         "removeErrorFlag")
   @patch("taurus.monitoring.models_monitor.taurus_models_monitor._reportIssue")
   @patch("requests.get")
   def testConnectAndCheckModelsResponseCode(self,
@@ -99,9 +99,10 @@ class TaurusModelsMonitorTest(unittest.TestCase):
     getMock.assert_called_once_with(url, auth=(apiKey, ""), timeout=timeout,
                                     verify=False)
     removeIssueMock.assert_called_once_with(
-      modelsMonitor._FLAG_REQUESTS_EXCEPTION)
+      ANY,
+      modelsMonitor.Flags.REQUESTS_EXCEPTION)
     reportIssueMock.assert_called_once_with(
-      modelsMonitor._FLAG_HTTP_STATUS_CODE,
+      modelsMonitor.Flags.HTTP_STATUS_CODE,
       url,
       modelsMonitor._getIssueString("Received abnormal HTTP status code", 404),
       {"key":"val"}
@@ -109,7 +110,7 @@ class TaurusModelsMonitorTest(unittest.TestCase):
 
 
   @patch("taurus.monitoring.models_monitor.taurus_models_monitor."
-         "_removeIssueFlag")
+         "removeErrorFlag")
   @patch("taurus.monitoring.models_monitor.taurus_models_monitor._reportIssue")
   @patch("requests.get")
   def testConnectAndCheckModelsValueError(self,
@@ -134,9 +135,10 @@ class TaurusModelsMonitorTest(unittest.TestCase):
 
     getMock.assert_called_once_with(url, auth=(apiKey, ""), timeout=timeout,
                                     verify=False)
-    removeIssueMock.assert_any_call(modelsMonitor._FLAG_REQUESTS_EXCEPTION)
-    removeIssueMock.assert_any_call(modelsMonitor._FLAG_HTTP_STATUS_CODE)
-    reportIssueMock.assert_called_once_with(modelsMonitor._FLAG_RESPONSE_JSON,
+    removeIssueMock.assert_any_call(ANY,
+                                    modelsMonitor.Flags.REQUESTS_EXCEPTION)
+    removeIssueMock.assert_any_call(ANY, modelsMonitor.Flags.HTTP_STATUS_CODE)
+    reportIssueMock.assert_called_once_with(modelsMonitor.Flags.RESPONSE_JSON,
                                             url,
                                             "ValueError encountered loading "
                                             "JSON.",
@@ -146,7 +148,7 @@ class TaurusModelsMonitorTest(unittest.TestCase):
   @patch("taurus.monitoring.models_monitor.taurus_models_monitor."
          "_checkModelsStatus")
   @patch("taurus.monitoring.models_monitor.taurus_models_monitor."
-         "_removeIssueFlag")
+         "removeErrorFlag")
   @patch("requests.get")
   def testConnectAndCheckModelsSuccess(self,
                                        getMock,
@@ -170,19 +172,20 @@ class TaurusModelsMonitorTest(unittest.TestCase):
 
     getMock.assert_called_once_with(url, auth=(apiKey, ""), timeout=timeout,
                                     verify=False)
-    removeIssueMock.assert_any_call(modelsMonitor._FLAG_REQUESTS_EXCEPTION)
-    removeIssueMock.assert_any_call(modelsMonitor._FLAG_HTTP_STATUS_CODE)
-    removeIssueMock.assert_any_call(modelsMonitor._FLAG_RESPONSE_JSON)
+    removeIssueMock.assert_any_call(ANY,
+                                    modelsMonitor.Flags.REQUESTS_EXCEPTION)
+    removeIssueMock.assert_any_call(ANY, modelsMonitor.Flags.HTTP_STATUS_CODE)
+    removeIssueMock.assert_any_call(ANY, modelsMonitor.Flags.RESPONSE_JSON)
     checkModelsStatusMock.assert_called_once_with("{}", url, {"key": "value"})
 
 
   @patch("nta.utils.error_reporting.sendMonitorErrorEmail")
   @patch("taurus.monitoring.models_monitor.taurus_models_monitor."
-         "_removeIssueFlag")
+         "removeErrorFlag")
   @patch("taurus.monitoring.models_monitor.taurus_models_monitor."
-         "_addIssueFlag")
+         "addErrorFlag")
   @patch("taurus.monitoring.models_monitor.taurus_models_monitor."
-         "_containsIssueFlag")
+         "containsErrorFlag")
   def testCheckModelsStatusNoModels(self,
                                     containsIssueMock,
                                     addIssueMock,
@@ -203,11 +206,11 @@ class TaurusModelsMonitorTest(unittest.TestCase):
 
   @patch("nta.utils.error_reporting.sendMonitorErrorEmail")
   @patch("taurus.monitoring.models_monitor.taurus_models_monitor."
-         "_removeIssueFlag")
+         "removeErrorFlag")
   @patch("taurus.monitoring.models_monitor.taurus_models_monitor."
-         "_addIssueFlag")
+         "addErrorFlag")
   @patch("taurus.monitoring.models_monitor.taurus_models_monitor."
-         "_containsIssueFlag")
+         "containsErrorFlag")
   def testCheckModelsStatusGoodModels(self,
                                       containsIssueMock,
                                       addIssueMock,
@@ -221,8 +224,8 @@ class TaurusModelsMonitorTest(unittest.TestCase):
     # Code under test
     modelsMonitor._checkModelsStatus(testJson, url, emailParams)
 
-    removeIssueMock.assert_any_call("123")
-    removeIssueMock.assert_any_call("456")
+    removeIssueMock.assert_any_call(ANY, "123")
+    removeIssueMock.assert_any_call(ANY, "456")
 
     self.assertFalse(containsIssueMock.called)
     self.assertFalse(addIssueMock.called)
@@ -231,11 +234,11 @@ class TaurusModelsMonitorTest(unittest.TestCase):
 
   @patch("nta.utils.error_reporting.sendMonitorErrorEmail")
   @patch("taurus.monitoring.models_monitor.taurus_models_monitor."
-         "_removeIssueFlag")
+         "removeErrorFlag")
   @patch("taurus.monitoring.models_monitor.taurus_models_monitor."
-         "_addIssueFlag")
+         "addErrorFlag")
   @patch("taurus.monitoring.models_monitor.taurus_models_monitor."
-         "_containsIssueFlag")
+         "containsErrorFlag")
   def testCheckModelsStatusErrorModels_AlreadyReported(self,
                                                        containsIssueMock,
                                                        addIssueMock,
@@ -250,8 +253,8 @@ class TaurusModelsMonitorTest(unittest.TestCase):
     # Code under test
     modelsMonitor._checkModelsStatus(testJson, url, emailParams)
 
-    containsIssueMock.assert_any_call("123")
-    containsIssueMock.assert_any_call("456")
+    containsIssueMock.assert_any_call(ANY, "123")
+    containsIssueMock.assert_any_call(ANY, "456")
 
     self.assertFalse(removeIssueMock.called)
     self.assertFalse(addIssueMock.called)
@@ -260,11 +263,11 @@ class TaurusModelsMonitorTest(unittest.TestCase):
 
   @patch("nta.utils.error_reporting.sendMonitorErrorEmail")
   @patch("taurus.monitoring.models_monitor.taurus_models_monitor."
-         "_removeIssueFlag")
+         "removeErrorFlag")
   @patch("taurus.monitoring.models_monitor.taurus_models_monitor."
-         "_addIssueFlag")
+         "addErrorFlag")
   @patch("taurus.monitoring.models_monitor.taurus_models_monitor."
-         "_containsIssueFlag")
+         "containsErrorFlag")
   def testCheckModelsStatusErrorModels_NotAlreadyReported(self,
                                                           containsIssueMock,
                                                           addIssueMock,
@@ -279,10 +282,10 @@ class TaurusModelsMonitorTest(unittest.TestCase):
     # Code under test
     modelsMonitor._checkModelsStatus(testJson, url, emailParams)
 
-    containsIssueMock.assert_any_call("123")
-    containsIssueMock.assert_any_call("456")
-    addIssueMock.assert_any_call("123", "123")
-    addIssueMock.assert_any_call("456", "456")
+    containsIssueMock.assert_any_call(ANY, "123")
+    containsIssueMock.assert_any_call(ANY, "456")
+    addIssueMock.assert_any_call(ANY, "123")
+    addIssueMock.assert_any_call(ANY, "456")
 
     self.assertFalse(removeIssueMock.called)
     self.assertTrue(sendEmailMock.called)

@@ -44,6 +44,13 @@ public class DataSyncService{
     * <code>isRefreshing</code></b> parameter for refreshing status.
     */
     public static let REFRESH_STATE_EVENT = "com.numenta.core.data.RefreshStateEvent"
+
+    
+    /**
+     * This Event is fired when the server starts and stops downloading data. Check event's <b>
+     * <code>isRefreshing</code></b> parameter for refreshing status.
+     */
+    public static let PROGRESS_STATE_EVENT = "com.numenta.core.data.ProgressStateEvent"
     
     /**
     * Default Refresh rate in minutes. User may override using application settings
@@ -137,7 +144,7 @@ public class DataSyncService{
         - FIXME need to change this to use iOS background service
     */
     func synchronizeWithServer () {
-                      self.fireRefreshStateEvent(true, result: "")
+                self.fireRefreshStateEvent(true, result: "")
                 self.loadAllMetrics()
                 self.loadAllAnnotations()
                 self.loadAllData()

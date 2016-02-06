@@ -45,6 +45,14 @@ CONF_DIR = os.environ.get("TAURUS_MONITORS_DB_CONFIG_PATH")
 if CONF_DIR is None:
   CONF_DIR = os.path.join(TAURUS_MONITORS_HOME, "conf")
 
+LOG_DIR = os.path.join(TAURUS_MONITORS_HOME, "logs")
+logging_support.setLogDir(LOG_DIR)
+
+
+
+class TaurusMonitorError(Exception):
+  pass
+
 
 
 def loadConfig(options):
@@ -97,6 +105,10 @@ class MonitorOptionParser(OptionParser):
                           "MODELS_MONITOR_EMAIL_RECIPIENTS\n"
                           "MODELS_MONITOR_EMAIL_AWS_REGION\n"
                           "MODELS_MONITOR_EMAIL_SES_ENDPOINT"))
+    self.add_option("--loggingLevel",
+                    help=("Specify logging level: DEBUG, INFO, WARNING, ERROR,"
+                          " or CRITICAL"),
+                    default="INFO")
 
 
   def parse_options(self, *args, **kwargs):
@@ -110,7 +122,6 @@ class MonitorOptionParser(OptionParser):
     (options, args) = OptionParser.parse_args(self, *args, **kwargs)
 
     if args:
-      self.parser.error("Unexpected positional arguments: {}"
-                        .format(repr(args)))
+      self.error("Unexpected positional arguments: {}".format(repr(args)))
 
     return options

@@ -15,15 +15,12 @@ setup(
       ("taurus-collectors-metric-maintenance-agent = "
        "%s.common_services.metric_maintenance_agent:main" % name),
       "taurus-xignite-agent = %s.xignite.xignite_stock_agent:main" % name,
-      ("taurus-xignite-security-news-agent = "
-       "%s.xignite.xignite_security_news_agent:main" % name),
       ("taurus-twitterdirect-agent = "
        "%s.twitterdirect.twitter_direct_agent:main" % name),
       ("taurus-process-tweet-deletions = "
        "%s.twitterdirect.process_tweet_deletions:main" % name),
       ("taurus-purge-old-tweets = "
        "%s.twitterdirect.purge_old_tweets:main" % name),
-      "taurus-resymbol = %s.resymbol_metrics:main" % name,
       ("taurus-set-collectorsdb-login = "
        "%s.collectorsdb.set_collectorsdb_login:main" % name),
       ("taurus-reset-collectorsdb = "

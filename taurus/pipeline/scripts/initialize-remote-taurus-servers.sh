@@ -55,6 +55,10 @@ RabbitMQ credentials:
   ☞  RABBITMQ_PASSWD
   ☞  RABBITMQ_USER
 
+nginx options:
+
+  ☞  NGINX_GLOBAL_PARAMS
+
 Taurus instance credentials:
 
   ☞  TAURUS_COLLECTOR_USER
@@ -281,10 +285,7 @@ pushd "${REPOPATH}"
     taurus/pipeline/scripts/ssl/${TAURUS_SERVER_HOST}.key \
     "${TAURUS_SERVER_USER}"@"${TAURUS_SERVER_HOST}":/opt/numenta/products/taurus/conf/ssl/localhost.key
 
-  # Copy manual overrides
-  scp ${SSH_ARGS} -r \
-    taurus/pipeline/scripts/overrides/taurus/* \
-    "${TAURUS_SERVER_USER}"@"${TAURUS_SERVER_HOST}":/opt/numenta/products/taurus/
+  # Copy env declarations
   scp ${SSH_ARGS} -r \
     taurus/pipeline/scripts/taurus.metric_collectors-env.sh \
     "${TAURUS_COLLECTOR_USER}"@"${TAURUS_COLLECTOR_HOST}":/opt/numenta/products/taurus.metric_collectors/env.sh
@@ -326,13 +327,15 @@ pushd "${REPOPATH}"
         --host=${DYNAMODB_HOST} \
         --port=${DYNAMODB_PORT} \
         --table-suffix=${DYNAMODB_TABLE_SUFFIX} &&
+     taurus-set-api-key \
+        --apikey=${TAURUS_API_KEY} &&
      cd /opt/numenta/products/taurus/taurus/engine/repository &&
      python migrate.py &&
      cd /opt/numenta/products/taurus &&
      if [ -f /var/run/nginx.pid ]; then
        sudo /usr/sbin/nginx -p /opt/numenta/products/taurus -c conf/nginx-taurus.conf -s reload
      else
-       sudo /usr/sbin/nginx -p /opt/numenta/products/taurus -c conf/nginx-taurus.conf
+       sudo /usr/sbin/nginx -p /opt/numenta/products/taurus -c conf/nginx-taurus.conf ${NGINX_GLOBAL_PARAMS}
      fi &&
      mkdir -p logs &&
      if [ -f taurus-supervisord.pid ]; then

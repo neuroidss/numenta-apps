@@ -18,7 +18,6 @@
  * http://numenta.org/licenses/
  * -------------------------------------------------------------------------- */
 
-'use strict';
 
 import React from 'react';
 import Material from 'material-ui';
@@ -26,16 +25,10 @@ import SearchStore from '../stores/search';
 import SearchQueryAction from '../actions/search-query';
 
 const {
-  LeftNav, MenuItem, Styles
+  LeftNav, MenuItem
 } = Material;
 
-const ThemeManager = new Styles.ThemeManager();
-
 class SearchHistoryComponent extends React.Component {
-
-  static childContextTypes = {
-    muiTheme: React.PropTypes.object
-  };
 
   static contextTypes = {
     executeAction: React.PropTypes.func,
@@ -52,11 +45,6 @@ class SearchHistoryComponent extends React.Component {
 
   toggle() {
     this.refs.leftNav.toggle();
-  }
-  getChildContext() {
-    return {
-      muiTheme: ThemeManager.getCurrentTheme()
-    };
   }
 
   getStoreState() {
@@ -86,23 +74,25 @@ class SearchHistoryComponent extends React.Component {
         text: 'HISTORY'
       }
     ];
-    return items.concat(Array.from(this.state.history, q => {
+    return items.concat(Array.from(this.state.history, (query) => {
       return {
-        text: q
+        text: query,
+        payload: {query}
       };
     }));
   }
 
-  _onChanged(e, key, payload) {
-    this.context.executeAction(SearchQueryAction, payload.text);
+  _onChanged(e, key, item) {
+    this.context.executeAction(SearchQueryAction, item.payload);
   }
 
   render() {
     return (
       <LeftNav docked={false} menuItems={this._getItems()}
+        menuItemClassName="historyItem"
         onChange={this._onChanged.bind(this)} ref="leftNav"/>
     );
   }
-};
+}
 
 export default SearchHistoryComponent;

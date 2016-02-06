@@ -40,10 +40,9 @@ def setUpModule():
 
 
 
-@patch("taurus.monitors.monitorsdb.sqlalchemy", autospec=True)
+@patch("taurus.monitoring.monitorsdb.sqlalchemy", autospec=True)
 class MonitorsdbTestCase(unittest.TestCase):
   def testEngineFactorySingletonPattern(self, sqlalchemyMock):
-
     # Explicitly spec out sqlalchemy.create_engine()
     firstCall = Mock(spec_set=sqlalchemy.engine.base.Engine)
     secondCall = Mock(spec_set=sqlalchemy.engine.base.Engine)
@@ -60,7 +59,7 @@ class MonitorsdbTestCase(unittest.TestCase):
 
     # Call monitorsdb.engineFactory() in different process, assert new
     # instance
-    with patch("taurus.monitors.monitorsdb.os", autospec=True) as osMock:
+    with patch("taurus.monitoring.monitorsdb.os", autospec=True) as osMock:
       osMock.getpid.return_value = monitorsdb._EngineSingleton._pid + 1
       engine3 = monitorsdb.engineFactory()
       self.assertTrue(engine.dispose.called)

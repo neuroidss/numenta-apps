@@ -104,6 +104,29 @@ class ConfigTest(unittest.TestCase):
       environPatch.stop()
 
 
+  def testRepr(self):
+
+    configName = "test.conf"
+    with self._redirectConfigBase(configName,
+                                  _SAMPLE_CONF_CONTENTS) as baseConfigDir:
+      conf = config.Config(configName, baseConfigDir)
+
+      reprText = repr(conf)
+      self.assertEqual(
+        reprText,
+        "Config<name=test.conf, mode=1, baseDir={}>".format(baseConfigDir))
+
+
+  def testConfigNamePropertyGetter(self):
+
+    configName = "test.conf"
+    with self._redirectConfigBase(configName,
+                                  _SAMPLE_CONF_CONTENTS) as baseConfigDir:
+      conf = config.Config(configName, baseConfigDir)
+
+      self.assertEqual(conf.configName, configName)
+
+
   def testHierarchicalConfigNameTypeError(self):
     # Expects TypeError when given configName is hierarchical
     configName = "a/b/c/hieararchical_config_name.conf"

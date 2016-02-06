@@ -18,9 +18,6 @@
  * http://numenta.org/licenses/
  * -------------------------------------------------------------------------- */
 
-'use strict';
-
-
 // This file must be ES5!
 
 require('babel/register');  // Sends us into ES6 transpiler

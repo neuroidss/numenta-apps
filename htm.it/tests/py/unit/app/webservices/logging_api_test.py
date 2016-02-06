@@ -67,7 +67,7 @@ class AndroidHandlerTest(unittest.TestCase):
         response = logging_api.AndroidHandler.POST()
 
     # Verify results
-    dataMock.assert_called_once()
+    dataMock.assert_called_once_with()
     openMock.assert_called_with(logging_api._LOG_FORMAT_ANDROID, "a")
     handle = openMock()
     handle.write.assert_called_once_with("%s [INFO] "
@@ -124,8 +124,8 @@ class FeedbackHandlerTest(unittest.TestCase):
     response = logging_api.FeedbackHandler.POST()
 
     # Verify results
-    dataMock.assert_called_once()
-    uploadTarfileMock.assert_called_once()
+    dataMock.assert_called_once_with()
+    self.assertEqual(uploadTarfileMock.call_count, 1)
     self.assertEqual(response, "s3_key")
 
 

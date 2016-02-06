@@ -95,6 +95,7 @@ def _parseArgs():
 
 
 def main():
+
   logging_support.LoggingSupport().initTool()
 
   try:

@@ -83,6 +83,7 @@ class MessageProperties(amqp.messages.BasicProperties):
   pass
 
 
+
 class MessageBusConnector(object):
   """
   An instance of this class represents a connection to the message bus.
@@ -257,8 +258,7 @@ class MessageBusConnector(object):
 
     retval: (possibly empty) sequence of message queue names
     """
-    connectionParams = (
-        amqp.connection.RabbitmqManagementConnectionParams())
+    connectionParams = amqp.connection.RabbitmqManagementConnectionParams()
 
     # Use RabbitMQ Management Plugin to retrieve the names of message
     # queues

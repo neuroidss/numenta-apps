@@ -31,6 +31,9 @@ import socket
 import time
 import unittest
 
+from nta.utils.config import Config
+from nta.utils.logging_support_raw import LoggingSupport
+
 from htmengine import repository
 from htmengine.exceptions import MetricStatisticsNotReadyError
 from htmengine.repository.queries import MetricStatus
@@ -39,7 +42,6 @@ from htmengine.runtime.scalar_metric_utils import (
 from htmengine.test_utils.test_case_base import TestCaseBase
 from htmengine.adapters.datasource import createDatasourceAdapter
 
-from nta.utils.config import Config
 
 
 
@@ -48,6 +50,10 @@ LOGGER = logging.getLogger(__name__)
 
 g_config = Config("application.conf",
                   os.environ.get("APPLICATION_CONFIG_PATH"))
+
+
+def setUpModule():
+  LoggingSupport.initTestApp()
 
 
 class CustomMetricsTest(TestCaseBase):
@@ -154,7 +160,7 @@ class CustomMetricsTest(TestCaseBase):
 
   def testCreateDelete2(self):
     """Tests creating a metric that was previously created and deleted."""
-    metricName = "testCreateDelete.%i" % int(time.time())
+    metricName = "testCreateDelete2.%i" % int(time.time())
     LOGGER.info("Running test with metric name: %s", metricName)
 
     # Add custom metric data
@@ -290,7 +296,7 @@ class CustomMetricsTest(TestCaseBase):
     self.checkEncoderResolution(uid, 0.0, 7000.0)
 
 
-  def test_MinMaxDelayedCreation(self):
+  def testMinMaxDelayedCreation(self):
     """Tests that the min and max are set correctly when not specified."""
 
     metricName = "testMinMaxDelayedCreation.%i" % int(time.time())
@@ -350,7 +356,7 @@ class CustomMetricsTest(TestCaseBase):
     self.checkModelResultsSize(uid, MODEL_CREATION_RECORD_THRESHOLD)
 
 
-  def test_MinMaxDelayedCreationNoMetricIntegrityErrorMER2190(self):
+  def testMinMaxDelayedCreationNoMetricIntegrityErrorMER2190(self):
     """Tests that delayed creation doesn't cause integrity error in
     custom-metric model. It sends more than MODEL_CREATION_RECORD_THRESHOLD
     rows """
@@ -410,7 +416,7 @@ class CustomMetricsTest(TestCaseBase):
     self.checkModelResultsSize(uid, totalRowsToSend)
 
 
-  def test_MinMaxExplicitMin(self):
+  def testMinMaxExplicitMin(self):
     """Tests that max is required if min is specified."""
     metricName = "testMinMaxExplicitMin.%i" % int(time.time())
     LOGGER.info("Running test with metric name: %s", metricName)
@@ -444,7 +450,7 @@ class CustomMetricsTest(TestCaseBase):
     self.checkMetricUnmonitoredById(uid)
 
 
-  def test_MinMaxExplicit(self):
+  def testMinMaxExplicit(self):
     """Tests that min and max are correctly set for explicit min and max."""
     metricName = "testMinMaxExplicit.%i" % int(time.time())
     LOGGER.info("Running test with metric name: %s", metricName)
@@ -630,7 +636,7 @@ class CustomMetricsTest(TestCaseBase):
 
   def testFloatTimestamps(self):
     """Tests sending metric data with floating point timestamps."""
-    metricName = "testBatchSend.%i" % int(time.time())
+    metricName = "testFloatTimestamps.%i" % int(time.time())
     LOGGER.info("Running test with metric name: %s", metricName)
 
     self.addCleanup(self._deleteMetric, metricName)
@@ -760,7 +766,7 @@ class CustomMetricsTest(TestCaseBase):
 
   def testExport(self):
     """Tests exporting custom metrics."""
-    metricName = "testBatchSend.%i" % int(time.time())
+    metricName = "testExport.%i" % int(time.time())
     LOGGER.info("Running test with metric name: %s", metricName)
 
     self.addCleanup(self._deleteMetric, metricName)
@@ -811,11 +817,6 @@ class CustomMetricsTest(TestCaseBase):
                              [6.0, datetime.datetime.utcfromtimestamp(ts2)])
     self.assertSequenceEqual(exported["data"][1],
                              [7.0, datetime.datetime.utcfromtimestamp(ts3)])
-
-
-
-def setUpModule():
-  logging.basicConfig(level=logging.DEBUG)
 
 
 

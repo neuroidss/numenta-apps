@@ -121,7 +121,7 @@ class TaurusEngineHealthCheckTestCase(unittest.TestCase):
   @_RETRY_SERVICE_RUNNING_CHECK
   def testDynamoDbServiceIsRunning(self):
     serviceStates = self._findServiceStateNames(
-      serviceGroup="dynamodb-service",
+      serviceGroup="taurus",
       processNamePrefix="dynamodb-service_")
 
     self.assertGreaterEqual(len(serviceStates), 1)
@@ -145,6 +145,17 @@ class TaurusEngineHealthCheckTestCase(unittest.TestCase):
     serviceStates = self._findServiceStateNames(
       serviceGroup="taurus",
       processNamePrefix="rmq-metric-collector_")
+
+    self.assertGreaterEqual(len(serviceStates), 1)
+    self.assertEqual(serviceStates.values(), ["RUNNING"] * len(serviceStates),
+                     msg=serviceStates)
+
+
+  @_RETRY_SERVICE_RUNNING_CHECK
+  def testMetricDataGarbageCollectorServiceIsRunning(self):
+    serviceStates = self._findServiceStateNames(
+      serviceGroup="taurus",
+      processNamePrefix="metric-data-garbage-collector_")
 
     self.assertGreaterEqual(len(serviceStates), 1)
     self.assertEqual(serviceStates.values(), ["RUNNING"] * len(serviceStates),

@@ -18,8 +18,6 @@
  * http://numenta.org/licenses/
  * -------------------------------------------------------------------------- */
 
-'use strict';
-
 import BaseStore from 'fluxible/addons/BaseStore';
 
 /**
@@ -30,8 +28,8 @@ export default class SearchStore extends BaseStore {
   static storeName = 'SearchStore';
 
   static handlers = {
-    'SEARCH_RECEIVED_DATA': '_handleReceivedData',
-    'SEARCH_CLEAR_DATA': '_handleClearData'
+    SEARCH_RECEIVED_DATA: '_handleReceivedData',
+    SEARCH_CLEAR_DATA: '_handleClearData'
   };
 
   constructor(dispatcher) {
@@ -39,54 +37,82 @@ export default class SearchStore extends BaseStore {
     // Text used to query
     this.query = null;
     // Last query results
-    this.results = [];
+    this.results = new Map();
     // Past queries
     this.history = new Set();
   }
 
   /**
-   * Return current query
+   * @return {string} current query
    */
   getQuery() {
     return this.query;
   }
 
   /**
-   * Return past queries history
+   * @return {iterator} past queries history
    */
   getHistory() {
-    return this.history;
+    return this.history.values();
   }
 
   /**
-   * Returns current query results
+   * Get results for the given model
+   * @param  {[type]} model [description]
+   * @returns {array} current query results
    */
-  getResults() {
-    return this.results;
+  getResults(model) {
+    return this.results.get(model) || [];
   }
 
-  /**
-   * Handle new data
-   */
+   /**
+    * Handle new data event
+    * @param  {object} payload New data
+    */
   _handleReceivedData(payload) {
-    // Remove whitespaces
     if (payload.query) {
+      // Remove whitespaces
       this.query = payload.query.trim();
     } else {
       this.query = '';
     }
+
     // Do not add empty queries to history
-    if (query) {
+    if (this.query) {
       this.history.add(this.query);
     }
-    if (payload.results) {
-      // Sort results by score
-      this.results = payload.results.sort((a, b) => {
-        return a.score - b.score;
-      });
+
+    if (payload.model) {
+      let model = payload.model;
+      if (payload.results) {
+        // Find and sort results by max score
+        let records = Object.keys(payload.results)
+          .map((id) => {
+            let record = payload.results[id];
+            let text = record.text;
+            let scores = record.scores;
+            // Find max
+            let maxScore = record.scores.reduce((prev, current) => {
+              return prev > current ? prev : current;
+            });
+            let sumScore = record.scores.reduce((prev, current) => {
+              return prev + current ;
+            });
+            return {
+              text, maxScore, sumScore, scores
+            };
+          })
+          .sort((a, b) => {
+            return b.sumScore - a.sumScore;
+          });
+        this.results.set(model, records);
+      } else {
+        // No data
+        this.results.delete(model);
+      }
     } else {
-      // No data
-      this.results = [];
+      // No model
+      this.results.clear();
     }
     this.emitChange();
   }
@@ -96,8 +122,8 @@ export default class SearchStore extends BaseStore {
    */
   _handleClearData() {
     this.query = null;
-    this.results = [];
+    this.results.clear();
     this.history.clear();
     this.emitChange();
   }
-};
+}

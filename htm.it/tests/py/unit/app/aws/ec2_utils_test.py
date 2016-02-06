@@ -43,7 +43,7 @@ class EC2UtilsTest(unittest.TestCase):
     suggestions = list(suggestions)
 
     self.assertSequenceEqual(suggestions, [])
-    getEC2InstancesMock.assert_call_once_with("dummy-region")
+    getEC2InstancesMock.assert_called_once_with("dummy-region")
 
 
   @patch("htm.it.app.aws.ec2_utils.getEC2Instances")
@@ -59,7 +59,7 @@ class EC2UtilsTest(unittest.TestCase):
     suggestions = list(suggestions)
 
     self.assertSequenceEqual(suggestions, [])
-    getEC2InstancesMock.assert_call_once_with("dummy-region")
+    getEC2InstancesMock.assert_called_once_with("dummy-region")
 
 
   @patch("htm.it.app.aws.ec2_utils.getEC2Instances")
@@ -97,7 +97,7 @@ class EC2UtilsTest(unittest.TestCase):
         {"id": "testId1", "name": "testName1", "namespace": "AWS/EC2",
          "region": regionMock.name},
     ])
-    getEC2InstancesMock.assert_call_once_with(regionMock.name)
+    getEC2InstancesMock.assert_called_once_with(regionMock.name)
 
 
   @patch("htm.it.app.aws.ec2_utils.getEC2Instances")
@@ -135,7 +135,7 @@ class EC2UtilsTest(unittest.TestCase):
         {"id": "testId2", "name": "testName2", "namespace": "AWS/EC2",
          "region": regionMock.name},
     ])
-    getEC2InstancesMock.assert_call_once_with(regionMock.name)
+    getEC2InstancesMock.assert_called_once_with(regionMock.name)
 
 
 

@@ -55,7 +55,7 @@ class ExtendedLogger(logging.Logger):
 
   @classmethod
   def getExtendedMsg(cls, msg):
-    extendedMsg = "%s" % (cls._logPrefix) + msg
+    extendedMsg = "%s  " % (cls._logPrefix) + msg
     return extendedMsg
 
 

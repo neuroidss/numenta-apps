@@ -18,6 +18,7 @@
 // http://numenta.org/licenses/
 
 import Foundation
+import UIKit
 
 class TutorialController :  UIViewController, UIPageViewControllerDelegate{
     
@@ -70,15 +71,17 @@ class TutorialController :  UIViewController, UIPageViewControllerDelegate{
         
         self.pageViewController!.dataSource = self.modelController
         
-        self.addChildViewController(self.pageViewController!)
-        self.view.addSubview(self.pageViewController!.view)
-        
         // Set the page view controller's bounds using an inset rect so that self's view is visible around the edges of the pages.
         var pageViewRect = self.view.bounds
         if UIDevice.currentDevice().userInterfaceIdiom == .Pad {
             pageViewRect = CGRectInset(pageViewRect, 40.0, 40.0)
         }
         self.pageViewController!.view.frame = pageViewRect
+
+        
+        self.addChildViewController(self.pageViewController!)
+        self.view.addSubview(self.pageViewController!.view)
+        
         
         self.pageViewController!.didMoveToParentViewController(self)
         
@@ -111,5 +114,11 @@ class TutorialController :  UIViewController, UIPageViewControllerDelegate{
     
     
 
-    
+    override func viewWillAppear(animated: Bool) {
+        // Google Analytics
+        let tracker = GAI.sharedInstance().defaultTracker
+        tracker.set(kGAIScreenName, value: "com.numenta.taurus.tutorial.TutorialActivity")
+        let builder = GAIDictionaryBuilder.createScreenView()
+        tracker.send(builder.build() as [NSObject : AnyObject])
+    }
 }

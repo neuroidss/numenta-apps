@@ -193,7 +193,7 @@ class GetStatisticsTest(unittest.TestCase):
 
     metricGetterMock.collectMetricStatistics.assert_called_once_with(
         autostackMock, metricRowMock)
-    metricGetterMock.close.assert_called_once()
+    metricGetterMock.close.assert_called_once_with()
 
 
   @patch("htm.it.app.runtime.aggregation.repository")
@@ -237,7 +237,7 @@ class GetStatisticsTest(unittest.TestCase):
 
     metricGetterMock.collectMetricStatistics.assert_called_once_with(
         autostackMock, metricRowMock)
-    metricGetterMock.close.assert_called_once()
+    metricGetterMock.close.assert_called_once_with()
 
 
   @patch("htm.it.app.runtime.aggregation.repository.engineFactory", autospec=True)
@@ -285,7 +285,7 @@ class GetStatisticsTest(unittest.TestCase):
 
     metricGetterMock.collectMetricStatistics.assert_called_once_with(
         autostackMock, metricRowMock)
-    metricGetterMock.close.assert_called_once()
+    metricGetterMock.close.assert_called_once_with()
 
 
 

@@ -181,7 +181,7 @@ def resetCollectorsdbMain():
 
   helpString = (
     "%%prog [--suppress-prompt-and-obliterate-database]\n\n"
-    "WARNING: PERMANENT DATA LOSS. Obliterate/reset collectorsdb sql "
+    "WARNING: PERMANENT DATA LOSS! Obliterate/reset collectorsdb sql "
     "database %(db)s on server %(host)s." % repoParams)
 
   parser = optparse.OptionParser(helpString)

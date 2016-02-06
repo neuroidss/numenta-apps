@@ -32,19 +32,18 @@ from sqlalchemy.exc import OperationalError
 from htmengine.repository.queries import MetricStatus
 from nta.utils import error_reporting
 from nta.utils.config import Config
-from taurus.engine import logging_support
 
-from taurus.monitoring import monitorsdb
+from taurus.monitoring import logging_support
 from taurus.monitoring.monitorsdb import CONF_DIR
 from taurus.monitoring.monitorsdb import schema
+from taurus.monitoring.taurus_monitor_utils import (
+  addErrorFlag,
+  containsErrorFlag,
+  Flags,
+  removeErrorFlag
+)
 
 
-
-_FLAG_OPERATIONAL_ERROR = "SQL Alchemy Operational Error"
-_FLAG_REQUESTS_EXCEPTION = "Requests Exception"
-_FLAG_HTTP_STATUS_CODE = "HTTP Status Code Issue"
-_FLAG_RESPONSE_JSON = "Response JSON Error"
-_FLAG_DATABASE_ISSUE = "sqlalchemy.exc.OperationalError"
 _DB_ERROR_FLAG_FILE = "dbErrorFlagFile.csv"
 _MONITOR_NAME = __file__.split("/")[-1]
 
@@ -66,61 +65,6 @@ def _getIssueString(name, details):
 
 
 
-@monitorsdb.retryOnTransientErrors
-def _containsIssueFlag(uid):
-  """
-  Checks whether issue(s) with specified uid is(are) present in
-  monitor_error_flags table.
-
-  :param uid: a unique issue id
-  :type uid: string
-  :returns: True is there exist any row(s) in the table having specified uid,
-            False otherwise
-  :rtype: Boolean
-  """
-  table = schema.modelsMonitorErrorFlags
-  sel = table.select().where(table.c.uid == uid)
-  issues = monitorsdb.engineFactory().execute(sel).fetchall()
-  return len(issues) > 0
-
-
-
-@monitorsdb.retryOnTransientErrors
-def _addIssueFlag(uid, name):
-  """
-  Adds issue to monitor_error_flags table.
-
-  :param uid: a unique issue id
-  :type uid: string
-  :param name: name of issue
-  :type name: string
-  """
-  table = schema.modelsMonitorErrorFlags
-  ins = table.insert().prefix_with("IGNORE", dialect="mysql").values(
-      uid=uid,
-      name=name,
-      should_report=False)
-  monitorsdb.engineFactory().execute(ins)
-  g_logger.debug("Added new issue flag for %s", name)
-
-
-
-@monitorsdb.retryOnTransientErrors
-def _removeIssueFlag(uid):
-  """
-  Removes issue from monitor_error_flags table.
-
-  :param uid: a unique issue id
-  :type uid: string
-  """
-  table = schema.modelsMonitorErrorFlags
-  cmd = table.delete().where(table.c.uid == uid)
-  result = monitorsdb.engineFactory().execute(cmd)
-  if result.rowcount > 0:
-    g_logger.debug("Cleared issue flag with uid: %s", uid)
-
-
-
 def _reportIssue(uid, url, issueMessage, emailParams):
   """
   Reports an issue if no database flag is present.
@@ -128,8 +72,8 @@ def _reportIssue(uid, url, issueMessage, emailParams):
   :param url: request URL
   :param issueMessage: Issue details
   """
-  if not _containsIssueFlag(uid):
-    _addIssueFlag(uid, uid)
+  if not containsErrorFlag(schema.modelsMonitorErrorFlags, uid):
+    addErrorFlag(schema.modelsMonitorErrorFlags, uid)
     error_reporting.sendMonitorErrorEmail(monitorName=_MONITOR_NAME,
                                           resourceName=url,
                                           message=issueMessage,
@@ -205,11 +149,11 @@ def _checkModelsStatus(modelsJson, url, emailParams):
   for model in modelsJson:
     uid = model["uid"]
     if model["status"] == MetricStatus.ERROR:
-      if not _containsIssueFlag(uid):
-        _addIssueFlag(uid, uid)
+      if not containsErrorFlag(schema.modelsMonitorErrorFlags, uid):
+        addErrorFlag(schema.modelsMonitorErrorFlags, uid)
         modelsInError += str(model) + "\n\n"
     else:
-      _removeIssueFlag(uid)
+      removeErrorFlag(schema.modelsMonitorErrorFlags, uid)
 
   if modelsInError != "":
     g_logger.info("Found models entering error status")
@@ -237,31 +181,31 @@ def _connectAndCheckModels(modelsUrl, apiKey, requestTimeout, emailParams):
     g_logger.debug("Connecting to Taurus models")
     response = requests.get(modelsUrl, auth=(apiKey, ""),
                             timeout=requestTimeout, verify=False)
-    _removeIssueFlag(_FLAG_REQUESTS_EXCEPTION)
+    removeErrorFlag(schema.modelsMonitorErrorFlags, Flags.REQUESTS_EXCEPTION)
   except requests.exceptions.RequestException:
     g_logger.exception("RequestException calling: %s with apiKey %s and "
                        "timeout: %s", modelsUrl, apiKey, requestTimeout)
     issue = traceback.format_exc() + "\n"
-    _reportIssue(_FLAG_REQUESTS_EXCEPTION, modelsUrl, issue, emailParams)
+    _reportIssue(Flags.REQUESTS_EXCEPTION, modelsUrl, issue, emailParams)
     return
 
   statusCode = response.status_code
   if statusCode is 200:
-    _removeIssueFlag(_FLAG_HTTP_STATUS_CODE)
+    removeErrorFlag(schema.modelsMonitorErrorFlags, Flags.HTTP_STATUS_CODE)
   else:
     g_logger.error("Received abnormal HTTP status code: %s", statusCode)
     issue = _getIssueString("Received abnormal HTTP status code", statusCode)
-    _reportIssue(_FLAG_HTTP_STATUS_CODE, modelsUrl, issue, emailParams)
+    _reportIssue(Flags.HTTP_STATUS_CODE, modelsUrl, issue, emailParams)
     return
 
   try:
     responseJson = response.json()
-    _removeIssueFlag(_FLAG_RESPONSE_JSON)
+    removeErrorFlag(schema.modelsMonitorErrorFlags, Flags.RESPONSE_JSON)
   except ValueError:
     g_logger.error("ValueError encountered loading JSON. Response text: %s",
                    response.text)
     issue = "ValueError encountered loading JSON."
-    _reportIssue(_FLAG_RESPONSE_JSON, modelsUrl, issue, emailParams)
+    _reportIssue(Flags.RESPONSE_JSON, modelsUrl, issue, emailParams)
     return
 
   _checkModelsStatus(responseJson, modelsUrl, emailParams)
@@ -277,9 +221,7 @@ def _getArgs():
                       help="Specify full path to monitor conf file")
   parser.add_argument("--loggingLevel", help="Specify logging level: DEBUG, "
                       "INFO, WARNING, ERROR, or CRITICAL",
-                      default="WARNING")
-  parser.add_argument("--loggingConsole", help="Specify logging output "
-                      "console: stderror or stdout", default="stderr")
+                      default="INFO")
   parser.add_argument("--requestTimeout", help="Specify API request timeout "
                       "in seconds", type=float, default=60.0)
   parser.add_argument("--testEmail", help="Forces a warning email to be sent.",
@@ -295,7 +237,6 @@ def main():
   try:
     args = _getArgs()
     logging_support.LoggingSupport.initLogging(loggingLevel=args.loggingLevel,
-                                               console=args.loggingConsole,
                                                logToFile=True)
 
     confDir = os.path.dirname(args.monitorConfPath)

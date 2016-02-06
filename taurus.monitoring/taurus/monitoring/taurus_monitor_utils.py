@@ -20,12 +20,24 @@
 # ----------------------------------------------------------------------
 import logging
 
+import enum
+
 from taurus.monitoring import monitorsdb
-from taurus.monitoring.monitorsdb import schema
 
 
 
 g_logger = logging.getLogger("taurus_monitor_utils")
+
+
+
+@enum.unique
+class Flags(enum.Enum):
+  OPERATIONAL_ERROR = "SQL Alchemy Operational Error",
+  REQUESTS_EXCEPTION = "Requests Exception",
+  HTTP_STATUS_CODE = "HTTP Status Code Issue",
+  RESPONSE_JSON = "Response JSON Error",
+  DATABASE_ISSUE = "sqlalchemy.exc.OperationalError",
+  ERROR_FLAG_FILE = "dbErrorFlagFile.csv"
 
 
 
@@ -50,7 +62,7 @@ def containsErrorFlag(table, uid):
 
 
 @monitorsdb.retryOnTransientErrors
-def addErrorFlag(table, uid, name):
+def addErrorFlag(table, uid, name=None):
   """
   Adds issue to table.
 
@@ -61,6 +73,7 @@ def addErrorFlag(table, uid, name):
   :param name: name of issue
   :type name: string
   """
+  name = name if name is not None else uid
   ins = table.insert().prefix_with("IGNORE", dialect="mysql").values(
     uid=uid,
     name=name,

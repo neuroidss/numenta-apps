@@ -28,10 +28,12 @@
 import datetime
 import unittest
 
-from mock import MagicMock, patch
+import mock
+from mock import MagicMock, Mock, patch
 
+from htmengine.model_swapper import model_swapper_interface
 from htmengine.runtime import metric_storer
-
+from htmengine.runtime import metric_streamer_util
 
 class MetricStorerTest(unittest.TestCase):
 
@@ -40,22 +42,36 @@ class MetricStorerTest(unittest.TestCase):
   def testHandleBatchSingle(self, mockEngine, addMetricMock):
     # Create mocks
     metric_storer.gCustomMetrics = {}
+
     metricMock = MagicMock()
+
     def addMetricSideEffect(*_args, **_kwargs):
       metric_storer.gCustomMetrics["test.metric"] = [
           metricMock, datetime.datetime.utcnow()]
+
     addMetricMock.side_effect = addMetricSideEffect
-    modelSwapperMock = MagicMock()
-    metricStreamerMock = MagicMock()
+
+    modelSwapperMock = MagicMock(
+      spec_set=model_swapper_interface.ModelSwapperInterface)
+
+    metricStreamerMock = MagicMock(
+      spec_set=metric_streamer_util.MetricStreamer,
+      streamMetricData=Mock(
+        spec_set=metric_streamer_util.MetricStreamer.streamMetricData))
+
     body = '{"protocol": "plain", "data": ["test.metric 4.0 1386792175"]}'
+
     message = MagicMock()
+
     message.body = body
+
     # Call the function under test
     metric_storer._handleBatch(mockEngine, [message], [], metricStreamerMock,
                                modelSwapperMock)
+
     # Check the results
     addMetricMock.assert_called_once_with(mockEngine, "test.metric")
-    metricStreamerMock.streamMetricData.assert_called_once()
+    self.assertEqual(metricStreamerMock.streamMetricData.call_count, 1)
     data, _uid, modelSwapper = metricStreamerMock.streamMetricData.call_args[0]
     self.assertIs(modelSwapper, modelSwapperMock)
     self.assertEqual(len(data), 1)

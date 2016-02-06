@@ -32,15 +32,9 @@ local changes without conflicts:
 
     cp -r conf conf-user
 
-- Edit `conf-user/nginx-taurus.conf`, replacing `user ec2-user ec2-user;` with
-  `user <your username> <your group>;`.  For example `user employee1 staff;`.
-- Edit `conf-user/supervisord.conf`, replacing `/opt/numenta/taurus/conf` with
-  your own configuration path.  For example, the line
-  `environment=APPLICATION_CONFIG_PATH=/opt/numenta/taurus/conf` should instead
-  be something like `environment=APPLICATION_CONFIG_PATH=/Users/<your username>/nta/numenta-apps/taurus/conf-user`
 - Additionally ensure that APPLICATION_CONFIG_PATH is set in your environment.
-- Edit `conf-user/supervisord.conf` to uncomment the lines for the DynamoDB
-  local test tool.
+- If running with local dynamodb emulation, edit `conf-user/supervisord.conf` to
+  uncomment the lines for the DynamoDB local test tool.
 
 Create empty `logs` and `.dynamodb` directories:
 
@@ -59,6 +53,11 @@ In a production or otherwise automated setting, it's best to use the included
 console scripts (where available) for setting configuration overrides.  This
 will ensure that proper validation is applied, eliminate potential syntax
 errors or typos, and supports an automated workflow.
+
+- `taurus-set-api-key` to set Taurus REST API Key.
+    ```
+    taurus-set-api-key --apikey API_KEY
+    ```
 
 - `taurus-set-rabbitmq` to set Taurus rabbitmq connection and authentication.
     ```
@@ -168,6 +167,14 @@ If you have an old copy of htm-it then you need to clean up RabbitMQ queues.
 ### Start nginx:
 
     sudo nginx -p . -c conf-user/nginx-taurus.conf
+
+Should you need to run nginx as a specific user and group, do so with the use
+of the `NGINX_GLOBAL_PARAMS` environment var, specifying "-g" options per
+http://nginx.org/en/docs/switches.html.
+
+For example:
+
+    export NGINX_GLOBAL_PARAMS="-g 'user root root;'"
 
 ### Start Taurus services with `supervisord`:
 

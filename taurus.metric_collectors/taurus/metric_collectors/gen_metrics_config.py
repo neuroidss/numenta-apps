@@ -103,22 +103,6 @@ def _addXigniteStockClosingPriceMetric(metricsDict, stockSymbol):
 
 
 
-def _addXigniteNewsVolumeMetric(metricsDict, stockSymbol):
-  """ Add an xignite security news volume (security headlines + releases)
-  metric to the given metrics dict for the given stock symbol
-  """
-  metricName = "XIGNITE.NEWS.%s.VOLUME" % (stockSymbol.upper(),)
-  metricsDict[metricName] = {
-    "provider": "xignite-security-news",
-    "metricType": "NewsVolume",
-    "metricTypeName": "News Volume",
-    "modelParams": {
-      "minResolution": 0.2
-    }
-  }
-
-
-
 def _addTweetVolumeMetric(metricsDict, stockSymbol, screenNames):
   """ Add a Tweet Volume metric to the given metrics dict for the given stock
   symbol and screen names
@@ -179,10 +163,6 @@ def main(inputCsvPath):
 
       _addXigniteStockClosingPriceMetric(companyObj["metrics"], symbol)
 
-      # NOTE: xignite news volume metrics are suppressed intentionally until we
-      # figure out the client GUI for displaying news Summaries, etc.
-      #_addXigniteNewsVolumeMetric(companyObj["metrics"], symbol)
-
       # Create list of twitter handles
       twitterHandles = [
         handle.strip() for handle in inputRow[twitterColumnIndex:] if handle
@@ -228,8 +208,8 @@ def _parseArgs():
   (_options, posArgs) = parser.parse_args()
 
   if len(posArgs) != 1:
-    parser.error("Expected one positional args, but got %s: %s" % (
-                 len(posArgs), posArgs,))
+    parser.error(
+      "Expected one positional args, but got %s: %s" % (len(posArgs), posArgs,))
 
   inputCsvPath, = posArgs
 

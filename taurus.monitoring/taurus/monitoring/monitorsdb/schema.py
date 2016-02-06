@@ -21,14 +21,18 @@
 
 """ Common SQLAlchemy table definitions for monitoring scripts. """
 
-from sqlalchemy import (BOOLEAN,
+from sqlalchemy import (BINARY,
+                        BOOLEAN,
                         Column,
                         DATETIME,
                         func,
+                        Index,
                         INTEGER,
                         MetaData,
                         PrimaryKeyConstraint,
-                        Table)
+                        String,
+                        Table,
+                        Text)
 
 from sqlalchemy.dialects import mysql
 
@@ -95,3 +99,29 @@ modelsMonitorErrorFlags = _createMonitorErrorFlagsSchema(
 # Error flag schema for Taurus metric-order monitor
 metricOrderMonitorErrorFlags = _createMonitorErrorFlagsSchema(
   "metric_order_monitor_error_flags", metadata)
+
+
+# See monitor_dispatcher.py for use-case and coordinate any changes there
+monitorDispatcherTable = Table("monitor_dispatcher",
+                               metadata,
+                               Column("checkFn",
+                                      String(length=80),
+                                      nullable=False,
+                                      primary_key=True),
+                               Column("excType",
+                                      String(length=80),
+                                      nullable=False,
+                                      primary_key=True),
+                               Column("excValueDigest",
+                                      BINARY(length=20),
+                                      primary_key=True),
+                               Column("timestamp",
+                                      DATETIME,
+                                      nullable=False),
+                               Column("excValue",
+                                      Text()),
+                               Index("timestamp_index",
+                                     "timestamp"))
+
+
+

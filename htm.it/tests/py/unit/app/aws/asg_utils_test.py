@@ -43,7 +43,7 @@ class ASGUtilsTest(unittest.TestCase):
     suggestions = list(suggestions)
 
     self.assertSequenceEqual(suggestions, [])
-    getAutoScalingGroupsMock.assert_call_once_with("dummy-region")
+    getAutoScalingGroupsMock.assert_called_once_with("dummy-region")
 
 
   @patch("htm.it.app.aws.asg_utils.getAutoScalingGroups")
@@ -73,7 +73,7 @@ class ASGUtilsTest(unittest.TestCase):
         {"id": "testName1", "name": "testName1", "namespace": "AWS/AutoScaling",
          "region": region},
     ])
-    getAutoScalingGroupsMock.assert_call_once_with(region)
+    getAutoScalingGroupsMock.assert_called_once_with(region)
 
 
 

@@ -1221,7 +1221,7 @@ class MetricDataForwarder(object):
     """ Aggregate tweet volume metrics in the given datetime range and forward
     them to Taurus Engine.
 
-    NOTE: this may be called by tooling, such as `resymbol_metrics.py`
+    NOTE: this may be called by tooling
 
     NOTE: does not updateLastEmittedSampleDatetime
 

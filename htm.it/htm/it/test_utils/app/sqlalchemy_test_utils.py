@@ -21,12 +21,9 @@
 
 """Repository object utilities for tests."""
 
-import functools
-import uuid
+from htmengine.test_utils.repository_test_utils import ManagedTempRepositoryBase
 
-from nta.utils.test_utils.config_test_utils import ConfigAttributePatch
-
-from htm.it.app import config, repository
+from htm.it.app import repository
 
 ENGINE = repository.getUnaffiliatedEngine()
 
@@ -43,7 +40,7 @@ def getAllDatabaseNames():
 
 
 
-class ManagedTempRepository(object):
+class ManagedTempRepository(ManagedTempRepositoryBase):
   """ Context manager that on entry patches the respository database name with
   a unique temp name and creates the repository; then deletes the repository on
   exit.
@@ -68,110 +65,9 @@ class ManagedTempRepository(object):
         <do test logic>
 
   """
-  REPO_CONFIG_NAME = config.CONFIG_NAME
-  REPO_BASE_CONFIG_DIR = config.baseConfigDir
-  REPO_SECTION_NAME = "repository"
-  REPO_DATABASE_ATTR_NAME = "db"
 
-
-  def __init__(self, clientLabel, kw=None):
+  def initTempDatabase(self):
+    """Initialize the temporary repository database with default schema and
+    contents
     """
-    clientLabel: this *relatively short* string will be used to construct the
-      temporary database name. It shouldn't contain any characters that would
-      make it inappropriate for a database name (no spaces, etc.)
-    kw: name of keyword argument to add to the decorated function(s). Its value
-      will be a reference to this instance of ManagedTempRepository. Ignored
-      when this instance is used as context manager. Defaults to kw=None to
-      avoid having it added to the keyword args.
-    """
-    self._kw = kw
-
-    self.tempDatabaseName = "%s_%s_%s" % (self.getDatabaseNameFromConfig(),
-                                          clientLabel, uuid.uuid1().hex)
-
-    # Create a Config patch to override the Repository database name
-    self._configPatch = ConfigAttributePatch(
-      self.REPO_CONFIG_NAME,
-      self.REPO_BASE_CONFIG_DIR,
-      values=((self.REPO_SECTION_NAME, self.REPO_DATABASE_ATTR_NAME,
-               self.tempDatabaseName),))
-    self._configPatchApplied = False
-
-    self._attemptedToCreateRepository = False
-
-
-  @classmethod
-  def getDatabaseNameFromConfig(cls):
-    return config.get(cls.REPO_SECTION_NAME,
-                      cls.REPO_DATABASE_ATTR_NAME)
-
-
-  def __enter__(self):
-    self.start()
-    return self
-
-
-  def __exit__(self, *args):
-    self.stop()
-    return False
-
-
-  def __call__(self, f):
-    """ Implement the function decorator """
-
-    @functools.wraps(f)
-    def applyTempRepositoryPatch(*args, **kwargs):
-      self.start()
-      try:
-        if self._kw is not None:
-          kwargs[self._kw] = self
-        return f(*args, **kwargs)
-      finally:
-        self.stop()
-
-    return applyTempRepositoryPatch
-
-
-  def start(self):
-    # Removes possible left over cached engine
-    # (needed if non-patched engine is run prior)
-    repository.engineFactory(reset=True)
-
-    # Override the Repository database name
-    try:
-      self._configPatch.start()
-      self._configPatchApplied = True
-
-      # Verity that the database doesn't exist yet
-      assert self.tempDatabaseName not in getAllDatabaseNames(), (
-        "Temp repo db=%s already existed" % (self.tempDatabaseName,))
-
-      # Now create the temporary repository database
-      self._attemptedToCreateRepository = True
-      repository.reset()
-
-      # Verify that the temporary repository database got created
-      assert self.tempDatabaseName in getAllDatabaseNames(), (
-        "Temp repo db=%s not found" % (self.tempDatabaseName,))
-    except:
-      # Attempt to clean up
-      self.stop()
-
-      raise
-
-
-  def stop(self):
-    try:
-      if self._attemptedToCreateRepository:
-        self._attemptedToCreateRepository = False
-        # Delete the temporary repository database, if any
-        with ENGINE.connect() as connection:
-          connection.execute(
-            "DROP DATABASE IF EXISTS %s" % (self.tempDatabaseName,))
-    finally:
-      if self._configPatchApplied:
-        self._configPatch.stop()
-      try:
-        del repository.engineFactory.engine
-      except AttributeError:
-        pass
+    repository.reset()

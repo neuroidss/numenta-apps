@@ -1,5 +1,4 @@
 # ----------------------------------------------------------------------
-# Numenta Platform for Intelligent Computing (NuPIC)
 # Copyright (C) 2015, Numenta, Inc.  Unless you have purchased from
 # Numenta, Inc. a separate commercial license for this software code, the
 # following terms and conditions apply:
@@ -21,32 +20,53 @@
 """
 Implements Imbu's web API.
 """
-
-import json
+import simplejson as json
 import logging
+import os
 import pkg_resources
 import web
 
-from fluent.experiments.runner import Runner as FluentRunner
+from htmresearch.frameworks.nlp.imbu import ImbuModels
+from htmresearch.frameworks.nlp.model_factory import ClassificationModelTypes
+
+
 
 g_log = logging.getLogger(__name__)
+
+
+
+# There is no longer training in imbu web app.  User must specify loadPath
+if "IMBU_LOAD_PATH_PREFIX" in os.environ:
+  _IMBU_LOAD_PATH_PREFIX = os.environ["IMBU_LOAD_PATH_PREFIX"]
+else:
+  raise KeyError("Required IMBU_LOAD_PATH_PREFIX missing from environment")
+
+g_models = {} # Global model cache
+
+imbu = ImbuModels(
+  cacheRoot=os.environ.get("MODEL_CACHE_DIR", os.getcwd()),
+  modelSimilarityMetric=None,
+  dataPath=os.environ.get("IMBU_DATA",
+                          pkg_resources.resource_filename(__name__,
+                                                          "data.csv")),
+  retina=os.environ["IMBU_RETINA_ID"],
+  apiKey=os.environ["CORTICAL_API_KEY"]
+)
 
 
 def addStandardHeaders(contentType="application/json; charset=UTF-8"):
   """
   Add Standard HTTP Headers ("Content-Type", "Server") to the response.
-
   Here is an example of the headers added by this method using the default
   values::
-
       Content-Type: application/json; charset=UTF-8
       Server: Imbu x.y.z
-
   :param content_type: The value for the "Content-Type" header.
                        (default "application/json; charset=UTF-8")
   """
   web.header("Server", "Imbu 1.0.0", True)
   web.header("Content-Type", contentType, True)
+
 
 
 def addCORSHeaders():
@@ -60,115 +80,97 @@ def addCORSHeaders():
   web.header("Access-Control-Allow-Methods", "POST", True)
 
 
+
 class FluentWrapper(object):
-  """ Wraps nupic.fluent Model """
 
-  def __init__(self, dataPath):
+  def query(self, model, text):
     """
-    initializes nupic.fluent model with given sample data
-
-    :param str dataPath: Path to sample data file.
-                         Must be a CSV file having 'ID and 'Sample' columns
-    """
-    g_log.info("Initialize nupic.fluent")
-    # Initialize nupic.fluent model runner
-    self._fluent = FluentRunner(dataPath=dataPath,
-                        resultsDir="",
-                        experimentName="imbu_fingerprints",
-                        load=False,
-                        modelName="ClassificationModelFingerprint",
-                        modelModuleName="fluent.models.classify_fingerprint",
-                        numClasses=1,  # must be >0 to go through training
-                        plots=0,
-                        orderedSplit=False,
-                        trainSizes=[],
-                        verbosity=0)
-
-    # Train model with given sample data
-    self._fluent.initModel()
-    self._fluent.setupData()
-    self._fluent.trainSize = len(self._fluent.samples)
-    self._fluent.encodeSamples()
-    self._fluent.resetModel(0)
-
-    for i in range(self._fluent.trainSize):
-      self._fluent.model.trainModel(i)
-
-
-  def query(self, text):
-    """ Queries fluent model and returns an ordered list of matching documents.
+    Queries the model and returns an ordered list of matching samples.
+    :param str model: Name of the model to use. Possible values are mapped to 
+        classes in the NLP model factory.
 
     :param str text: The text to match.
-
     :returns: a sequence of matching samples.
-
     ::
     [
-        {"id": "1", "text": "sampleText", "score": "0.75"},
+        {"0": {"text": "sampleText", "scores": [0.75, ...]},
         ...
     ]
     """
-    results = []
-    if text:
-      g_log.info("Query model for : %s", text)
-      sampleIDs, sampleDists = self._fluent.model.queryModel(text, False)
-      for sID, dist in zip (sampleIDs, sampleDists):
-        results.append({"id": sID,
-                        "text": self._fluent.dataDict[sID][0],
-                        "score": dist.item()})
 
-    return results
+    global g_models
+
+    if model not in g_models:
+      loadPath = os.path.join(_IMBU_LOAD_PATH_PREFIX, model)
+      g_models[model] = imbu.createModel(model, str(loadPath), None)
+
+    if text:
+      _, sortedIds, sortedDistances = imbu.query(g_models[model], text)
+      return imbu.formatResults(model, text, sortedDistances, sortedIds)
+
+    else:
+      return []
 
 
 
 class DefaultHandler(object):
-  def GET(self):  # pylint: disable=R0201,C0103
+  def GET(self, *args):  # pylint: disable=R0201,C0103
     addStandardHeaders("text/html; charset=UTF-8")
     return "<html><body><h1>Welcome to Nupic Fluent</h1></body></html>"
 
 
 
 class FluentAPIHandler(object):
-  """ Handles Fluent API Requests """
+  """Handles API requests"""
 
-  def OPTIONS(self): # pylint: disable=R0201,C0103
+  def OPTIONS(self, modelName=ImbuModels.defaultModelType): # pylint: disable=R0201,C0103
     addStandardHeaders()
     addCORSHeaders()
 
 
-  def POST(self): # pylint: disable=R0201,C0103
+  def GET(self, *args):
+    """ GET global ready status.  Returns "true" when all models have been
+    created and are ready for queries.
+    """
     addStandardHeaders()
     addCORSHeaders()
 
-    response = []
+    return json.dumps(True)
+
+
+  def POST(self, modelName=ImbuModels.defaultModelType): # pylint: disable=R0201,C0103
+    addStandardHeaders()
+    addCORSHeaders()
+
+    response = {}
 
     data = web.data()
     if data:
       if isinstance(data, basestring):
-        response = g_fluent.query(data)
+        response = g_fluent.query(modelName, data)
       else:
         raise web.badrequest("Invalid Data. Query data must be a string")
 
-    else:
-      # sample data is missing
-      g_log.error("sample data is missing, raising BadRequest exception")
-      raise web.badrequest("Sample data is missing")
+    if len(response) == 0:
+      # No data, just return all samples
+      # See "ImbuModels.formatResults" for expected format
+      for item in imbu.dataDict.items():
+        response[item[0]] = {"text": item[1][0], "scores": [0]}
 
     return json.dumps(response)
 
 
 
 urls = (
-    "", "DefaultHandler",
-    "/", "DefaultHandler",
-    "/fluent", "FluentAPIHandler"
+  "", "DefaultHandler",
+  "/", "DefaultHandler",
+  "/fluent", "FluentAPIHandler",
+  "/fluent/(.*)", "FluentAPIHandler"
 )
 app = web.application(urls, globals())
 
-# Create nupic.fluent model runner
-g_fluent = FluentWrapper(pkg_resources.resource_filename(__name__, "data.csv"))
+# Create Imbu model runner
+g_fluent = FluentWrapper()
 
-if __name__ == "__main__":
-  app.run()
-
+# Required by uWSGI per WSGI spec
 application = app.wsgifunc()

@@ -27,83 +27,80 @@ from sqlalchemy import create_engine
 
 from nta.utils import sqlalchemy_utils
 
+import htmengine.repository
+
 import htm.it
 
 from htm.it import htm_it_logging
 from htm.it.app import config
 from htm.it.app.repository.migrate import migrate
 from htm.it.app.repository.queries import (
-    addAnnotation,
-    addAutostack,
-    addDeviceNotificationSettings,
-    addMetric,
-    addMetricData,
-    addMetricToAutostack,
-    addNotification,
-    batchAcknowledgeNotifications,
-    batchSeeNotifications,
-    clearOldNotifications,
-    deleteAnnotationById,
-    deleteAutostack,
-    deleteMetric,
-    deleteModel,
-    deleteStaleNotificationDevices,
-    getAllNotificationSettings,
-    getAnnotationById,
-    getAnnotations,
-    getAutostack,
-    getAutostackList,
-    getAutostackFromMetric,
-    getAutostackForNameAndRegion,
-    getAutostackMetrics,
-    getAutostackMetricsWithMetricName,
-    getAutostackMetricsPendingDataCollection,
-    getCloudwatchMetrics,
-    getCloudwatchMetricsForNameAndServer,
-    getCloudwatchMetricsPendingDataCollection,
-    getCustomMetricByName,
-    getCustomMetrics,
-    getDeviceNotificationSettings,
-    getInstanceCount,
-    getInstances,
-    getInstanceStatusHistory,
-    getAllMetrics,
-    getAllMetricsForServer,
-    getAllModels,
-    getMetric,
-    getMetricWithSharedLock,
-    getMetricWithUpdateLock,
-    getMetricCountForServer,
-    getMetricData,
-    getMetricDataCount,
-    getProcessedMetricDataCount,
-    getMetricDataWithRawAnomalyScoresTail,
-    getMetricIdsSortedByDisplayValue,
-    getMetricStats,
-    getNotification,
-    getUnprocessedModelDataCount,
-    getUnseenNotificationList,
-    listMetricIDsForInstance,
-    saveMetricInstanceStatus,
-    setMetricCollectorError,
-    setMetricLastTimestamp,
-    setMetricStatus,
-    updateDeviceNotificationSettings,
-    updateMetricColumns,
-    updateMetricColumnsForRefStatus,
-    updateMetricDataColumns,
-    updateNotificationDeviceTimestamp,
-    updateNotificationMessageId,
-    lockOperationExclusive,
-    OperationLock)
-from htmengine.repository import _EngineSingleton
+  addAnnotation,
+  addAutostack,
+  addDeviceNotificationSettings,
+  addMetric,
+  addMetricData,
+  addMetricToAutostack,
+  addNotification,
+  batchAcknowledgeNotifications,
+  batchSeeNotifications,
+  clearOldNotifications,
+  deleteAnnotationById,
+  deleteAutostack,
+  deleteMetric,
+  deleteModel,
+  deleteStaleNotificationDevices,
+  getAllNotificationSettings,
+  getAnnotationById,
+  getAnnotations,
+  getAutostack,
+  getAutostackList,
+  getAutostackFromMetric,
+  getAutostackForNameAndRegion,
+  getAutostackMetrics,
+  getAutostackMetricsWithMetricName,
+  getAutostackMetricsPendingDataCollection,
+  getCloudwatchMetrics,
+  getCloudwatchMetricsForNameAndServer,
+  getCloudwatchMetricsPendingDataCollection,
+  getCustomMetricByName,
+  getCustomMetrics,
+  getDeviceNotificationSettings,
+  getInstanceCount,
+  getInstances,
+  getInstanceStatusHistory,
+  getAllMetrics,
+  getAllMetricsForServer,
+  getAllModels,
+  getMetric,
+  getMetricWithSharedLock,
+  getMetricWithUpdateLock,
+  getMetricCountForServer,
+  getMetricData,
+  getMetricDataCount,
+  getProcessedMetricDataCount,
+  getMetricDataWithRawAnomalyScoresTail,
+  getMetricIdsSortedByDisplayValue,
+  getMetricStats,
+  getNotification,
+  getUnprocessedModelDataCount,
+  getUnseenNotificationList,
+  listMetricIDsForInstance,
+  saveMetricInstanceStatus,
+  setMetricCollectorError,
+  setMetricLastTimestamp,
+  setMetricStatus,
+  updateDeviceNotificationSettings,
+  updateMetricColumns,
+  updateMetricColumnsForRefStatus,
+  updateMetricDataColumns,
+  updateNotificationDeviceTimestamp,
+  updateNotificationMessageId,
+  lockOperationExclusive,
+  OperationLock)
 
 
 retryOnTransientErrors = sqlalchemy_utils.retryOnTransientErrors
-
-
-DSN_FORMAT = "mysql://%(user)s:%(passwd)s@%(host)s:%(port)s"
-DB_DSN_FORMAT = "mysql://%(user)s:%(passwd)s@%(host)s:%(port)s/%(db)s"
 
 
 
@@ -111,32 +108,19 @@ g_log = logging.getLogger("htm-it.repository")
 
 
 
-def getBaseConnectionArgsDict():
-  """Return a dictonary of common database connection arguments."""
-  return {
-    "host": config.get("repository", "host"),
-    "port": config.getint("repository", "port"),
-    "user": config.get("repository", "user"),
-    "passwd": config.get("repository", "passwd"),
-    "charset": "utf8",
-    "use_unicode": True,
-  }
-
-
-
 def getDSN():
-  return DSN_FORMAT % dict(config.items("repository"))
+  return htmengine.repository.getDSN(config)
 
 
 
 def getUnaffiliatedEngine():
-  return create_engine(getDSN())
+  return htmengine.repository.getUnaffiliatedEngine(config)
 
 
 
 def getDbDSN():
   config.loadConfig()
-  return DB_DSN_FORMAT % dict(config.items("repository"))
+  return htmengine.repository.getDbDSN(config)
 
 
 
@@ -155,18 +139,15 @@ def engineFactory(reset=False):
       from htm.it.app import repository
       engine = repository.engineFactory()
   """
-  if reset:
-    _EngineSingleton.reset()
-
-  return _EngineSingleton(getDbDSN(), pool_recycle=179, pool_size=0,
-                          max_overflow=-1)
+  config.loadConfig()
+  return htmengine.repository.engineFactory(config, reset)
 
 
 
 def reset(offline=False):
   """
-  Reset the htm-it database; upon successful completion, the necessary schema are
-  created, but the tables are not populated
+  Reset the htm-it database; upon successful completion, the necessary schema
+  are created, but the tables are not populated
 
   :param offline: False to execute SQL commands; True to just dump SQL commands
     to stdout for offline mode or debugging
@@ -176,8 +157,8 @@ def reset(offline=False):
   dbName = config.get('repository', 'db')
 
   resetDatabaseSQL = (
-      "DROP DATABASE IF EXISTS %(database)s; "
-      "CREATE DATABASE %(database)s;" % {"database": dbName})
+    "DROP DATABASE IF EXISTS %(database)s; "
+    "CREATE DATABASE %(database)s;" % {"database": dbName})
   statements = resetDatabaseSQL.split(";")
 
   engine = getUnaffiliatedEngine()

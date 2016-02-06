@@ -573,6 +573,10 @@ public class TaurusClient implements HTMClient {
         } else {
             // Get Multiple days
             int totalDays = toDay - fromDay;
+            // Account for intervals at the end of the year where fromDay could be greater than toDay
+            if (totalDays < 0) {
+                totalDays += 365;
+            }
             int interval = -1;
 
             // Check if loading in reverse order

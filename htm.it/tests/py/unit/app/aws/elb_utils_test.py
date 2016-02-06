@@ -43,7 +43,7 @@ class ELBUtilsTest(unittest.TestCase):
     suggestions = list(suggestions)
 
     self.assertSequenceEqual(suggestions, [])
-    getELBInstancesMock.assert_call_once_with("dummy-region")
+    getELBInstancesMock.assert_called_once_with("dummy-region")
 
 
   @patch("htm.it.app.aws.elb_utils.getELBInstances")
@@ -73,7 +73,7 @@ class ELBUtilsTest(unittest.TestCase):
         {"id": "testName1", "name": "testName1", "namespace": "AWS/ELB",
          "region": region},
     ])
-    getELBInstancesMock.assert_call_once_with(region)
+    getELBInstancesMock.assert_called_once_with(region)
 
 
 

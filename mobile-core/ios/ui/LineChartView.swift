@@ -1,6 +1,7 @@
 
 
 import Foundation
+import UIKit
 
 class LineChartView: UIView {
   //  var label: String = "Stock Price"
@@ -24,7 +25,8 @@ class LineChartView: UIView {
     
     var emptyTextString : String?
     var isEmpty : Bool = false
-    
+    var selection = -1
+    var selectOnDraw : Int64 = -1
     // Callback for when the chart is touched. The int is the index to the closest data element
     var selectionCallback :( (Int)->Void)?
     
@@ -52,6 +54,11 @@ class LineChartView: UIView {
             barWidth = Double (contentWidth) / Double(TaurusApplication.getTotalBarsOnChart())
             
         }
+        
+        if (selectOnDraw > 0){
+           markerX = Double(selectOnDraw) * self.pointWidth + Double(barMarginLeft)
+            selectOnDraw = -1
+        }
         drawAnomalies(rect)
         drawMarker(rect)
         drawValues( rect)
@@ -68,6 +75,10 @@ class LineChartView: UIView {
     */
     func drawMarker ( rect : CGRect){
         if (markerX<0){
+            return
+        }
+        
+        if (self.selectionCallback == nil){
             return
         }
         let context = UIGraphicsGetCurrentContext()!
@@ -116,8 +127,8 @@ class LineChartView: UIView {
                     color = Appearence.yellowbarColor
                     bar.size.height -= 5.0
                 }else {
-               //    color = UIColor.greenColor().CGColor
-                 //   bar.size.height -= 4.0
+//                   color = UIColor.greenColor().CGColor
+//                    bar.size.height -= 4.0
                    continue
                 }
        
@@ -357,19 +368,20 @@ class LineChartView: UIView {
     */
     override func touchesBegan(touches: Set<UITouch>, withEvent event: UIEvent?) {
         
-        if ( self.selectionCallback != nil){
-            if let touch = touches.first {
-                let x = Double(touch.locationInView(self).x)
-                if (x != markerX){
-                    markerX = Double(x)
-                    
-                    let selection = Int ( (markerX) / self.pointWidth)
-                    
+       
+        if let touch = touches.first {
+            let x = Double(touch.locationInView(self).x)
+            if (x != markerX){
+                markerX = Double(x)
+                
+                selection = Int ( (markerX) / self.pointWidth)
+                if ( self.selectionCallback != nil){
                     selectionCallback! (selection)
-                    self.setNeedsDisplay()
                 }
+                self.setNeedsDisplay()
             }
         }
+        
         super.touchesBegan(touches, withEvent:event)
     }
     

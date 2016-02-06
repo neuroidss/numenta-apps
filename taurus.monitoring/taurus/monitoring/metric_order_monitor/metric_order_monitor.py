@@ -191,9 +191,7 @@ def _getArgs():
                       help="Specify full path to monitor conf file")
   parser.add_argument("--loggingLevel", help="Specify logging level: DEBUG, "
                       "INFO, WARNING, ERROR, or CRITICAL",
-                      default="WARNING")
-  parser.add_argument("--loggingConsole", help="Specify logging output "
-                      "console: stderror or stdout", default="stderr")
+                      default="INFO")
   parser.add_argument("--testEmail", help="Forces a warning email to be sent.",
                       action="store_true")
   return parser.parse_args()
@@ -207,7 +205,6 @@ def main():
   try:
     args = _getArgs()
     logging_support.LoggingSupport.initLogging(loggingLevel=args.loggingLevel,
-                                               console=args.loggingConsole,
                                                logToFile=True)
 
     confDir = os.path.dirname(args.monitorConfPath)

@@ -40,12 +40,13 @@ from nta.utils import error_reporting
 from nta.utils.message_bus_connector import MessageBusConnector
 
 from taurus.metric_collectors import collectorsdb
+from taurus.metric_collectors import metric_utils
 from taurus.metric_collectors.xignite import xignite_stock_agent
 
 
-_ACCESSIBILITY_TIMEOUT_SEC = 10
+_ACCESSIBILITY_TIMEOUT_SEC = 20
 
-_RETRY_SERVICE_RUNNING_CHECK = error_handling.retry(
+_RETRY_ACCESSIBILITY_CHECK = error_handling.retry(
   _ACCESSIBILITY_TIMEOUT_SEC,
   initialRetryDelaySec=1,
   maxRetryDelaySec=1)
@@ -55,18 +56,19 @@ _RETRY_SERVICE_RUNNING_CHECK = error_handling.retry(
 class TaurusMetricCollectorsResourceAccessibilityTestCase(unittest.TestCase):
 
 
-  @_RETRY_SERVICE_RUNNING_CHECK
+  @_RETRY_ACCESSIBILITY_CHECK
   def testCollectorsdbIsAccessible(self):  # pylint: disable=R0201
     transactionContext = collectorsdb.engineFactory().begin()
     transactionContext.transaction.rollback()
 
 
-  @_RETRY_SERVICE_RUNNING_CHECK
+  @_RETRY_ACCESSIBILITY_CHECK
   def testMessageBusIsAccessible(self):  # pylint: disable=R0201
     with MessageBusConnector() as bus:
       bus.isMessageQeueuePresent("")
 
 
+  # Twitter API sometimes throttles for a while, so we use longer retries
   @error_handling.retry(timeoutSec=90,
                         initialRetryDelaySec=2,
                         maxRetryDelaySec=2)
@@ -120,7 +122,7 @@ class TaurusMetricCollectorsResourceAccessibilityTestCase(unittest.TestCase):
     self.fail("Unexpected return of control from stream.filter()")
 
 
-  @_RETRY_SERVICE_RUNNING_CHECK
+  @_RETRY_ACCESSIBILITY_CHECK
   def testXigniteSecuritiesInterfaceIsAccessible(self):
 
     def getData(formattedStartTime, formattedEndTime):
@@ -163,13 +165,21 @@ class TaurusMetricCollectorsResourceAccessibilityTestCase(unittest.TestCase):
         data = getData(formattedStartTime, formattedEndTime)
         endTime -= timedelta(days=1)
 
-    self.assertEqual(data["Outcome"], "Success",
+    self.assertEqual(
+      data["Outcome"], "Success",
       ("Unable to query the XIgnite API for recent data for AAPL between {} "
        "and now").format(startTime))
 
 
-  @_RETRY_SERVICE_RUNNING_CHECK
-  def testSendErrorEmailIsPossible(self):
+  @_RETRY_ACCESSIBILITY_CHECK
+  def testTaurusEngineRestApiIsAccessible(self): # pylint: disable=R0201
+    metric_utils.getAllCustomMetrics(
+      host=os.environ["TAURUS_HTM_SERVER"],
+      apiKey=os.environ["TAURUS_API_KEY"])
+
+
+  @_RETRY_ACCESSIBILITY_CHECK
+  def testSendErrorEmailIsPossible(self): # pylint: disable=R0201
     """Send email to devnull@numenta.com via error-reporting email mechanism"""
     params = error_reporting._getErrorReportingParamsFromEnv()
     params["recipients"][:] = ["devnull@numenta.com"]
@@ -177,6 +187,7 @@ class TaurusMetricCollectorsResourceAccessibilityTestCase(unittest.TestCase):
     error_reporting.sendErrorEmail(subject="testSendErrorEmailIsPossible",
                                    body="Testing testSendErrorEmailIsPossible",
                                    params=params)
+
 
 
 

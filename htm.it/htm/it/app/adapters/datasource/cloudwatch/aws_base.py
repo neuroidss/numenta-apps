@@ -238,7 +238,7 @@ class AWSResourceAdapterBase(object):
 
 
   def getMetricData(self, start, end):
-    """ Retrieve metric data for the given time range
+    """ Retrieve metric data for up to the given time range
 
     :param start: UTC start time of the metric data range. The start value
       is inclusive: results include datapoints with the time stamp specified. If
@@ -265,28 +265,19 @@ class AWSResourceAdapterBase(object):
 
     samples = []
 
-    start, end = cloudwatch_utils.getMetricCollectionTimeRange(
+    fromDate, toDate = cloudwatch_utils.normalizeMetricCollectionTimeRange(
       startTime=start,
       endTime=end,
       period=period)
 
-    nextCallStartTime = start
+    if end is None:
+      end = toDate
 
-    # Calculate the number of records returned by this query
-    remainingSampleSlots = (end - start).total_seconds() // period
-
-    if remainingSampleSlots <= 0:
+    if toDate <= fromDate:
       self._log.warning("The requested date range=[%s..%s] is less than "
                         "period=%ss; adapter=%r", start, end, period, self)
     else:
-      # AWS limits data access to 1440 records
-      requestLimit = min(remainingSampleSlots, 1440)
-      fromDate = start
-      toDate = fromDate + datetime.timedelta(seconds=period * requestLimit)
-
-      # Load data in blocks of up to 1440 records
-      while not samples and toDate <= end and fromDate < toDate:
-        nextCallStartTime = fromDate
+      while fromDate < toDate:
         try:
           rawdata = self._queryCloudWatchMetricStats(
             period=period,
@@ -300,24 +291,27 @@ class AWSResourceAdapterBase(object):
           else:
             raise
 
-        # AWS limits data access to 1440 records
-        remainingSampleSlots = remainingSampleSlots - requestLimit
-        fromDate = toDate
-        requestLimit = min(remainingSampleSlots, 1440)
-        toDate = fromDate + datetime.timedelta(seconds=period * requestLimit)
+        if rawdata:
+          # Sort by "Timestamp"
+          rawdata.sort(key=lambda row: row["Timestamp"])
 
-        if not rawdata:
-          continue
+          # Format raw data into data points and append to results
+          samples.extend((e["Timestamp"], e[self.STATISTIC]) for e in rawdata)
 
-        # Sort by "Timestamp"
-        rawdata.sort(key=lambda row: row["Timestamp"])
+          # Bail out once we get a batch of samples
+          break
 
-        # Format raw data into data points and append to results
-        samples.extend((e["Timestamp"], e[self.STATISTIC]) for e in rawdata)
+        # Try the next range
+        fromDate, toDate = cloudwatch_utils.normalizeMetricCollectionTimeRange(
+          startTime=toDate,
+          endTime=end,
+          period=period)
 
 
     if samples:
       nextCallStartTime = samples[-1][0] + datetime.timedelta(seconds=period)
+    else:
+      nextCallStartTime = fromDate
 
     return (samples, nextCallStartTime)
 
@@ -343,7 +337,7 @@ class AWSResourceAdapterBase(object):
     defaultMinVal = self.MIN
     defaultMaxVal = self.MAX
 
-    start, end = cloudwatch_utils.getMetricCollectionTimeRange(
+    start, end = cloudwatch_utils.normalizeMetricCollectionTimeRange(
       startTime=start,
       endTime=end,
       period=self.METRIC_PERIOD)

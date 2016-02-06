@@ -55,6 +55,10 @@ RabbitMQ credentials:
   ☞  RABBITMQ_PASSWD
   ☞  RABBITMQ_USER
 
+nginx options:
+
+  ☞  NGINX_GLOBAL_PARAMS
+
 Taurus instance credentials:
 
   ☞  TAURUS_COLLECTOR_USER
@@ -214,28 +218,24 @@ pushd "${REPOPATH}"
 
   fi
 
-  # Shutdown services, clear out metrics
+  # Stop taurus metric collector server
   ssh -v -t ${SSH_ARGS} "${TAURUS_COLLECTOR_USER}"@"${TAURUS_COLLECTOR_HOST}" \
     "cd /opt/numenta/products/taurus.metric_collectors &&
      if [ -f supervisord.pid ]; then
-       supervisorctl --serverurl http://localhost:8001 shutdown
-     fi &&
-     taurus-unmonitor-metrics \
-       --server=\"${TAURUS_SERVER_HOST_PRIVATE}\" \
-       --apikey=\"${TAURUS_API_KEY}\" \
-       --all \
-       --modelsout=./unmonitor.json || true"
+       supervisorctl --serverurl http://localhost:8001 shutdown &&
+       nta-wait-for-supervisord-stopped http://localhost:8001
+     fi"
 
-  # Stop taurus server instance
+  # Stop taurus engine server
   ssh -v -t ${SSH_ARGS} "${TAURUS_SERVER_USER}"@"${TAURUS_SERVER_HOST}" \
     "cd /opt/numenta/products/taurus &&
      if [ -f taurus-supervisord.pid ]; then
-       supervisorctl --serverurl http://localhost:9001 shutdown
+       supervisorctl --serverurl http://localhost:9001 shutdown &&
+       nta-wait-for-supervisord-stopped http://localhost:9001
      fi  &&
      if [ -f /var/run/nginx.pid ]; then
        sudo /usr/sbin/nginx -p . -c conf/nginx-taurus.conf -s stop;
-     fi &&
-     rm -rf ${HOME}/taurus_model_checkpoints/*"
+     fi"
 
 
   # Sync git histories with taurus server for current HEAD
@@ -300,10 +300,7 @@ pushd "${REPOPATH}"
     taurus/pipeline/scripts/ssl/${TAURUS_SERVER_HOST}.key \
     "${TAURUS_SERVER_USER}"@"${TAURUS_SERVER_HOST}":/opt/numenta/products/taurus/conf/ssl/localhost.key
 
-  # Copy manual overrides
-  scp ${SSH_ARGS} -r \
-    taurus/pipeline/scripts/overrides/taurus/* \
-    "${TAURUS_SERVER_USER}"@"${TAURUS_SERVER_HOST}":/opt/numenta/products/taurus/
+  # Copy env declarations
   scp ${SSH_ARGS} -r \
     taurus/pipeline/scripts/taurus.metric_collectors-env.sh \
     "${TAURUS_COLLECTOR_USER}"@"${TAURUS_COLLECTOR_HOST}":/opt/numenta/products/taurus.metric_collectors/env.sh
@@ -311,7 +308,7 @@ pushd "${REPOPATH}"
     taurus/pipeline/scripts/taurus-env.sh \
     "${TAURUS_SERVER_USER}"@"${TAURUS_SERVER_HOST}":/opt/numenta/products/taurus/env.sh
 
-  # Perform Engine update
+  # Perform Engine update, clear out metrics, start Engine
   TAURUS_ENGINE_TESTS="py.test tests/deployment"
   if [[ ${RUN_UNIT_AND_INTEGRATION_TESTS} == 1 ]]; then
     TAURUS_ENGINE_TESTS="
@@ -335,31 +332,20 @@ pushd "${REPOPATH}"
         --host=${MYSQL_HOST} \
         --user=${MYSQL_USER} \
         --password=${MYSQL_PASSWD} &&
-     taurus-create-db \
-        --host=${MYSQL_HOST} \
-        --user=${MYSQL_USER} \
-        --password=${MYSQL_PASSWD} \
-        --suppress-prompt-and-continue-with-deletion &&
      taurus-set-dynamodb \
         --host=${DYNAMODB_HOST} \
         --port=${DYNAMODB_PORT} \
         --table-suffix=${DYNAMODB_TABLE_SUFFIX} &&
-     cd /opt/numenta/products/taurus/taurus/engine/repository &&
-     python migrate.py &&
+     taurus-set-api-key --apikey=${TAURUS_API_KEY} &&
      cd /opt/numenta/products/taurus &&
-     if [ -f /var/run/nginx.pid ]; then
-       sudo /usr/sbin/nginx -p . -c conf/nginx-taurus.conf -s reload
-     else
-       sudo /usr/sbin/nginx -p . -c conf/nginx-taurus.conf
-     fi &&
-     if [ -f taurus-supervisord.pid ]; then
-       supervisorctl --serverurl http://localhost:9001 reload
-     else
-       supervisord -c conf/supervisord.conf
-     fi &&
+     python setup.py reset_all_data --suppress-prompt-and-obliterate &&
+     cd /opt/numenta/products/taurus &&
+     sudo /usr/sbin/nginx -p . -c conf/nginx-taurus.conf ${NGINX_GLOBAL_PARAMS} &&
+     supervisord -c conf/supervisord.conf &&
+     nta-wait-for-supervisord-running http://localhost:9001 &&
      ${TAURUS_ENGINE_TESTS}"
 
-  # Perform Collector update
+  # Perform Collector update, start Collector
   if [[ ${RUN_UNIT_AND_INTEGRATION_TESTS} == 1 ]]; then
     TAURUS_COLLECTOR_UNIT_AND_INTEGRATION_TESTS="
       py.test ../nta.utils/tests &&
@@ -383,11 +369,7 @@ pushd "${REPOPATH}"
         --host=${RABBITMQ_HOST} \
         --user=${RABBITMQ_USER} \
         --password=${RABBITMQ_PASSWD} &&
-     cd /opt/numenta/products/taurus.metric_collectors/taurus/metric_collectors/collectorsdb &&
-     python migrate.py &&
      cd /opt/numenta/products/taurus.metric_collectors &&
-     supervisorctl --serverurl http://localhost:8001 shutdown &&
-     nta-wait-for-supervisord-stopped http://localhost:8001 &&
      py.test tests/deployment/resource_accessibility_test.py &&
      supervisord -c conf/supervisord.conf &&
      nta-wait-for-supervisord-running http://localhost:8001 &&

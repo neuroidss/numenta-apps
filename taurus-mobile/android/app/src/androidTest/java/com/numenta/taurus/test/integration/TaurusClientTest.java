@@ -117,8 +117,8 @@ public class TaurusClientTest extends TestCase {
     // Number of days to create data for the tests
     static final int NUM_OF_DAYS = 1;
 
-    // Test date range
-    static final long TEST_START_TIMESTAMP = 1429488000000l;
+    // Test date range. Use a date range crossing the new year, also testing this scenario
+    static final long TEST_START_TIMESTAMP = 1451779200000l; // Jan 3, 2016
 
     static final long TEST_END_TIMESTAMP =
             TEST_START_TIMESTAMP + DataUtils.MILLIS_PER_DAY * NUM_OF_DAYS;

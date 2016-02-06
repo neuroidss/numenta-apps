@@ -146,20 +146,12 @@ use in lieu of the command line interface.
 Renaming a stock (symbol)
 -----
 
-We have specialized tooling for migrating historical twitter data when a stock
-symbol is changed (for example when Walgreens went from trading under *WBA* to *WAG*)
+### Follow these steps
 
-### Follow the following steps (on a running metric-collectors instance):
-
-- Update the  file `taurus/metric_collectors/metric_csv_archive/metrics.csv` to use the correct symbol and then run `python taurus/metric_collectors/gen_metrics_config.py taurus/metric_collectors/metric_csv_archive/metrics.csv > conf/metrics.json` to generate the metrics.json file with updated metric names.
-- `taurus-collectors-set-opmode hot_standby`
-- `supervisorctl restart all` (restarts all services)
-  Note: If running supervisor on a non-default port (we currently use port 8001) run the following command:
-  `supervisorctl -s http://localhost:8001 restart all`
-- `taurus-resymbol --oldsymbol=<ABC> --newsymbol=<DEF>`
-  To only copy twitter metrics use the -t flag, to only copy xignite stock metrics use the -x flag. Default action is to copy both metrics.
-- `taurus-collectors-set-opmode active`
-- `supervisorctl restart all` or `supervisorctl -s http://localhost:8001 restart all`
-Note: The new metrics are NOT automatically monitored, regardless of whether or not the replaced
-metrics were already monitored. Once a metric has enough records om the taurus database, monitor
-metrics manually.
+- Update the  file `taurus/metric_collectors/metric_csv_archive/metrics.csv` to
+  use the correct symbol and then run
+    `python taurus/metric_collectors/gen_metrics_config.py taurus/metric_collectors/metric_csv_archive/metrics.csv > conf/metrics.json`
+  to generate the metrics.json file with updated metric names.
+- Push changes to Taurus Metric Collector server.
+- Restart Taurus Metric Collector services. metric_maintenance_agent.py service does the rest.
+  For more info, see taurus.metric_collectors/taurus/metric_collectors/common_services/metric_maintenance_agent.py.

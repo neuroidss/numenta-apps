@@ -424,126 +424,6 @@ xigniteSecurity = Table(
 
 
 
-def _createXigniteGlobalnewsSchema(schemaName, metadata):
-  schema = Table(
-    schemaName,
-    metadata,
-
-    # Foreign key reference into xignite_securty.symbol column
-    Column("symbol",
-           mysql.VARCHAR(length=_FIN_SECURITY_SYMBOL_MAX_LEN,
-                         **_ASCII_TEXT_KWARGS),
-           ForeignKey(xigniteSecurity.c.symbol,
-                      name=schemaName + "_to_security_fk",
-                      onupdate="CASCADE", ondelete="CASCADE"),
-           nullable=False,
-           server_default=""),
-
-    # The title for this headline
-    Column("title",
-           mysql.VARCHAR(length=500),
-           nullable=True),
-
-    # The date when this headline was published (or re-published by another
-    # source)
-    Column("local_pub_date",
-           DATE,
-           nullable=False),
-
-    # The UTC offset for the local_pub_date field
-    Column("utc_offset",
-           FLOAT,
-           autoincrement=False,
-           nullable=False),
-
-    # The UTC date/time when this press release was discovered by our agent
-    Column("discovered_at",
-           DATETIME,
-           nullable=False),
-
-    # The originating journal/website for this headline. NOTE: the same article
-    # URL can originate from multiple sources (e.g., "Clusterstock" and
-    # "Business Insider: Finance")
-    Column("source",
-           mysql.VARCHAR(length=MAX_UTF8_KEY_LENGTH),
-           nullable=False),
-
-    # The URL for the headline
-    # NOTE: max key length in SQL is 767 bytes
-    Column("url",
-           mysql.VARCHAR(length=767, **_ASCII_TEXT_KWARGS),
-           nullable=False),
-
-    # JSON list that contains URLs of all images associated with this headline
-    Column("image_urls",
-           mysql.MEDIUMTEXT(convert_unicode=True),
-           nullable=True),
-
-    # JSON list that contains all tags associated with this headline, broken
-    # down by tag groups; the original is flattened; example:
-    #   [{"Companies": ["American Airlines Group Inc.", "S&P Capital IQ"]},
-    #    {"Sectors": ["Finance", "Transportation"]},
-    #    {"Symbols": ["DAL", "AAL"]}, {"Topics": ["Business_Finance"]}]
-    # Source: xignite SecurityHeadline.Tags
-    Column("tags",
-           TEXT(convert_unicode=True),
-           nullable=True),
-
-    # The time taken (in seconds) to process the request on xignite servers.
-    Column("proc_dur",
-           FLOAT,
-           nullable=False),
-
-    # An abbreviated version(usually 2-3 paragraphs) of the full article; NULL
-    # if unknown
-    # Source: GetMarketNewsDetails MarketNewsItem.Summary
-    Column("summary",
-           mysql.TEXT(convert_unicode=True),
-           nullable=True),
-
-    # The UTC date/time when this news article was (originally) published; NULL
-    # if unknown
-    # Source: GetMarketNewsDetails MarketNewsItem.Time
-    Column("orig_pub_time",
-           DATETIME,
-           nullable=True),
-
-    # The originating journal/website for this headline; NULL if not known
-    # Source: GetMarketNewsDetails MarketNewsItem.Source
-    Column("orig_source",
-           mysql.TEXT(convert_unicode=True),
-           nullable=True),
-
-    # The time taken (in seconds) to process the GetMarketNewsDetails request on
-    # xignite servers.
-    # Source: GetMarketNewsDetails MarketNewsItem.Delay
-    Column("details_proc_dur",
-           FLOAT,
-           nullable=True),
-
-    PrimaryKeyConstraint("symbol", "local_pub_date", "url", "source",
-                         name=schemaName + "_pk"),
-
-    Index("discovered_at_idx", "discovered_at", unique=False)
-  )
-
-
-  return schema
-
-
-
-# Security (stock) Headlines from xIgnite
-xigniteSecurityHeadline = _createXigniteGlobalnewsSchema(
-  "xignite_security_headline", metadata)
-
-
-
-# Security (stock) Press Releases from xIgnite
-xigniteSecurityRelease = _createXigniteGlobalnewsSchema(
-  "xignite_security_release", metadata)
-
-
-
 # Company security symbols that have become invalid; used by
 # check_company_symbols.py
 companySymbolFailures = Table(
@@ -575,7 +455,7 @@ emittedSampleTracker = Table(
   "emitted_sample_tracker",
   metadata,
   # Provider-specific key that uniquely identifies the corresponding sample
-  # timestamp (e.g., "xignite-security-news-volume")
+  # timestamp (e.g., "twitter-tweets-volume")
   Column("key",
          mysql.VARCHAR(length=EMITTED_TRACKER_KEY_MAX_LEN,
                        **_ASCII_TEXT_KWARGS),
@@ -599,7 +479,7 @@ emittedNonMetricTracker = Table(
   metadata,
 
   # Provider-specific key that uniquely identifies the corresponding sample
-  # timestamp (e.g., "xignite-security-news-volume")
+  # timestamp (e.g., "twitter-tweets-volume")
   Column("key",
          mysql.VARCHAR(length=EMITTED_TRACKER_KEY_MAX_LEN,
                        **_ASCII_TEXT_KWARGS),
@@ -612,6 +492,8 @@ emittedNonMetricTracker = Table(
          autoincrement=False,
          nullable=False),
 )
+
+
 
 # XIgnite stock data.  Partial results from XIgniteGlobalQuota GetBars API
 xigniteSecurityBars = Table(

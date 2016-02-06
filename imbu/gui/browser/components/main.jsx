@@ -18,18 +18,17 @@
 * http://numenta.org/licenses/
 * -------------------------------------------------------------------------- */
 
-'use strict';
 
 import React from 'react';
 import Material from 'material-ui';
 import SearchComponent from './search.jsx';
 import SearchResultsComponent from './search-results.jsx';
 import SearchHistoryComponent from './search-history.jsx';
+import ThemeManager from 'material-ui/lib/styles/theme-manager';
+import LightTheme from 'material-ui/lib/styles/raw-themes/light-raw-theme';
 const {
-  AppBar, IconButton, Styles
+  AppBar, IconButton, GridList, GridTile, Paper
 } = Material;
-
-const ThemeManager = new Styles.ThemeManager();
 
 export default class Main extends React.Component {
 
@@ -46,24 +45,46 @@ export default class Main extends React.Component {
   }
 
   getChildContext() {
+    return {muiTheme: ThemeManager.getMuiTheme(LightTheme)};
+  }
+  _getStyles() {
     return {
-      muiTheme: ThemeManager.getCurrentTheme()
+      tile: {
+        margin: 1
+      }
     };
   }
 
   render() {
+    let styles = this._getStyles();
+
     return (
       <div>
         <AppBar title="Numenta Imbu Application"
           onLeftIconButtonTouchTap={this._onLeftIconButtonTouchTap.bind(this)}
           iconElementRight={
-            <IconButton href="http://www.numenta.com" linkButton={true}
-              iconClassName="material-icons" tooltip="Go to numenta.com">home
-            </IconButton>}/>
+            <IconButton href="http://www.numenta.com"
+              linkButton={true}
+              iconClassName="material-icons"
+              tooltip="Go to numenta.com">home</IconButton>
+          }/>
+
         <SearchComponent/>
-        <SearchResultsComponent/>
+        <br/>
+        <GridList cols={2} cellHeight={800}>
+          <GridTile>
+            <Paper style={styles.tile}>
+              <SearchResultsComponent model="CioDocumentFingerprint"/>
+            </Paper>
+          </GridTile>
+          <GridTile>
+            <Paper style={styles.tile}>
+              <SearchResultsComponent model="CioWordFingerprint"/>
+            </Paper>
+          </GridTile>
+        </GridList>
         <SearchHistoryComponent ref="history"/>
       </div>
     );
   }
-};
+}

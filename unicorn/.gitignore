@@ -3,8 +3,9 @@
 *.log
 build/
 dist/
-frontend/browser/assets/bundle/
-frontend/docs/
+nupic/
+js/browser/assets/bundle/
+js/docs/
 logs/
 node_modules/
 Unicorn-darwin-x64/

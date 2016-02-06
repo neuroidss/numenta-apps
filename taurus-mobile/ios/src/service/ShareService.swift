@@ -21,53 +21,66 @@ import Foundation
 import MessageUI
 
 /** class for handling social aspects of app
-*/
-class ShareService  {
+ */
+class ShareService {
+
+    var mailDelegate: MFMailComposeViewControllerDelegate?
     /** provides a UI to share a screen shot of the current view
-        - parameter controller: controller to take a screen shot of
-    */
-    func share( controller: UIViewController){
+     - parameter controller: controller to take a screen shot of
+     */
+    func share( controller: UIViewController) {
         let screenshot = takeScreenshot (controller)
         let objectsToShare = [screenshot]
         let activityVC = UIActivityViewController(activityItems: objectsToShare, applicationActivities: nil)
-        
+
         controller.presentViewController(activityVC, animated: true, completion: nil)
     }
-    
-    
-    /** provides a UI to send an email with a screen shot of the current view
-    - parameter controller: controller to take a screen shot of
-    */
-    func feedback (controller: UIViewController, presenter: MFMailComposeViewControllerDelegate){
-        
+
+    /* provides a UI to send an email with a screen shot of the current view
+     - parameter controller: controller to take a screen shot of
+     */
+    func feedback (controller: UIViewController, presenter: MFMailComposeViewControllerDelegate) {
+
+        mailDelegate = presenter
         // make sure mail is configured.
-        if (MFMailComposeViewController.canSendMail() == false){
-            
-            
-            let alert = UIAlertController(title: "Unable to send mail", message:
-                "Your device could not send e-mail.  Please check e-mail configuration and try again.", preferredStyle: UIAlertControllerStyle.Alert)
-            alert.addAction(UIAlertAction(title: "Click", style: UIAlertActionStyle.Default, handler: nil))
+        if MFMailComposeViewController.canSendMail() == false {
+            let alert = UIAlertController(title: "Unable to send mail",
+                                        message: "Your device could not send e-mail." +
+                                                 " Please check e-mail configuration and try again.",
+                                 preferredStyle: UIAlertControllerStyle.Alert)
+            alert.addAction(UIAlertAction(title: "Ok", style: UIAlertActionStyle.Default, handler: nil))
             controller.presentViewController(alert, animated: true, completion: nil)
             return
         }
 
         let mailController = MFMailComposeViewController()
         mailController.mailComposeDelegate = presenter
-        
+
         mailController.setToRecipients(["support@numenta.com"])
         mailController.setSubject("feedback")
-        
+
+        let version =  NSBundle.mainBundle().objectForInfoDictionaryKey( "CFBundleVersion") as! String
+        let bundleId =  NSBundle.mainBundle().objectForInfoDictionaryKey( "CFBundleIdentifier") as! String
+        let device =  UIDevice.currentDevice()
+        let report: String = "Bundle ID: \(bundleId)\n" +
+            "Application Version: \(version)\n" +
+            "iOS Version: \(device.systemVersion)\n" +
+            "iOS Device: \(device.model)\n"
+
+        mailController.addAttachmentData(report.dataUsingEncoding(NSUTF8StringEncoding)!,
+            mimeType:"text/plain", fileName:"report.txt")
+
         // create attachment and convert to a jpeg
         let screenshot = takeScreenshot (controller)
-        let myData = UIImageJPEGRepresentation(screenshot, 0.9);
-        mailController.addAttachmentData(myData!, mimeType:"image/jpg" ,fileName:"screenshot.jpg")
+        let myData = UIImageJPEGRepresentation(screenshot, 0.9)
+        mailController.addAttachmentData(myData!, mimeType:"image/jpg", fileName:"screenshot.jpg")
 
         controller.presentViewController(mailController, animated: true, completion: nil)
     }
-    
-    /** creates a screenshot of the view of the passed in controller
-    */
-    func takeScreenshot(controller :UIViewController)->UIImage{
+
+    /* creates a screenshot of the view of the passed in controller
+     */
+    func takeScreenshot(controller: UIViewController) -> UIImage {
         let view = controller.view
         UIGraphicsBeginImageContext(view.frame.size)
         view.layer.renderInContext(UIGraphicsGetCurrentContext()!)
@@ -76,7 +89,4 @@ class ShareService  {
 
         return image
     }
-    
-   
-    
 }

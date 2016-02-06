@@ -27,7 +27,7 @@ import webpacker from 'webpack-stream';
 
 // internals
 
-import Config from './frontend/lib/ConfigServer';
+import Config from './js/main/ConfigService';
 
 const config = new Config();
 
@@ -37,28 +37,18 @@ let WebServer = null; // @TODO not global
 // TASKS
 
 /**
- * Gulp task to serve site from the _site/ build dir
- */
-gulp.task('serve', () => {
-  let stream = gulp.src('.')
-    .pipe(gwebserver({ port: config.get('TEST_PORT') }))
-    .on('error', console.error);
-
-  WebServer = stream;
-
-  return stream;
-});
-
-/**
  * Gulp task to run WebPack to transpile require/modules/Babel into bundle
  */
 gulp.task('webpack', ()  => {
   let target = (config.get('UNICORN_TARGET') === 'desktop') ? 'atom' : 'web';
+  let source = path.join(__dirname, '/js/browser/app.js');
+  let destination = path.join(__dirname, '/js/browser/assets/bundle/');
 
-  return gulp.src('frontend/browser/app.js')
+  return gulp.src(source)
     .pipe(webpacker({
       bail: true,
       devtool: 'source-map',
+      entry: ['babel-polyfill', source],
       module: {
         loaders: [
           // fonts
@@ -80,7 +70,7 @@ gulp.task('webpack', ()  => {
           // script
           {
             test: /\.(js|jsx)$/,
-            loader: 'babel?stage=1',
+            loader: 'babel-loader',
             exclude: /node_modules/
           },
           {
@@ -91,18 +81,26 @@ gulp.task('webpack', ()  => {
       },
       output: {
         filename: 'bundle.js',
-        publicPath: path.join(__dirname, '/frontend/browser/assets/bundle/')
+        publicPath: destination
       },
-      plugins: [
-        new webpack.IgnorePlugin(/vertx/)  // @TODO remove in fluxible 4.x
-      ],
       resolve: {
-        extensions: ['', '.css', '.js', '.json', '.jsx']
+        extensions: [
+          '',
+          '.css',
+          '.eot',
+          '.js',
+          '.json',
+          '.jsx',
+          '.svg',
+          '.ttf',
+          '.woff',
+          '.woff2'
+        ]
       },
       target,
       verbose: true
     }))
-    .pipe(gulp.dest('frontend/browser/assets/bundle/'));
+    .pipe(gulp.dest(destination));
 });
 
 

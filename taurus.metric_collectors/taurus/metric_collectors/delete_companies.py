@@ -25,14 +25,12 @@
 import argparse
 import logging
 import os
-import Queue
 import random
-import signal
-import threading
 import time
 import uuid
 
 from nta.utils.error_handling import retry
+from nta.utils import prompt_utils
 
 from taurus.metric_collectors import collectorsdb
 from taurus.metric_collectors import logging_support
@@ -143,9 +141,13 @@ def deleteCompanies(tickerSymbols,
 
   # NOTE: We must query custom metrics after flushing the metric data path,
   # since metrics may get created as a side-effect of processing metric data.
-  allMetricNames = tuple(
-    obj["name"] for obj in
-    metric_utils.getAllCustomMetrics(host=engineServer, apiKey=engineApiKey))
+  allMetricsMap = {
+    obj["name"] : obj
+    for obj in
+    metric_utils.getAllCustomMetrics(host=engineServer, apiKey=engineApiKey)
+  }
+
+  allMetricNames = allMetricsMap.keys()
 
   for symbolNum, symbol in enumerate(tickerSymbols, 1):
     # Delete corresponding metrics from Taurus Engine
@@ -165,7 +167,8 @@ def deleteCompanies(tickerSymbols,
       metric_utils.deleteMetric(host=engineServer,
                                 apiKey=engineApiKey,
                                 metricName=metricName)
-      g_log.info("Deleted metric=%s", metricName)
+      g_log.info("Deleted metric name=%s, uid=%s", metricName,
+                 allMetricsMap[metricName]["uid"])
 
 
     # Delete the symbol from xignite_security table last; this cascades to
@@ -286,27 +289,10 @@ def _warnAboutDestructiveAction(timeout, tickerSymbols, engineServer):
             expectedAnswer=expectedAnswer,
             timeout=timeout))
 
-  timerExpiredQ = Queue.Queue()
-
-  def onTimerExpiration():
-    timerExpiredQ.put(1)
-    # NOTE: thread.interrupt_main() doesn't unblock raw_input, so we use
-    # SIGINT instead
-    os.kill(os.getpid(), signal.SIGINT)
-
-
-  timer = threading.Timer(timeout, onTimerExpiration)
   try:
-    timer.start()
-    if timerExpiredQ.empty():
-      answer = raw_input(promptText)
-  except KeyboardInterrupt:
-    if timerExpiredQ.empty():
-      raise
-  finally:
-    timer.cancel()
-
-  if not timerExpiredQ.empty():
+    answer = prompt_utils.promptWithTimeout(promptText=promptText,
+                                            timeout=timeout)
+  except prompt_utils.PromptTimeout:
     raise WarningPromptTimeout("Warning prompt timed out")
 
   if answer.strip() != expectedAnswer:

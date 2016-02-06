@@ -24,6 +24,10 @@ pod install
 sed -i .bak -e s/\"\"/\"${COGNITO_POOL_ID}\"/g src/app/AppConfig.swift
 rm src/app/AppConfig.swift.bak
 
+# Update Google Analytics
+sed -i .bak -e s/\$GA_TRACKING_ID/${GA_TRACKING_ID}/g GoogleService-Info.plist
+rm GoogleService-Info.plist.bak
+
 # Update build number
 BUILD_NUMBER=`git rev-list HEAD --count .`
 agvtool new-version -all 1.0.${BUILD_NUMBER}

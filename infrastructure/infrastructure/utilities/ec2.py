@@ -27,13 +27,12 @@ import os
 from time import sleep
 
 import boto.ec2
+import boto.exception
 
 from infrastructure.utilities import jenkins
-from infrastructure.utilities.exceptions import (CommandFailedError,
-                                                 InstanceLaunchError,
+from infrastructure.utilities.exceptions import (InstanceLaunchError,
                                                  InstanceNotFoundError,
                                                  InvalidParametersError)
-from infrastructure.utilities.ssh import runCommandBySSH
 
 
 DEFAULT_REGION = "us-west-2"
@@ -52,7 +51,8 @@ def getEC2Connection(config):
     :returns: An EC2Connection.
   """
   # TODO: TAUR-215 - Add retry decorator
-  return boto.ec2.connect_to_region(config["REGION"],
+  return boto.ec2.connect_to_region(
+    config["REGION"],
     aws_access_key_id = config["AWS_ACCESS_KEY_ID"],
     aws_secret_access_key = config["AWS_SECRET_ACCESS_KEY"])
 
@@ -102,18 +102,45 @@ def launchInstance(amiID, config, logger):
   instance = reservation.instances[0]
   instanceID = instance.id
 
-  logger.debug("Waiting for instance %s to boot.", instanceID)
-  for _ in xrange(MAX_RETRIES_FOR_INSTANCE_READY):
-    logger.debug("Instance state: %s", instance.state)
-    if instance.state == "pending":
-      sleep(SLEEP_DELAY)
-      instance.update()
-    elif instance.state == "running":
-      break
-  else:
-    terminateInstance(instanceID, config, logger)
-    raise InstanceLaunchError("Instance took more than %d seconds to start" %
-      MAX_RETRIES_FOR_INSTANCE_READY * SLEEP_DELAY)
+  try:
+    logger.debug("Waiting for instance %s to boot.", instanceID)
+    for _ in xrange(MAX_RETRIES_FOR_INSTANCE_READY):
+      logger.debug("Instance state: %s", instance.state)
+
+      if instance.state == "pending":
+        sleep(SLEEP_DELAY)
+
+        try:
+          instance.update()
+        except boto.exception.EC2ResponseError as exc:
+          # InvalidInstanceID.NotFound may occur because the ID of a recently
+          # created instance has not propagated through the system (due to
+          # eventual consistency)
+          if exc.error_code != "InvalidInstanceID.NotFound":
+            raise
+
+          logger.debug("launchInstance: suppressing transient "
+                       "InvalidInstanceID.NotFound on instance=%s", instanceID)
+
+      if instance.state == "running":
+        break
+    else:
+      raise InstanceLaunchError("Instance took more than %d seconds to start" %
+                                MAX_RETRIES_FOR_INSTANCE_READY * SLEEP_DELAY)
+  except:  # pylint: disable=W0702
+    # Preserve the original exception and traceback during cleanup
+    try:
+      raise
+    finally:
+      logger.exception("Terminating instance=%s that failed to reach running "
+                       "state; state=%s", instanceID, instance.state)
+      try:
+        terminateInstance(instanceID, config, logger)
+      except Exception:  # pylint: disable=W0703
+        # Suppress secondary non-system-exiting exception in favor of the
+        # original exception
+        logger.exception("Termination of instance=%s failed", instanceID)
+
 
   publicDnsName = instance.public_dns_name
 
@@ -142,7 +169,7 @@ def launchInstance(amiID, config, logger):
     raise
 
   logger.info("Instance %s is running, public dns : %s", instanceID,
-    publicDnsName)
+              publicDnsName)
   return publicDnsName, instanceID
 
 
@@ -205,7 +232,7 @@ def loadInstanceTags(instanceId,
 
   :rtype: boto instance tags object
 
-  :raises CommandFailedError if it can't find the instanceID
+  :raises InstanceNotFoundError if it can't find the instanceID
   :raises InstanceNotFoundError if instanceId is not found in region
   :raises InvalidParametersError if the arguments fail sanity check
   """

@@ -288,6 +288,13 @@ class SynchronousAmqpClient(object):
   _decodeMessageBody = str
 
 
+  # NOTE: RabbitMQ release 3.5.5, changed the server's default heartbeat timeout
+  # from 580 to 60, causing frequent dropped connections on our blocking
+  # transport. So, we restore the longer timeout by passing a bigger value
+  # to the broker during connection tuning.
+  _DEFAULT_HEARTBEAT_TIMEOUT_SEC = 600
+
+
   def __init__(self, connectionParams=None, channelConfigCb=None):
     """
     NOTE: Connection establishment may be performed in the scope of the
@@ -332,6 +339,7 @@ class SynchronousAmqpClient(object):
       vhost=params.vhost,
       host=params.host,
       port=params.port,
+      heartbeat=self._DEFAULT_HEARTBEAT_TIMEOUT_SEC,
       logger=g_log)
 
 

@@ -3,7 +3,12 @@ uwsgi==2.0.4
 web.py==0.37
 
 # Nupic
-nupic==0.3.4
+numpy==1.9.2
+pytest==2.5.1
+nupic==0.4.5
+
 # Fluent
+enum34==1.0.4
+pandas==0.17.0
 -e git+https://github.com/numenta/cortipy.git#egg=cortipy-0.1.0
--e git+https://github.com/numenta/nupic.fluent.git@0.2.1#egg=Fluent-0.2.1
+-e git+https://github.com/numenta/nupic.research.git#egg=htmresearch-0.0.1

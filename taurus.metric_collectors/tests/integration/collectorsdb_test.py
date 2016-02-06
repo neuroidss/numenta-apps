@@ -36,6 +36,7 @@ def setUpModule():
   logging_support.LoggingSupport.initTestApp()
 
 
+
 def startProxy(host, port, listenPort):
   """ Start a proxy using netcat (nc)
 

@@ -29,12 +29,14 @@ Unit tests for taurus.metric_collectors.delete_companies
 
 import time
 import unittest
+import uuid
 
 import mock
 from mock import ANY, Mock, patch
 
 
 from nta.utils.test_utils import time_test_utils
+from nta.utils import prompt_utils
 
 from taurus.metric_collectors import delete_companies
 
@@ -83,7 +85,8 @@ class DeleteCompaniesTestCase(unittest.TestCase):
 
     # Patch getAllCustomMetrics to return all negatives and positives
     getAllCustomMetricsMock.return_value = [
-      {"name": metric} for metric in negatives.union(positives)
+      {"uid": uuid.uuid1().hex, "name": metric}
+      for metric in negatives.union(positives)
     ]
 
     # Simulate xitgnite_security found for first symbol, but not the second one.
@@ -150,7 +153,8 @@ class DeleteCompaniesTestCase(unittest.TestCase):
 
     # Patch getAllCustomMetrics to return all negatives and positives
     getAllCustomMetricsMock.return_value = [
-      {"name": metric} for metric in negatives.union(positives)
+      {"uid": uuid.uuid1().hex, "name": metric}
+      for metric in negatives.union(positives)
     ]
 
     engineFactoryMock.return_value.begin.return_value.__enter__.return_value \
@@ -226,7 +230,7 @@ class DeleteCompaniesTestCase(unittest.TestCase):
 
   @patch("taurus.metric_collectors.delete_companies"
          "._waitForFlusherAndGarbageCollect",
-         spec_set=delete_companies._flushTaurusEngineMetricDataPath)
+         spec_set=delete_companies._waitForFlusherAndGarbageCollect)
   @patch("taurus.metric_collectors.metric_utils.metricDataBatchWrite",
          autospec=True)
   def testFlushTaurusEngineMetricDataPath(self,
@@ -333,25 +337,29 @@ class DeleteCompaniesTestCase(unittest.TestCase):
         flusherMetricName=flusherMetricName)
 
 
-  @patch("__builtin__.raw_input", autospec=True)
+  @patch("taurus.metric_collectors.delete_companies.prompt_utils"
+         ".promptWithTimeout", autospec=True)
   @patch("taurus.metric_collectors.delete_companies.random.randint",
          autospec=True)
-  def testWarnAboutDestructiveActionConfirmed(self, randintMock, rawInputMock):
+  def testWarnAboutDestructiveActionConfirmed(self, randintMock,
+                                              promptWithTimeoutMock):
     randintMock.return_value = 1
-    rawInputMock.return_value = "Yes-1"
+    promptWithTimeoutMock.return_value = "Yes-1"
 
     delete_companies._warnAboutDestructiveAction(timeout=10,
                                                  tickerSymbols="FOO",
                                                  engineServer="host")
 
-    self.assertEqual(rawInputMock.call_count, 1)
+    promptWithTimeoutMock.assert_called_once_with(promptText=ANY,
+                                                  timeout=10)
 
 
-  @patch("__builtin__.raw_input", autospec=True)
-  def testWarnAboutDestructiveActionRejected(self, rawInputMock):
+  @patch("taurus.metric_collectors.delete_companies.prompt_utils"
+         ".promptWithTimeout", autospec=True)
+  def testWarnAboutDestructiveActionRejected(self, promptWithTimeoutMock):
     # NOTE: rejection can be anything other than the expected input of
     # "Yes-<randint>"
-    rawInputMock.return_value = "No"
+    promptWithTimeoutMock.return_value = "No"
 
     with self.assertRaises(delete_companies.UserAbortedOperation):
       delete_companies._warnAboutDestructiveAction(timeout=10,
@@ -359,14 +367,15 @@ class DeleteCompaniesTestCase(unittest.TestCase):
                                                    engineServer="host")
 
 
-  @patch("__builtin__.raw_input", autospec=True)
-  def testWarnAboutDestructiveActionTimedOut(self, rawInputMock):
+  @patch("taurus.metric_collectors.delete_companies.prompt_utils"
+         ".promptWithTimeout", autospec=True)
+  def testWarnAboutDestructiveActionTimedOut(self, promptWithTimeoutMock):
 
     # NOTE: py.test by default captures console output and patches console input
-    # such # that raw_input fails. Although not ideal, we have to patch
+    # such that raw_input fails. Although not ideal, we have to patch
     # raw_input with something else that blocks and will be interrupted by
     # SIGINT.
-    rawInputMock.side_effect = lambda *args: time.sleep(10)
+    promptWithTimeoutMock.side_effect = prompt_utils.PromptTimeout
 
     with self.assertRaises(delete_companies.WarningPromptTimeout):
       delete_companies._warnAboutDestructiveAction(timeout=0.001,

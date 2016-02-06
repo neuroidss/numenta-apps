@@ -18,25 +18,26 @@
 * http://numenta.org/licenses/
 * -------------------------------------------------------------------------- */
 
-'use strict';
-
+import connectToStores from 'fluxible-addons-react/connectToStores';
+import ReactDOM from 'react-dom';
 import React from 'react';
 import Material from 'material-ui';
-import connectToStores from 'fluxible-addons-react/connectToStores';
-import SearchStore from '../stores/search';
+
+import CheckServerStatusAction from '../actions/server-status';
 import SearchQueryAction from '../actions/search-query';
+import SearchStore from '../stores/search';
+import ServerStatusStore from '../stores/server-status';
 
 const {
-  RaisedButton, TextField, Styles, ClearFix
+  RaisedButton, TextField, Styles, ClearFix, LinearProgress
 } = Material;
 
 const {
-  Spacing
+  Spacing, Colors
 } = Styles;
 
-const ThemeManager = new Styles.ThemeManager();
-
-@connectToStores([SearchStore], (context) => ({
+@connectToStores([SearchStore, ServerStatusStore], (context) => ({
+  ready: context.getStore(ServerStatusStore).isReady(),
   query: context.getStore(SearchStore).getQuery()
 }))
 export default class SearchComponent extends React.Component {
@@ -46,53 +47,91 @@ export default class SearchComponent extends React.Component {
     getStore: React.PropTypes.func
   };
 
-  static childContextTypes = {
-    muiTheme: React.PropTypes.object
-  };
-
   constructor() {
     super();
   }
 
-  getChildContext () {
-    return {
-      muiTheme: ThemeManager.getCurrentTheme()
-    };
+  componentDidMount() {
+    // Check server status
+    this._checkServerStatus();
   }
 
   componentDidUpdate() {
-    const el = React.findDOMNode(this.refs.query);
+    const el = ReactDOM.findDOMNode(this.refs.query);
     this.refs.query.setValue(this.props.query);
     el.focus();
   }
 
+  /**
+   * Pool server until all models are ready
+   */
+  _checkServerStatus() {
+    if (!this.props.ready) {
+      this.context.executeAction(CheckServerStatusAction);
+      // Wait 5 seconds before next poll
+      setTimeout(() =>  this._checkServerStatus(), 5000);
+    }
+  }
+
   _search() {
-    let query = this.refs.query.getValue();
-    this.context.executeAction(SearchQueryAction, query);
+    let query = this.refs.query.getValue() || '';
+    this.context.executeAction(SearchQueryAction, {query});
   }
 
   _getStyles() {
     return {
       content: {
-        padding: Spacing.desktopGutterMini + 'px',
-        maxWidth: '1200px',
+        padding: `${Spacing.desktopGutterMini}px`,
         margin: '0 auto',
+        display: 'table',
         boxSizing: 'border-box'
+      },
+      searchField: {
+        display: 'table-cell',
+        width: '100%'
+      },
+      searchButton: {
+        display: 'table-cell',
+        width: '1px',
+        float: 'right'
+      },
+      progress: {
+        textAlign: 'center',
+        padding: 5,
+        color: Colors.red500
       }
     };
   }
 
-  render () {
+  render() {
     let styles = this._getStyles();
-
+    let progress;
+    let ready = this.props.ready;
+    if (!ready) {
+      progress = (
+        <ClearFix>
+          <h3 height={styles.progress.height} style={styles.progress}>
+            Please wait while models are being built
+          </h3>
+          <LinearProgress mode="indeterminate"/>
+        </ClearFix>);
+    }
     return (
-      <ClearFix style={styles.content}>
-        <TextField floatingLabelText="Sample Text to match" fullWidth={true}
-                  id="query" name="query"
-                  onEnterKeyDown={this._search.bind(this)} ref="query"/>
-        <RaisedButton label="Search" onTouchTap={this._search.bind(this)}
-                      role="search" secondary={true}/>
+      <div>
+        {progress}
+        <ClearFix style={styles.content}>
+          <TextField floatingLabelText="Enter query:"
+                     fullWidth={true}
+                     id="query" name="query"
+                     disabled={!ready}
+                     onEnterKeyDown={this._search.bind(this)}
+                     style={styles.searchField}
+                     ref="query"/>
+          <RaisedButton label="Search" onTouchTap={this._search.bind(this)}
+                        disabled={!ready}
+                        style={styles.searchButton}
+                        role="search" secondary={true}/>
       </ClearFix>
-    );
+    </div>);
   }
 }

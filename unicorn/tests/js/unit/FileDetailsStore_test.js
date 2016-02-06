@@ -16,7 +16,7 @@
 // along with this program.  If not, see http://www.gnu.org/licenses.
 //
 // http://numenta.org/licenses/
-import FileDetailsStore from '../../../frontend/browser/stores/FileDetailsStore';
+import FileDetailsStore from '../../../js/browser/stores/FileDetailsStore';
 
 const assert = require('assert');
 

@@ -43,7 +43,7 @@ class RDSUtilsTest(unittest.TestCase):
     suggestions = list(suggestions)
 
     self.assertSequenceEqual(suggestions, [])
-    getRDSInstancesMock.assert_call_once_with("dummy-region")
+    getRDSInstancesMock.assert_called_once_with("dummy-region")
 
 
   @patch("htm.it.app.aws.rds_utils.getRDSInstances")
@@ -59,7 +59,7 @@ class RDSUtilsTest(unittest.TestCase):
     suggestions = list(suggestions)
 
     self.assertSequenceEqual(suggestions, [])
-    getRDSInstancesMock.assert_call_once_with("dummy-region")
+    getRDSInstancesMock.assert_called_once_with("dummy-region")
 
 
   @patch("htm.it.app.aws.rds_utils.getRDSInstances")
@@ -91,7 +91,7 @@ class RDSUtilsTest(unittest.TestCase):
         {"id": "testId1", "name": "testId1", "namespace": "AWS/RDS",
          "region": region},
     ])
-    getRDSInstancesMock.assert_call_once_with(region)
+    getRDSInstancesMock.assert_called_once_with(region)
 
 
 

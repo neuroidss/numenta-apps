@@ -54,6 +54,10 @@ RabbitMQ credentials:
   ☞  RABBITMQ_PASSWD
   ☞  RABBITMQ_USER
 
+nginx options:
+
+  ☞  NGINX_GLOBAL_PARAMS
+
 Taurus instance credentials:
 
   ☞  TAURUS_COLLECTOR_USER
@@ -221,13 +225,12 @@ pushd "${REPOPATH}"
        supervisorctl --serverurl http://localhost:8001 restart all
      fi"
 
-  # Stop taurus server instance
+  # Stop taurus engine server
   ssh -v -t ${SSH_ARGS} "${TAURUS_SERVER_USER}"@"${TAURUS_SERVER_HOST}" \
     "cd /opt/numenta/products/taurus &&
      if [ -f taurus-supervisord.pid ]; then
-       supervisorctl --serverurl http://localhost:9001 stop all
-       nta-wait-for-supervisord-processes-stopped --supervisorApiUrl=http://localhost:9001
-       supervisorctl --serverurl http://localhost:9001 shutdown
+       supervisorctl --serverurl http://localhost:9001 shutdown &&
+       nta-wait-for-supervisord-stopped http://localhost:9001
      fi  &&
      if [ -f /var/run/nginx.pid ]; then
        sudo /usr/sbin/nginx -p . -c conf/nginx-taurus.conf -s stop;
@@ -295,10 +298,7 @@ pushd "${REPOPATH}"
     taurus/pipeline/scripts/ssl/${TAURUS_SERVER_HOST}.key \
     "${TAURUS_SERVER_USER}"@"${TAURUS_SERVER_HOST}":/opt/numenta/products/taurus/conf/ssl/localhost.key
 
-  # Copy manual overrides
-  scp ${SSH_ARGS} -r \
-    taurus/pipeline/scripts/overrides/taurus/* \
-    "${TAURUS_SERVER_USER}"@"${TAURUS_SERVER_HOST}":/opt/numenta/products/taurus/
+  # Copy env declarations
   scp ${SSH_ARGS} -r \
     taurus/pipeline/scripts/taurus.metric_collectors-env.sh \
     "${TAURUS_COLLECTOR_USER}"@"${TAURUS_COLLECTOR_HOST}":/opt/numenta/products/taurus.metric_collectors/env.sh
@@ -334,19 +334,14 @@ pushd "${REPOPATH}"
         --host=${DYNAMODB_HOST} \
         --port=${DYNAMODB_PORT} \
         --table-suffix=${DYNAMODB_TABLE_SUFFIX} &&
+     taurus-set-api-key \
+        --apikey=${TAURUS_API_KEY} &&
      cd /opt/numenta/products/taurus/taurus/engine/repository &&
      python migrate.py &&
      cd /opt/numenta/products/taurus &&
-     if [ -f /var/run/nginx.pid ]; then
-       sudo /usr/sbin/nginx -p . -c conf/nginx-taurus.conf -s reload
-     else
-       sudo /usr/sbin/nginx -p . -c conf/nginx-taurus.conf
-     fi &&
-     if [ -f taurus-supervisord.pid ]; then
-       supervisorctl --serverurl http://localhost:9001 reload
-     else
-       supervisord -c conf/supervisord.conf
-     fi &&
+     sudo /usr/sbin/nginx -p . -c conf/nginx-taurus.conf ${NGINX_GLOBAL_PARAMS} &&
+     supervisord -c conf/supervisord.conf &&
+     nta-wait-for-supervisord-running http://localhost:9001 &&
      ${TAURUS_ENGINE_TESTS}"
 
 

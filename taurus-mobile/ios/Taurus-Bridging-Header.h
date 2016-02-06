@@ -23,8 +23,8 @@
 
 #import "FMDB.h"
 
+#import <Google/Analytics.h>
 
 #import <AWSCore/AWSCore.h>
 #import <AWSDynamoDB/AWSDynamoDB.h>
 #import <AWSCognito/AWSCognito.h>
-#import "SWRevealViewController.h"

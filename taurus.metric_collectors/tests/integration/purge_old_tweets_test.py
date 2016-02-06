@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # ----------------------------------------------------------------------
 # Numenta Platform for Intelligent Computing (NuPIC)
 # Copyright (C) 2015, Numenta, Inc.  Unless you have purchased from
@@ -19,6 +18,9 @@
 #
 # http://numenta.org/licenses/
 # ----------------------------------------------------------------------
+
+"""Integration test for taurus.metric_collectors.twitterdirect.purge_old_tweets
+"""
 
 from datetime import datetime, timedelta
 import unittest
@@ -90,7 +92,7 @@ class PurgeOldTweetsTestCase(unittest.TestCase):
 
     allRows = oldRows + youngRows
 
-    # Patch collectorsdb config to use a temporary database name
+    # Patch collectorsdb config to use a temporary database
     with collectorsdb_test_utils.ManagedTempRepository("purgetweets"):
       engine = collectorsdb.engineFactory()
 
@@ -101,20 +103,22 @@ class PurgeOldTweetsTestCase(unittest.TestCase):
 
       self.assertEqual(numInserted, len(allRows))
 
-      purge_old_tweets.purgeOldTweets(gcThresholdDays)
+      # Execute
+      numDeleted = purge_old_tweets.purgeOldTweets(gcThresholdDays)
+
+      # Verify
+
+      self.assertEqual(numDeleted, len(oldRows))
 
       # Verify that only the old tweets got purged
-      rows = engine.execute(
+      remainingRows = engine.execute(
         sql.select([schema.twitterTweets.c.uid])).fetchall()
 
-      self.assertEqual(len(rows), len(youngRows))
+      self.assertEqual(len(remainingRows), len(youngRows))
 
-      self.assertItemsEqual([row["uid"] for row in youngRows],
-                            [row.uid for row in rows])
-
-
-
-
+      self.assertItemsEqual(
+        [row["uid"] for row in youngRows],
+        [row.uid for row in remainingRows]) # pylint: disable=E1101
 
 
 

@@ -1027,7 +1027,7 @@ class EC2InstanceMetricGetter(object):
               then end-time will be set equal to start-time
     :rtype: htm.it.app.runtime.aggregator_utils.TimeRange
     """
-    startTime, endTime = cloudwatch_utils.getMetricCollectionTimeRange(
+    startTime, endTime = cloudwatch_utils.normalizeMetricCollectionTimeRange(
       startTime=startTime,
       endTime=None,
       period=period)
@@ -1046,7 +1046,7 @@ class EC2InstanceMetricGetter(object):
               number of metric periods.
     :rtype: htm.it.app.runtime.aggregator_utils.TimeRange
     """
-    startTime, endTime = cloudwatch_utils.getMetricCollectionTimeRange(
+    startTime, endTime = cloudwatch_utils.normalizeMetricCollectionTimeRange(
       startTime=None,
       endTime=None,
       period=period)

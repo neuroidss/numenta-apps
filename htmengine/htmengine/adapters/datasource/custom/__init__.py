@@ -27,7 +27,7 @@ import copy
 import datetime
 
 from htmengine.adapters.datasource.datasource_adapter_iface import (
-    DatasourceAdapterIface)
+  DatasourceAdapterIface)
 
 import htmengine.exceptions as app_exceptions
 from htmengine import htmengine_logging
@@ -252,8 +252,8 @@ class _CustomDatasourceAdapter(DatasourceAdapterIface):
     :raises htmengine.exceptions.MetricNotSupportedError: if requested metric
       isn't supported
 
-    :raises htmengine.exceptions.MetricAlreadyMonitored: if the metric is already
-      being monitored
+    :raises htmengine.exceptions.MetricAlreadyMonitored: if the metric is
+      already being monitored
     """
     metricSpec = modelSpec["metricSpec"]
 

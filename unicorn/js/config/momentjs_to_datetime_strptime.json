@@ -1,0 +1,42 @@
+{
+  "ISO 8601": {
+    "YYYY-MM-DDTHH:mm:ss.SZ": "%Y-%m-%dT%H:%M:%S.%fZ",
+    "YYYY-MM-DDTHH:mm:ss.S": "%Y-%m-%dT%H:%M:%S.%f",
+    "YYYY-MM-DDTHH:mm:ssZ": "%Y-%m-%dT%H:%M:%SZ",
+    "YYYY-MM-DDTHH:mm:ss": "%Y-%m-%dT%H:%M:%S",
+    "YYYY-MM-DDTHH:mmZ": "%Y-%m-%dT%H:%MZ",
+    "YYYY-MM-DDTHH:mm": "%Y-%m-%dT%H:%M"
+  },
+
+  "ISO 8601 no T": {
+    "YYYY-MM-DD HH:mm:ss.SZ": "%Y-%m-%d %H:%M:%S.%fZ",
+    "YYYY-MM-DD HH:mm:ss.S": "%Y-%m-%d %H:%M:%S.%f",
+    "YYYY-MM-DD HH:mm:ssZ": "%Y-%m-%d %H:%M:%SZ",
+    "YYYY-MM-DD HH:mm:ss": "%Y-%m-%d %H:%M:%S",
+    "YYYY-MM-DD HH:mmZ": "%Y-%m-%d %H:%MZ",
+    "YYYY-MM-DD HH:mm": "%Y-%m-%d %H:%M",
+    "YYYY-MM-DD": "%Y-%m-%d"
+  },
+
+  "US Date, 24h time": {
+    "MM-DD-YYYY HH:mm:ss.S": "%m-%d-%Y %H:%M:%S.%f",
+    "MM-DD-YYYY HH:mm:ss": "%m-%d-%Y %H:%M:%S",
+    "MM-DD-YYYY HH:mm": "%m-%d-%Y %H:%M"
+  },
+
+  "US Date": {
+    "MM-DD-YYYY": "%m-%d-%Y"
+  },
+
+  "US 12h AM/PM time": {
+    "hh:mm:ss.S A": "%i:%M:%S.%f %p",
+    "hh:mm:ss A": "%i:%M:%S %p",
+    "hh:mm A": "%i:%M %p"
+  },
+
+  "24h time": {
+    "HH:mm:ss.S": "%H:%M:%S.%f",
+    "HH:mm:ss": "%H:%M:%S",
+    "HH:mm": "%H:%M"
+  }
+}

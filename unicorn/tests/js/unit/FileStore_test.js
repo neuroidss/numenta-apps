@@ -20,7 +20,7 @@
 
 // internals
 
-import FileStore from '../../../frontend/browser/stores/FileStore';
+import FileStore from '../../../js/browser/stores/FileStore';
 
 
 // SETUP

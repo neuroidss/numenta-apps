@@ -204,8 +204,10 @@ class MetricOrderMonitorTest(unittest.TestCase):
     sendEmailMock.assert_called_once_with(
       monitorName=monitor._MONITOR_NAME,
       resourceName=monitoredResource,
-      message="The following rows of metric_data table were out of "
-              "order:\n1\n2\n3\n",
+      message=(
+        "The following rows of metric_data table were out of order:\nUID "
+        "\tcount(rowid) \tmin(rowid) \tmax(rowid) \tmin(timestamp) "
+        "\tmax(timestamp) \tmetric name\n1\n2\n3\n"),
       params={})
 
     self.assertFalse(removeMock.called)

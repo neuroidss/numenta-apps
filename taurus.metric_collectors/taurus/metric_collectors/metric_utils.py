@@ -613,7 +613,7 @@ def queryLastEmittedSampleDatetime(key):
 @collectorsdb.retryOnTransientErrors
 def updateLastEmittedSampleDatetime(key, sampleDatetime):
   """ Update the last emitted sample timestamp value in the database for the
-  News Volume metrics
+  Tweet Volume metrics
 
   :param str key: caller's key in schema.emittedSampleTracker
   :param datetime sampleDatetime: UTC datetime of last successfully-emitted
@@ -648,7 +648,7 @@ def queryLastEmittedNonMetricSequence(key):
 @collectorsdb.retryOnTransientErrors
 def updateLastEmittedNonMetricSequence(key, seq):
   """ Update the last emitted sample timestamp value in the database for the
-  News Volume metrics
+  Tweet Volume metrics
 
   :param str key: caller's key in schema.emittedNonMetricTracker
   :param int seq: sequence of last successfully-emitted non-metric

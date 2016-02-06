@@ -19,4 +19,4 @@ def upgrade():
 
 
 def downgrade():
-    ${downgrades if downgrades else "pass"}
+    raise NotImplementedError("Rollback is not supported.")

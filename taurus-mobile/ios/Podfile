@@ -1,23 +1,33 @@
-source 'https://github.com/CocoaPods/Specs.git'
+source 'https://github.com/CocoaPods/Specs.git'
+
 
 pod 'FMDB'
-#pod 'MMDrawerController', '~> 0.5.7'
-pod'AWSCore'
-#pod 'AWSAutoScaling'
+pod 'Google/Analytics'
+
+#pod 'MMDrawerController', '~> 0.5.7'
+
+pod'AWSCore', '2.3.0'
+
+#pod 'AWSAutoScaling'
 #pod 'AWSCloudWatch'
-pod 'AWSDynamoDB'
+pod 'AWSDynamoDB',  :git => 'https://github.com/lscheinkman/aws-sdk-ios.git', :branch => 'gzip'
 #pod 'AWSEC2'
 #pod 'AWSElasticLoadBalancing'
 #pod 'AWSKinesis'
-#pod 'AWSLambda'
+
+#pod 'AWSLambda'
 #pod 'AWSMachineLearning'
 #pod 'AWSMobileAnalytics'
 #pod 'AWSS3'
-#pod 'AWSSES'
+
+#pod 'AWSSES'
 #pod 'AWSSimpleDB'
-#pod 'AWSSNS'
+
+#pod 'AWSSNS'
 #pod 'AWSSQS'
-pod 'AWSCognito'
+pod 'AWSCognito', '2.3.0'
+
+
 
 
 

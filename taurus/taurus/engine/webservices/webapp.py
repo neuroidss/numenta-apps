@@ -25,8 +25,7 @@ from taurus.engine import logging_support
 from taurus.engine.taurus_logging import getExtendedLogger
 from taurus.engine.webservices import (instances_api,
                                        metrics_api,
-                                       models_api,
-                                       tweets_api)
+                                       models_api)
 
 
 
@@ -42,8 +41,7 @@ urls = (
   "/", "DefaultHandler",
   "/_instances", instances_api.app,
   "/_metrics", metrics_api.app,
-  "/_models", models_api.app,
-  "/_tweets", tweets_api.app
+  "/_models", models_api.app
 )
 
 

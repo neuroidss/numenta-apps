@@ -373,10 +373,6 @@ public class TaurusClient : GrokClient {
     func getAllInstanceDataForDate( date : NSDate,  fromHour: Int,  toHour : Int,
         ascending : Bool,callback : (InstanceData?)->Void?){
             
-            
-       //     print (date)
-       //     print ( fromHour)
-        //    print (toHour)
             let query = AWSDynamoDBQueryInput()
             query.tableName = TaurusClient.INSTANCE_DATA_HOURLY_TABLE
             var keyConditions : [String: AWSDynamoDBCondition] = [: ]
@@ -392,7 +388,6 @@ public class TaurusClient : GrokClient {
             let dateAttr = AWSDynamoDBAttributeValue()
             dateAttr.S = dateStr
             
-           // print ("syncing " + dateAttr.S)
             dateCondition.attributeValueList = [dateAttr]
             keyConditions["date"] = dateCondition
             
@@ -499,17 +494,17 @@ public class TaurusClient : GrokClient {
         let fromDay = calendar.ordinalityOfUnit(.Day, inUnit: .Year, forDate: from)
         let toDay = calendar.ordinalityOfUnit(.Day, inUnit: .Year, forDate: to)
 
-        /*print ("Get all days")
-        print ("getAllInstance from:" + from.description)
-        print ("getAllInstance to:" + to.description)
-*/
-       
+
         // Check if "from" date and "to" date falls on the same day
         if (fromDay == toDay) {
              getAllInstanceDataForDate(from, fromHour: calendar.component(NSCalendarUnit.Hour, fromDate: from), toHour: calendar.component(NSCalendarUnit.Hour, fromDate: to), ascending: ascending, callback : callback)
         } else {
             // Get Multiple days
-            let totalDays = toDay - fromDay;
+            var totalDays = toDay - fromDay;
+            // Account for intervals at the end of the year where fromDay could be greater than toDay
+            if (totalDays < 0) {
+                totalDays += 365;
+            }
             var interval = -1;
             var date = to
             // Check if loading in reverse order
@@ -520,12 +515,16 @@ public class TaurusClient : GrokClient {
             
             for var i = 0; i<=totalDays ; i++ {
                 
+                 NSNotificationCenter.defaultCenter().postNotificationName(DataSyncService.PROGRESS_STATE_EVENT, object: date)
+                
              //   print (date)
                 getAllInstanceDataForDate(date, fromHour:0, toHour: 23, ascending: ascending, callback : callback)
                 
                 // FIXME verify this handles end of year wrapping properly
                 date = calendar.dateByAddingUnit(NSCalendarUnit.Day, value: interval, toDate: date, options: [])!
             }
+            
+             NSNotificationCenter.defaultCenter().postNotificationName(DataSyncService.PROGRESS_STATE_EVENT, object: nil)
         }
     }
 }

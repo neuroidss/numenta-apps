@@ -33,7 +33,8 @@
           "volume_size": 32
         }
       ],
-      "type": "amazon-ebs"
+      "type": "amazon-ebs",
+      "ssh_pty": true
     }
   ],
   "provisioners": [

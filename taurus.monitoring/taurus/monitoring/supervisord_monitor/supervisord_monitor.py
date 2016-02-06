@@ -18,6 +18,7 @@
 #
 # http://numenta.org/licenses/
 # ----------------------------------------------------------------------
+import logging
 import types
 
 from nta.utils import error_reporting
@@ -26,11 +27,17 @@ from nta.utils.supervisor_utils import SupervisorClient
 from taurus.monitoring.monitor_dispatcher import MonitorDispatcher
 from taurus.monitoring import (loadConfig,
                                loadEmailParamsFromConfig,
-                               MonitorOptionParser)
+                               logging_support,
+                               MonitorOptionParser,
+                               TaurusMonitorError)
 
 
 
-class SupervisorMonitorError(Exception):
+g_logger = logging.getLogger(__name__)
+
+
+
+class SupervisorMonitorError(TaurusMonitorError):
   pass
 
 
@@ -58,13 +65,29 @@ class SupervisorChecker(MonitorDispatcher):
   def __init__(self):
     options = self.parser.parse_options()
 
+    if not options.serverUrl:
+      self.parser.error("You must specify a --serverUrl argument.")
+
+    logging_support.LoggingSupport.initLogging(
+      loggingLevel=options.loggingLevel)
+
     self.server = SupervisorClient(options.serverUrl)
     self.subjectPrefix = options.subjectPrefix
 
     self.config = loadConfig(options)
     self.emailParams = loadEmailParamsFromConfig(self.config)
+    self.options = options
+
+    g_logger.info("Initialized {}".format(repr(self)))
 
 
+  def __repr__(self):
+    invocation = " ".join("--{}={}".format(key, value)
+                          for key, value in vars(self.options).items())
+    return "{} {}".format(self.parser.get_prog_name(), invocation)
+
+
+  @MonitorDispatcher.preventDuplicates
   def dispatchNotification(self, checkFn, excType, excValue, excTraceback):
     """  Send notification.
 
@@ -84,46 +107,47 @@ class SupervisorChecker(MonitorDispatcher):
     )
 
 
+  @MonitorDispatcher.registerCheck
+  def checkSupervisordState(self):
+    """ Check that supervisord is running
+    """
+    state = self.server.supervisor.getState()
+    if not isinstance(state, types.DictType):
+      raise SupervisorMonitorError("Unexpected response from"
+                                   " `server.supervisor.getState()`: {}"
+                                   .format(repr(state)))
 
-@SupervisorChecker.registerCheck
-def checkSupervisordState(monitorObj):
-  """ Check that supervisord is running
-  """
-  state = monitorObj.server.supervisor.getState()
-  if not isinstance(state, types.DictType):
-    raise SupervisorMonitorError("Unexpected response from"
-                                 " `server.supervisor.getState()`: {}"
-                                 .format(repr(state)))
-
-  if state.get("statename") != "RUNNING":
-    raise SupervisorNotRunning("Supervisor does not appear to be running:"
-                               "{}".format(repr(state)))
-
+    if state.get("statename") != "RUNNING":
+      raise SupervisorNotRunning("Supervisor does not appear to be running:"
+                                 "{}".format(repr(state)))
 
 
-@SupervisorChecker.registerCheck
-def checkSupervisorProcesses(monitorObj):
-  """ Check that there are no processes in a 'FATAL' state.
-  """
-  processes = monitorObj.server.supervisor.getAllProcessInfo()
 
-  if not isinstance(processes, types.ListType):
-    raise SupervisorMonitorError("Unexpected response from"
-                                 " `server.supervisor.getAllProcessInfo()`: {}"
-                                 .format(repr(processes)))
+  @MonitorDispatcher.registerCheck
+  def checkSupervisorProcesses(self):
+    """ Check that there are no processes in a 'FATAL' state.
+    """
+    processes = self.server.supervisor.getAllProcessInfo()
 
-  for process in processes:
-    if process.get("statename") == "FATAL":
-      logTail = monitorObj.server.supervisor.tailProcessLog(
-        process["group"] + ":" + process["name"], -2048, 2048)
+    if not isinstance(processes, types.ListType):
+      raise SupervisorMonitorError(
+        "Unexpected response from`server.supervisor.getAllProcessInfo()`: {}"
+        .format(repr(processes)))
 
-      errMessage = ("{group}:{name} is in a FATAL state: {description}"
-                    .format(group=process.get("group"),
-                            name=process.get("name"),
-                            description=process.get("description"))) + (
-                    "\n\nLast 2048 bytes of log:" +
-                    "\n\n=======================\n\n" +
-                    logTail[0] +
-                    "\n\n=======================\n")
+    for process in processes:
+      if process.get("statename") == "FATAL":
+        logTail = self.server.supervisor.tailProcessLog(
+          process["group"] + ":" + process["name"], -2048, 2048)
 
-      raise SupervisorProcessInFatalState(errMessage)
+        errMessage = (
+          "{group}:{name} is in a FATAL state: {description}"
+          "\n\nLast 2048 bytes of log:"
+          "\n\n=======================\n\n"
+          "{logTail}"
+          "\n\n=======================\n").format(
+            group=process.get("group"),
+            name=process.get("name"),
+            description=process.get("description"),
+            logTail=logTail[0])
+
+        raise SupervisorProcessInFatalState(errMessage)

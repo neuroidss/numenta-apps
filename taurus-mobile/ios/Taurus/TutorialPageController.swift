@@ -18,6 +18,7 @@
 // http://numenta.org/licenses/
 
 import Foundation
+import UIKit
 
 class TutorialPageController: UIViewController {
     

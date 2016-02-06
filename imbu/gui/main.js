@@ -18,9 +18,6 @@
  * http://numenta.org/licenses/
  * -------------------------------------------------------------------------- */
 
-'use strict';
-
-
 /**
  * Main Electron code Application entry point, initializes browser app.
  */
@@ -30,10 +27,12 @@
 import app from 'app';
 import BrowserWindow from 'browser-window';
 import crashReporter from 'crash-reporter';
+import path from 'path';
 
 // internals
 
 let mainWindow = null; // global reference to keep window object from JS GC
+const MAIN_PAGE = `file://${path.join(__dirname, '/browser/index.html')}`;
 
 
 // MAIN
@@ -56,9 +55,9 @@ app.on('ready', () => {
     width:  1200,
     height: 720
   });
-  mainWindow.loadUrl('file://' + __dirname + '/browser/index.html');
+  mainWindow.loadUrl(MAIN_PAGE);
   // mainWindow.openDevTools();
-  mainWindow.on('closed', function () {
+  mainWindow.on('closed', () => {
     mainWindow = null; // dereference single main window object
   });
 });

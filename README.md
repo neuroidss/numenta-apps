@@ -34,7 +34,7 @@ defines program dependencies within a `DEPENDENCIES.md` file.
 
 See http://numenta.com/htm-it.
 
-#### [`/htm-it`](htm-it)
+#### [`/htm.it`](htm.it)
 
 AWS/Cloudwatch integration for HTM Engine.
 

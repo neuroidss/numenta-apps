@@ -99,7 +99,7 @@ class InstanceAnomalyChartData : AnomalyChartData {
         let anomalies :[Int64:AnomalyValue]? = db.getInstanceData(instanceId, from: startDate, to: endDate)
         var changed = true
         // Extract anomaly scores
-       var scores = [(Int64,Double)]()
+        var scores = [(Int64,Double)]()
         if anomalies == nil{
             return  false
         }
@@ -115,14 +115,6 @@ class InstanceAnomalyChartData : AnomalyChartData {
             return $0.0 < $1.0
         }
         
-        if (ticker == "JNJ"){
-            for score in scores{
-                print(score)
-            }
-        }
-       
-        
-     
        
         // Check if anything changed
         // fixmeabs(
@@ -132,33 +124,33 @@ class InstanceAnomalyChartData : AnomalyChartData {
        
 
         // Rank data based on the last bars if changed
-       if (timestamp != lastDBTimestamp || changed)
-       {
+       if (timestamp != lastDBTimestamp || changed) {
             lastDBTimestamp = timestamp
-             let anomalies :[Int64:AnomalyValue]? = db.getInstanceData(instanceId, from: lastDBTimestamp - Int64(limit)*aggregation.milliseconds(), to: lastDBTimestamp)
-        
+            // Get last "limit" bars
+            let data :[Int64:AnomalyValue]? = db.getInstanceData(instanceId, from: lastDBTimestamp - Int64(limit) * aggregation.milliseconds(), to: lastDBTimestamp)
+            // Sort and Truncate results
+            let sortedAnomalies = data?.sort {
+                $0.0 > $1.0
+            }.prefix(limit)
+
             rank = 0
             anomalousMetrics.rawValue = 0
-            for (_abs, value) in anomalies!{
-                    rank += Float(DataUtils.calculateSortRank ((Double(abs(value.anomaly)))))
-                    anomalousMetrics.insert( value.metricMask)
-                
+            for (_, value) in sortedAnomalies! {
+                rank += Float(DataUtils.calculateSortRank ((Double(abs(value.anomaly)))))
+                anomalousMetrics.insert(value.metricMask)
             }
-        
-            if ( anomalousMetrics.rawValue != 0){
-                if ( anomalousMetrics.contains( MetricType.StockPrice) || anomalousMetrics.contains( MetricType.StockVolume) ){
+
+            if (anomalousMetrics.rawValue != 0) {
+                if (anomalousMetrics.contains( MetricType.StockPrice) || anomalousMetrics.contains( MetricType.StockVolume)) {
                     rank += Float(DataUtils.RED_SORT_FLOOR*1000.0)
                 }
                 
-                if ( anomalousMetrics.contains( MetricType.TwitterVolume) ){
-                    rank += Float(DataUtils.RED_SORT_FLOOR)*100.0
+                if (anomalousMetrics.contains( MetricType.TwitterVolume)) {
+                    rank += Float(DataUtils.RED_SORT_FLOOR*100.0)
                 }
-        
-
             }
         }
         self.modified = false
-       
         
         return changed
     }
@@ -179,7 +171,7 @@ class InstanceAnomalyChartData : AnomalyChartData {
     */
     func setEndDate( endDate : NSDate){
         
-        print (endDate)
+      //  print (endDate)
         let secsSince1970 : Double = endDate.timeIntervalSince1970
         self.endDate = Int64(secsSince1970*1000)
     }
@@ -233,23 +225,25 @@ class InstanceAnomalyChartData : AnomalyChartData {
     }
 
     func getCollapsedData()->[(Int64, Double)]{
-        var marketCalendar = TaurusApplication.marketCalendar
+        let marketCalendar = TaurusApplication.marketCalendar
         var marketClosed = false
         var collapsedData = [(Int64, Double)]()
-        
-        for val in self.data! {
-            let time = val.0 + DataUtils.METRIC_DATA_INTERVAL
-            
-            if ( marketCalendar.isOpen( time) == false){
-                marketClosed = true
-                continue
+
+        if let data = self.data {
+            for val in data {
+                let time = val.0 + DataUtils.METRIC_DATA_INTERVAL
+                
+                if ( marketCalendar.isOpen( time) == false){
+                    marketClosed = true
+                    continue
+                }
+                
+                if (marketClosed){
+                    collapsedData.append( (0,0) )
+                    marketClosed = false
+                }
+                collapsedData.append ( val )
             }
-            
-            if (marketClosed){
-                collapsedData.append( (0,0) )
-                marketClosed = false
-            }
-            collapsedData.append ( val )
         }
         
         if (marketClosed){

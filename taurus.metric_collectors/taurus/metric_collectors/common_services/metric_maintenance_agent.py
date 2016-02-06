@@ -46,7 +46,6 @@ models.
 """
 
 import logging
-import __main__
 import argparse
 import os
 import sys
@@ -99,7 +98,7 @@ def _parseArgs(args):
   :param list args: the equivalent of sys.argv[1:]
 
   """
-  parser = argparse.ArgumentParser(description=__main__.__doc__)
+  parser = argparse.ArgumentParser(description=__doc__)
 
   parser.parse_args(args=args)
 

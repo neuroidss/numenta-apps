@@ -271,6 +271,8 @@ def _startModelHelper(conn, metricObj, swarmParams, logger):
       "startModel: 'swarmParams' must be non-None: metric=%s"
       % (metricObj.uid,))
 
+  metricName = metricObj.name
+
   if metricObj.status not in (MetricStatus.UNMONITORED,
                               MetricStatus.PENDING_DATA):
     if metricObj.status in (MetricStatus.CREATE_PENDING, MetricStatus.ACTIVE):
@@ -279,6 +281,7 @@ def _startModelHelper(conn, metricObj, swarmParams, logger):
     logger.error("Unexpected metric status; metric=%r", metricObj)
     raise ValueError("startModel: unexpected metric status; metric=%r"
                      % (metricObj,))
+
 
   startTime = time.time()
 
@@ -313,7 +316,7 @@ def _startModelHelper(conn, metricObj, swarmParams, logger):
                                message=repr(sys.exc_info()[1]))
     raise
 
-  logger.info("startModel: started model=%r; duration=%.4fs",
-              metricObj, time.time() - startTime)
+  logger.info("startModel: started model uid=%s, name=%s; duration=%.4fs",
+              metricObj.uid, metricName, time.time() - startTime)
 
   return True

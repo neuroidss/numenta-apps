@@ -548,8 +548,7 @@ def forward(metricSpecs, data, security, server=DEFAULT_SERVER,
 def transmitMetricData(metricSpecs, symbol, engine):
   """ Send unsent metric data samples for the given symbol to Taurus
 
-  NOTE: this is also used externally by friends of the agent; e.g.,
-  `resymbol_metrics.py`.
+  NOTE: this is also used externally by friends of the agent.
 
   :param metricSpecs: Sequence of one or more StockMetricSpec objects associated
     with the same stock symbol for which polling was conducted

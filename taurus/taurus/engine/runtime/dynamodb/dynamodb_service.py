@@ -36,12 +36,12 @@ import sys
 import boto.dynamodb2
 from boto.dynamodb2.exceptions import (
     ConditionalCheckFailedException, ItemNotFound, ResourceNotFoundException,
-    ValidationException, ProvisionedThroughputExceededException)
+    ValidationException)
 from boto.dynamodb2.table import Table
 from boto.exception import JSONResponseError
 
 from nta.utils import amqp
-from nta.utils import error_handling
+from nta.utils.dynamodb_utils import retryOnTransientDynamoDBError
 
 import taurus.engine
 from taurus.engine import taurus_logging
@@ -75,15 +75,6 @@ FIXED_DYNAMODB_CONTEXT = Context(
     Overflow,
     Underflow
   ]
-)
-
-
-
-# Decorator for retrying dynamodb operations that failed due to transient error
-_RETRY_ON_TRANSIENT_DYNAMODB_ERROR = error_handling.retry(
-  timeoutSec=10, initialRetryDelaySec=0.5, maxRetryDelaySec=2,
-  retryExceptions=(ProvisionedThroughputExceededException,),
-  logger=g_log
 )
 
 
@@ -154,8 +145,10 @@ class DynamoDBService(object):
 
   _FRESH_DATA_THRESHOLD_DAYS = 14
 
+  _INPUT_QUEUE_NAME = "dynamodb"
+
+
   def __init__(self):
-    self._queueName = "dynamodb"
     self._modelResultsExchange = (
       taurus.engine.config.get("metric_streamer", "results_exchange_name"))
     self._nonMetricDataExchange = (
@@ -335,7 +328,7 @@ class DynamoDBService(object):
       updateValues = {":value": {"N": str(score)}}
       updateExpression = "SET %s = :value" % anomalyScoreMetric
 
-      @_RETRY_ON_TRANSIENT_DYNAMODB_ERROR
+      @retryOnTransientDynamoDBError(g_log)
       def updateItemWithRetries():
         self.dynamodb.update_item(self._instance_data_hourly.table_name,
                                   key=updateKey,
@@ -369,7 +362,7 @@ class DynamoDBService(object):
 
       putCondition = "attribute_not_exists(instance_id)"
 
-      @_RETRY_ON_TRANSIENT_DYNAMODB_ERROR
+      @retryOnTransientDynamoDBError(g_log)
       def putItemWithRetries(item, condition):
         self.dynamodb.put_item(
           self._instance_data_hourly.table_name,
@@ -495,9 +488,10 @@ class DynamoDBService(object):
     """ Purge metric from dynamodb metric table
     :param uid: Metric uid
     """
-    g_log.info("Removing %s from dynamodb", uid)
+    g_log.info("Handling `deleteModel` for %s", uid)
     try:
       metricItem = self._metric.lookup(uid, consistent=True)
+      g_log.info("Deleting %r from dynamodb", metricItem)
       metricItem.delete()
     except ItemNotFound as err:
       g_log.warning("Nothing to remove.  %s", str(err))
@@ -588,7 +582,7 @@ class DynamoDBService(object):
     """ Declares dynamodb queue and binds to model results and non-metric data
     exchanges.
     """
-    result = amqpClient.declareQueue(self._queueName, durable=True)
+    result = amqpClient.declareQueue(self._INPUT_QUEUE_NAME, durable=True)
 
     amqpClient.bindQueue(exchange=self._modelResultsExchange,
                          queue=result.queue, routingKey="")
@@ -629,7 +623,7 @@ class DynamoDBService(object):
 
         self._declareExchanges(amqpClient)
         self._declareQueueAndBindToExchanges(amqpClient)
-        consumer = amqpClient.createConsumer(self._queueName)
+        consumer = amqpClient.createConsumer(self._INPUT_QUEUE_NAME)
 
         # Start consuming messages
         for evt in amqpClient.readEvents():

@@ -35,8 +35,8 @@ class QueueDeclarationResult(object):
     """
     :param str queue: Reports the name of the queue. If the server generated a
       queue name, this field contains that name
-    :param int messageCount: The number of messages in the queue, which will be
-      zero for newly-declared queues
+    :param int messageCount: The number of messages in the queue that are ready
+      to be consumed, which will be zero for newly-declared queues
     :param int consumerCount: Reports the number of active consumers for the
       queue. Note that consumers can suspend activity (Channel.Flow) in which
       case they do not appear in this count
