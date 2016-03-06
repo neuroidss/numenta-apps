@@ -1,4 +1,4 @@
-// Copyright © 2015, Numenta, Inc.  Unless you have purchased from
+// Copyright © 2016, Numenta, Inc.  Unless you have purchased from
 // Numenta, Inc. a separate commercial license for this software code, the
 // following terms and conditions apply:
 //
@@ -16,12 +16,8 @@
 // http://numenta.org/licenses/
 
 
-// externals
-
 import Paper from 'material-ui/lib/paper';
 import React from 'react';
-
-// internals
 
 import Logo from '../components/Logo';
 

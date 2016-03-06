@@ -1,38 +1,22 @@
 {
   "$schema": "http://json-schema.org/schema#",
-  "id": "/MetricData",
+  "id": "/db/MetricData",
   "type": "object",
   "properties": {
-    "uid": {
-      "type": "string",
-      "maxLength": 50,
-      "minLength": 1
-    },
     "metric_uid": {
       "type": "string",
-      "maxLength": 40,
-      "minLength": 1
-    },
-    "rowid": {
-      "type": "integer",
-      "default": 0
+      "maxLength": 50,
+      "minLength": 1,
+      "required": true
     },
     "timestamp": {
       "type": "string",
-      "format": "date-time"
+      "required": true
     },
     "metric_value": {
-      "type": "number"
-    },
-    "display_value": {
-      "type": "number"
-    },
-    "anomaly_score": {
-      "type": "number"
-    },
-    "anomaly_likelihood": {
-      "type": "number"
+      "type": "number",
+      "required": true
     }
   },
-  "required": ["uid", "metric_uid", "rowid", "timestamp", "metric_value", "display_value"]
+  "additionalProperties": false
 }

@@ -1,4 +1,6 @@
 {
+  "$schema": "http://json-schema.org/schema#",
+  "id": "/py/stats_schema",
   "description": "--stats arg passed to the engine; used by getScalarMetricWithTimeOfDayAnomalyParams in nupic.frameworks.opf.common_models.cluster_params.",
   "type": "object",
   "additionalProperties": false,

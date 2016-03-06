@@ -1,4 +1,4 @@
-// Copyright © 2015, Numenta, Inc.  Unless you have purchased from
+// Copyright © 2016, Numenta, Inc.  Unless you have purchased from
 // Numenta, Inc. a separate commercial license for this software code, the
 // following terms and conditions apply:
 //
@@ -15,7 +15,6 @@
 //
 // http://numenta.org/licenses/
 
-
 import Avatar from 'material-ui/lib/avatar';
 import React from 'react';
 
@@ -27,6 +26,7 @@ export default class Logo extends React.Component {
 
   static get contextTypes() {
     return {
+      getConfigClient: React.PropTypes.func,
       muiTheme: React.PropTypes.object
     };
   }
@@ -34,27 +34,35 @@ export default class Logo extends React.Component {
   constructor(props, context) {
     super(props, context);
 
-    // dynamic styles
+    this._config = this.context.getConfigClient();
+
     let muiTheme = this.context.muiTheme;
     this._styles = {
       root: {
-        backgroundColor: muiTheme.appBar.color,
+        backgroundColor: muiTheme.rawTheme.palette.primary2Color,
+        borderBottom: '5px solid #29aae2',
         color: muiTheme.appBar.textColor,
-        height: muiTheme.appBar.height * 2,
+        height: muiTheme.appBar.height * 1.2,
         margin: 0,
         padding: muiTheme.rawTheme.spacing.desktopGutter,
+        paddingTop: muiTheme.rawTheme.spacing.desktopGutter - 5,
         width: '100%'
       },
       avatar: {
-        backgroundColor: muiTheme.rawTheme.palette.accent2Color,
-        borderColor: muiTheme.rawTheme.palette.accent2Color,
-        position: 'relative',
-        top: '0.666rem'
+        backgroundColor: 'none',
+        border: 0,
+        borderRadius: 'none'
       },
       title: {
-        marginLeft: '0.666rem',
-        marginTop: '-3rem',
-        fontSize: '200%'
+        fontSize: '160%',
+        fontWeight: muiTheme.rawTheme.font.weight.light,
+        letterSpacing: '0.33px',
+        position: 'relative',
+        left: '0.666rem',
+        top: '-5px'
+      },
+      titleStrong: {
+        fontWeight: muiTheme.rawTheme.font.weight.medium
       }
     };
   }
@@ -62,20 +70,20 @@ export default class Logo extends React.Component {
   /**
    * Render
    * @return {object} Abstracted React/JSX DOM representation to render to HTML
-   * @todo refactor split into Header->Brand(Avatar)->Company(text) components,
-   *  each w/own style. Space/align logo and Company text a bit.
    */
   render() {
+    let titles = this._config.get('title').split(' ');
+
     return (
       <header style={this._styles.root}>
         <Avatar
-          size={65}
+          size={40}
           style={this._styles.avatar}
-          src="assets/images/unicorn-logo-300.png">
-            <span style={this._styles.title}>
-              Unicorn
-            </span>
-        </Avatar>
+          src="assets/images/numenta-mark.svg"
+          />
+        <span style={this._styles.title}>
+          <span style={this._styles.titleStrong}>{titles[0]}</span> {titles[1]}
+        </span>
       </header>
     );
   }

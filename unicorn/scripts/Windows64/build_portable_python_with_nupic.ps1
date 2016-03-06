@@ -40,6 +40,15 @@ function Unzip
     [System.IO.Compression.ZipFile]::ExtractToDirectory($zipfile, $outpath)
 }
 
+# Utility function to zip files
+function ZipFiles( $zipfilename, $sourcedir )
+{
+   Add-Type -Assembly System.IO.Compression.FileSystem
+   $compressionLevel = [System.IO.Compression.CompressionLevel]::Optimal
+   [System.IO.Compression.ZipFile]::CreateFromDirectory($sourcedir,
+        $zipfilename, $compressionLevel, $false)
+}
+
 if ($cleanup){
     Write-Host "==> Uninstalling Python ..."
     Start-Process  -Wait -FilePath msiexec -ArgumentList /x, $python_msi, /passive, /norestart
@@ -99,3 +108,5 @@ if ($install_nupic) {
     Invoke-Expression $test_nupic_bindings_import
     Invoke-Expression $test_nupic_import
 }
+
+ZipFiles "$script_path\$portable_python_dir.zip" $script_path\$portable_python_dir

@@ -1,4 +1,4 @@
-// Copyright © 2015, Numenta, Inc. Unless you have purchased from
+// Copyright © 2016, Numenta, Inc. Unless you have purchased from
 // Numenta, Inc. a separate commercial license for this software code, the
 // following terms and conditions apply:
 //
@@ -17,61 +17,27 @@
 
 
 import {ACTIONS} from '../lib/Constants';
-import {
-  DatabaseGetError, DatabasePutError, FilesystemGetError
-} from '../../main/UserError';
 
-
-// MAIN
 
 /**
  * Get List of files from py
+ * @param  {FluxibleContext} actionContext - The action context
+ * @returns {Promise}
+ * @emits {LIST_FILES}
+ * @emits {LIST_FILES_FAILURE}
  */
 export default function (actionContext) {
   return new Promise((resolve, reject) => {
-
-    let databaseClient = actionContext.getDatabaseClient();
-    let fileClient = actionContext.getFileClient();
-
-    // load existing files from db, from previous execution
-    databaseClient.getAllFiles((error, files) => {
+    let db = actionContext.getDatabaseClient();
+    db.getAllFiles((error, files) => {
       if (error) {
-        actionContext.dispatch(
-          ACTIONS.LIST_FILES_FAILURE,
-          new DatabaseGetError(error)
-        );
+        actionContext.dispatch(ACTIONS.LIST_FILES_FAILURE, error);
         reject(error);
-      } else if (files.length) {
-        // files in db already, not first run, straight to UI
+      } else {
+        files = JSON.parse(files);
         actionContext.dispatch(ACTIONS.LIST_FILES, files);
         resolve(files);
-      } else {
-        // no files in db, first run, so load them from fs
-        fileClient.getSampleFiles((error, files) => {
-          if (error) {
-            actionContext.dispatch(
-              ACTIONS.LIST_FILES_FAILURE,
-              new FilesystemGetError(error)
-            );
-            reject(error);
-          } else {
-            // got file list from fs, saving to db for next runs
-            databaseClient.putFileBatch(files, (error) => {
-              if (error) {
-                actionContext.dispatch(
-                  ACTIONS.LIST_FILES_FAILURE,
-                  new DatabasePutError(error)
-                );
-                reject(error);
-              } else {
-                // DB now has Files, on to UI.
-                actionContext.dispatch(ACTIONS.LIST_FILES, files);
-                resolve(files);
-              }
-            }); // databaseClient.putFiles()
-          }
-        }); // fileClient.getSampleFiles()
       }
-    }); // databaseClient.getAllFiles()
-  }); // Promise
+    });
+  });
 }

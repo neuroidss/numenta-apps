@@ -1,4 +1,4 @@
-// Copyright © 2015, Numenta, Inc. Unless you have purchased from
+// Copyright © 2016, Numenta, Inc. Unless you have purchased from
 // Numenta, Inc. a separate commercial license for this software code, the
 // following terms and conditions apply:
 //
@@ -26,7 +26,12 @@ import {ACTIONS} from '../lib/Constants';
  * @param {Object} payload - The action payload
  * @param {String} payload.modelId - Required model id
  * @param {Object[]} payload.data - New data to be appended
+ * @emits {RECEIVE_MODEL_DATA}
+ * @TODO {@link ModelService} should save model results to database
  */
 export default function (actionContext, payload) {
-  actionContext.dispatch(ACTIONS.RECEIVE_MODEL_DATA, payload);
+  let {modelId, data} = payload;
+  actionContext.dispatch(ACTIONS.RECEIVE_MODEL_DATA, {
+    modelId, data
+  });
 }

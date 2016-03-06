@@ -1,4 +1,4 @@
-// Copyright © 2015, Numenta, Inc. Unless you have purchased from
+// Copyright © 2016, Numenta, Inc. Unless you have purchased from
 // Numenta, Inc. a separate commercial license for this software code, the
 // following terms and conditions apply:
 //
@@ -22,11 +22,10 @@ import {ACTIONS} from '../lib/Constants';
  * Stop running model
  * @param {FluxibleContext} actionContext - Fluxible action context object
  * @param {string} modelId - Model ID
- * @returns {Promise} - Fluxible resolves with return value
- * @see http://fluxible.io/api/actions.html#api-code-actions-code-
+ * @emits {STOP_MODEL}
  */
 export default function (actionContext, modelId) {
   let modelClient = actionContext.getModelClient();
   modelClient.removeModel(modelId);
-  return actionContext.dispatch(ACTIONS.STOP_MODEL, modelId);
+  actionContext.dispatch(ACTIONS.STOP_MODEL, modelId);
 }

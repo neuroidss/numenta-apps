@@ -1,4 +1,6 @@
 {
+  "$schema": "http://json-schema.org/schema#",
+  "id": "/py/input_opt_schema",
   "description": "--input command-line option object passed to ModelRunner",
   "type": "object",
   "additionalProperties": false,

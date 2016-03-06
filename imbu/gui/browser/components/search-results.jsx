@@ -124,19 +124,36 @@ export default class SearchResultsComponent extends React.Component {
     }
   }
 
-  formatResults(text, scores, maxScore) {
+  formatResults(data) {
+    let {text, scores, maxScore, windowSize} = data;
+
     if (scores.length > 1) {
-      let result = [];
       let words = text.split(' ');
+      let elements = [];
+      let highlightStyle = {
+        backgroundColor: Colors.purple200
+      };
+
       for (let i=0; i < words.length; i++) {
         let score = scores[i];
-        let style = {};
+        let currentElement = {
+          score,
+          text: words[i],
+          style: {}
+        };
+        elements.push(currentElement);
+
         if (score > 0 && score === maxScore) {
-          style = {backgroundColor: Colors.purple200};
+          // Highlight word or window with maxScore
+          elements.slice(-windowSize).forEach((obj) => {
+            obj.style = highlightStyle;
+          });
         }
-        result.push((<span title={score} style={style}>{words[i]} </span>));
       }
-      return result;
+
+      return elements.map((obj) => {
+        return (<span title={obj.score} style={obj.style}>{obj.text} </span>);
+      });
     }
     return text;
   }
@@ -147,14 +164,13 @@ export default class SearchResultsComponent extends React.Component {
 
     // Convert SearchStore results to Table rows
     let rows = this.state.results.map((result, idx) => {
-      let {text, scores, maxScore} = result;
       return (
         <TableRow key={idx}>
           <TableRowColumn key={0} style={styles.column.summary}>
-            {this.formatResults(text, scores, maxScore)}
+            {this.formatResults(result)}
           </TableRowColumn>
           <TableRowColumn key={1} style={styles.column.score}>
-            {maxScore.toFixed(4)}
+            {result.maxScore.toFixed(4)}
           </TableRowColumn>
         </TableRow>);
     });
@@ -167,11 +183,21 @@ export default class SearchResultsComponent extends React.Component {
                 onChange={this._modelChanged.bind(this)}
                 value={this.state.model}
                 style={styles.modelsMenu}>
-          <option value="CioDocumentFingerprint">Cortical.io document-level fingerprints</option>
-          <option value="CioWordFingerprint">Cortical.io word-level fingerprints</option>
-          <option value="Keywords">Keywords (random encodings)</option>
-          <option value="HTM_sensor_knn">HTM Network (sensor-kNN)</option>
-          <option value="HTM_sensor_simple_tp_knn">HTM Network (sensor-simple TP-kNN)</option>
+          <option value="CioDocumentFingerprint">
+            Cortical.io document-level fingerprints
+          </option>
+          <option value="CioWordFingerprint">
+            Cortical.io word-level fingerprints
+          </option>
+          <option value="Keywords">
+            Keywords (random encodings)
+          </option>
+          <option value="HTM_sensor_knn">
+            HTM Network (sensor-kNN)
+          </option>
+          <option value="HTM_sensor_simple_tp_knn">
+            HTM Network (sensor-simple TP-kNN)
+          </option>
         </select>
 
         <Table selectable={false} fixedHeader={true}

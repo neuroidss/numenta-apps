@@ -5,9 +5,16 @@
 Visual C++ for Python.
 * Install [Visual C++ for Python](http://aka.ms/vcpython27).
 
-## Run
-This script will install a portable python distribution with NuPIC. The options 
-are:
+## Building a portable python with NuPIC
+### Simple way: pip install nupic
+The script `simple_build_portable_python_with_nupic.ps1` will install a portable python distribution with NuPIC (with `pip install nupic`).
+The flag to pass the specific version of nupic is: `-nupic_version`. E.g: `0.3.8` (default value is `0.3.6`)
+```
+powershell.exe -ExecutionPolicy RemoteSigned .\simple_build_portable_python_with_nupic.ps1 -nupic_version=0.3.6
+```
+
+### Better way: fetch nupic.core and nupic wheels
+The script `build_portable_python_with_nupic.ps1` will install a portable python distribution with NuPIC by fetching the nupic.bindings wheel and installing nupic in the same fashion. The options opf this script are:
 ```
 -cleanup: (default: False) Clean the build dir and make sure the Python 
 distribution is installed from scratch.
@@ -15,7 +22,8 @@ distribution is installed from scratch.
 -nupic_unzip_path: (default: <build_script_dir>) Path where to install NuPIC.
 ```
 
-To run this script with the right execution policy, open PowerShell or a 
+## Running the scripts
+To run these scripts with the right execution policy, open PowerShell or a 
 command prompt and run powershell.exe with the `ExecutionPolicy` flag set to `RemoteSigned`. For example:
 ```
 powershell.exe -ExecutionPolicy RemoteSigned .\build_portable_python_with_nupic.ps1 -cleanup -install_nupic  -nupic_unzip_path "Z:\tmp"

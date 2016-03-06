@@ -10,8 +10,8 @@ installRequires = []
 dependencyLinks = []
 
 
-
-with open("requirements.txt", "r") as reqfile:
+requirements = os.path.join(os.path.dirname(__file__), "requirements.txt")
+with open(requirements, "r") as reqfile:
   for line in reqfile:
     line = line.strip()
     (link, _, package) = line.rpartition("#egg=")
@@ -56,8 +56,7 @@ class PyTest(TestCommand):
       os.chdir(cwd)
     sys.exit(errno)
 
-
-
+os.chdir(os.path.dirname(__file__))
 setup(
   name = "unicorn_backend",
   description = "Unicorn backend",

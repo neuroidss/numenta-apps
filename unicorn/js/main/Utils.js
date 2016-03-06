@@ -1,4 +1,4 @@
-// Copyright © 2015, Numenta, Inc. Unless you have purchased from
+// Copyright © 2016, Numenta, Inc. Unless you have purchased from
 // Numenta, Inc. a separate commercial license for this software code, the
 // following terms and conditions apply:
 //
@@ -15,8 +15,9 @@
 //
 // http://numenta.org/licenses/
 
-
 import crypto from 'crypto';
+
+import muiTheme from '../browser/lib/MaterialUI/UnicornTheme';
 
 
 export default class Utils {
@@ -52,23 +53,37 @@ export default class Utils {
     let fileId = Utils.generateFileId(filename);
     // Use 64 bit hash
     let metricId = Utils.generateId(metric).substr(0,16);
-    return `${fileId}!${metricId}`
+    return `${fileId}!${metricId}`;
   }
 
   /**
-   * Genereate unique metric data row uid based on the filename, metric name,
-   *  and row timestamp, via hashing.
-   * @param  {string} filename - The absolute path
-   * @param  {string} metric - Metric name
-   * @param  {Date} timestamp - timestamp for the data record
+   * Genereate unique metric data id based on the metric id and timestamp
+   * @param  {string} metricId - Metric ID
+   * @param  {Date} timestamp  - timestamp for the data record
    * @return {string} Unique id
    */
-  static generateMetricDataId(filename, metric, timestamp) {
-    let metricId = Utils.generateMetricId(filename, metric);
+  static generateMetricDataId(metricId, timestamp) {
     if (!(timestamp instanceof Date)) {
       timestamp = new Date(timestamp);
     }
     return `${metricId}!${timestamp.getTime()}`;
+  }
+
+  /**
+   * Map Anomaly value/height to bar color (Red/Yellow/Green)
+   * @param {Number} index - Integer for current count of anomaly height
+   * @param {Number} total - Integer for max possible anomaly height
+   * @returns {String} - String for Color to use
+   */
+  static mapAnomalyColor(index, total) {
+    let color = muiTheme.palette.safeColor;
+    if (index > (total/4)) {
+      color = muiTheme.palette.warnColor;
+    }
+    if (index > (total/2)) {
+      color = muiTheme.palette.dangerColor;
+    }
+    return color;
   }
 
   /**
@@ -91,11 +106,27 @@ export default class Utils {
       if (i < values.length) {
         result += values[i];
       }
-
       i++;
     }
-
     return result;
   }
 
+  /**
+   * Convert callback style function into {@link Promise}.
+   * When calling methods make sure to bind the method to the instance.
+   * @param  {Function} fn  callback style function
+   * @param  {Array} args   function arguments
+   * @return {Promise} Promise wrapping the callback base function
+   */
+  static promisify(fn, ...args) {
+    return new Promise((resolve, reject) => {
+      fn(...args, (error, data) => {
+        if (error) {
+          reject(error);
+        } else {
+          resolve(data);
+        }
+      })
+    });
+  }
 }

@@ -33,7 +33,7 @@ In order to use `htmengine`, there are some additional steps you MUST do to crea
 
 ### Configuration
 
-Create a `conf/` directory, and use the following files as templates for your own configuration.  Carefully review each file, and fill in or replace any values that are specific to your application.
+Create a `conf/` directory, and use the following files as templates for your own configuration. Carefully review each file, and fill in or replace any values that are specific to your application. In your own environment, you MUST set the `APPLICATION_CONFIG_PATH` environment variable to the absolute path of this `conf/` directory.
 
 - `conf/application.conf`
 
@@ -148,7 +148,6 @@ Create a `conf/` directory, and use the following files as templates for your ow
   port=127.0.0.1:9001
 
   [supervisord]
-  environment=APPLICATION_CONFIG_PATH=/ABSOLUTE/PATH/TO/THIS/APPLICATION/conf
   pidfile=%(here)s/../supervisord.pid
   identifier=APPLICATION_NAME-supervisor
   logfile=%(here)s/../logs/supervisord.log
@@ -171,7 +170,6 @@ Create a `conf/` directory, and use the following files as templates for your ow
   files = /ABSOLUTE/PATH/TO/htmengine/conf/supervisord-base.conf
   ```
 
-In your own environment, you MUST set the `APPLICATION_CONFIG_PATH` environment variable to the absolute path to the application config path.  This must match the value in `conf/supervisord.conf`!
 
 ### Repository
 

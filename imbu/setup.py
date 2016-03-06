@@ -1,4 +1,4 @@
-# Copyright (C) 2015, Numenta, Inc.  Unless you have purchased from
+# Copyright (C) 2015-2016, Numenta, Inc.  Unless you have purchased from
 # Numenta, Inc. a separate commercial license for this software code, the
 # following terms and conditions apply:
 #
@@ -43,7 +43,8 @@ setup(
   version="0.1.0",
   description=("Sample application using nnupic.fluent platform"),
   url="https://github.com/numenta/numenta-apps/imbu",
-  packages = find_packages(),
+  package_dir = {"": "engine"},
+  packages = find_packages("engine"),
   include_package_data=True,
   install_requires = installRequires,
   dependency_links = dependencyLinks,

@@ -1,0 +1,33 @@
+{
+  "name": "portable_python_darwin",
+  "version": "1.0.0",
+  "description": "Portable Python for Unicorn (Mac OSX)",
+  "main": "index.js",
+  "os": [
+    "darwin"
+  ],
+  "cpu": [
+    "x64"
+  ],
+  "private": true,
+  "bin": {
+    "python": "bin/python"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/numenta/numenta-apps/tree/master/unicorn"
+  },
+  "keywords": [
+  ],
+  "homepage": "http://numenta.com",
+  "bugs": "https://github.com/numenta/numenta-apps/issues",
+  "author": {
+    "name": "Numenta",
+    "email": "info@numenta.com",
+    "url": "http://numenta.com"
+  },
+  "license": "SEE LICENSE IN LICENSE.txt"
+}

@@ -1,4 +1,4 @@
-// Copyright © 2015, Numenta, Inc. Unless you have purchased from
+// Copyright © 2016, Numenta, Inc. Unless you have purchased from
 // Numenta, Inc. a separate commercial license for this software code, the
 // following terms and conditions apply:
 //
@@ -16,30 +16,110 @@
 //
 // http://numenta.org/licenses/
 
-
-// externals
-
-import app from 'app';
-import BrowserWindow from 'browser-window';
+import {app, BrowserWindow, crashReporter, dialog, Menu} from 'electron';
 import bunyan from 'bunyan';
-import crashReporter from 'crash-reporter';
-import dialog from 'dialog';
 import path from 'path';
 
-// internals
-
-import Config from './ConfigService';
+import config from './ConfigService';
+import database from './DatabaseService';
+import fileService from './FileService';
+import modelService from './ModelService';
+import paramFinderService from './ParamFinderService';
+import MainMenu from './MainMenu';
 import ModelServiceIPC from './ModelServiceIPC';
+import ParamFinderServiceIPC from './ParamFinderServiceIPC';
+import Utils from './Utils';
 
-const config = new Config();
 const log = bunyan.createLogger({
-  name: 'Unicorn:Main',
-  level: 'debug'  // @TODO higher for Production
+  level: 'debug',  // @TODO higher for Production
+  name: config.get('title')
 });
-const initialPage = path.join(__dirname, '..', 'browser', 'index.html');
+const initialPage = path.join(__dirname, config.get('browser:entry'));
 
-let mainWindow = null; // global ref to keep window object from JS GC
-let modelService = null;
+let activeModels = new Map();  // Active models and their event handlers
+let mainWindow = null;  // global ref to keep window object from JS GC
+let modelServiceIPC = null;
+let paramFinderServiceIPC = null;
+
+
+/**
+ * Initialize the application populating local data on first run
+ */
+function initializeApplicationData() {
+  // Check if running for the first time
+  let initialized = config.get('initialized');
+  if (!initialized) {
+    let promisify = Utils.promisify;
+    // Load sample files from the file system
+    promisify(::fileService.getSampleFiles)
+      // Save all sample files to the database
+      .then((files) => Promise.all(
+        files.map((file) => promisify(::database.uploadFile, file)))
+      )
+      .then(() => {
+        // Make sure to only run once
+        config.set('initialized', true);
+        config.save();
+      })
+      .catch((error) => {
+        console.log(error); // eslint-disable-line
+        dialog.showErrorBox('Error', error);
+      });
+  }
+}
+
+/**
+ * Handles model data event saving the results to the database
+ * @param  {string} modelId Model receiving data
+ * @param  {Array} data    model data in the following format:
+ *                         [timestamp, metric_value, anomaly_score]
+ */
+function receiveModelData(modelId, data) {
+  let [timestamp, value, score] = data; // eslint-disable-line
+  let metricData = {
+    metric_uid: modelId,
+    timestamp,
+    metric_value: value,
+    anomaly_score: score
+  };
+  database.putModelData(metricData, (error) => {
+    if (error) {
+      log.error('Error saving model data', error, metricData);
+    }
+  });
+}
+
+/**
+ * Handle application wide model services events
+ */
+function handleModelEvents() {
+  // Attach event handler on model creation
+  modelService.on('newListener', (modelId, listener) => {
+    if (!activeModels.has(modelId)) {
+      let listener = (command, data) => { // eslint-disable-line
+        try {
+          if (command === 'data') {
+            // Handle model data
+            receiveModelData(modelId, JSON.parse(data));
+          }
+        } catch (e) {
+          log.error('Model Error', e, modelId, command, data);
+        }
+      };
+      activeModels.set(modelId, listener);
+      modelService.on(modelId, listener);
+    }
+  });
+
+  // Detach event handler on model close
+  modelService.on('removeListener', (modelId, listener) => {
+    if (activeModels.has(modelId)) {
+      let listener = activeModels.get(modelId);
+      activeModels.delete(modelId);
+      modelService.removeListener(modelId, listener);
+    }
+  });
+}
 
 
 /**
@@ -50,22 +130,23 @@ let modelService = null;
  */
 
 crashReporter.start({
-  product_name: config.get('title'),
-  company_name: config.get('company')
+  companyName: config.get('company'),
+  productName: config.get('title'),
+  submitURL: '' // @TODO https://discuss.atom.io/t/electron-crash-report-server/20563
 });
 
 app.on('window-all-closed', () => {
-  // OS X apps stay active until the user quits explicitly Cmd + Q
-  if (process.platform !== 'darwin') {
-    app.quit();
-  }
+  app.quit();
 });
-
-
-// MAIN
 
 // Electron finished init and ready to create browser window
 app.on('ready', () => {
+  // Initialize application data
+  initializeApplicationData();
+
+  // set main menu
+  Menu.setApplicationMenu(Menu.buildFromTemplate(MainMenu));
+
   // create browser window
   mainWindow = new BrowserWindow({
     width: 1200,
@@ -73,9 +154,8 @@ app.on('ready', () => {
     // @TODO fill out options
     //  https://github.com/atom/electron/blob/master/docs/api/browser-window.md
   });
-  mainWindow.loadUrl(`file://${initialPage}`);
+  mainWindow.loadURL(`file://${initialPage}`);
   mainWindow.center();
-  mainWindow.openDevTools();
 
   // browser window events
   mainWindow.on('closed', () => {
@@ -93,7 +173,14 @@ app.on('ready', () => {
     log.info('Electron Main: Renderer DOM is now ready!');
   });
 
-  // Handle IPC commuication for the ModelService
-  modelService = new ModelServiceIPC();
-  modelService.start(mainWindow.webContents);
+  // Handle model service events
+  handleModelEvents();
+
+  // Handle IPC communication for the ModelService
+  modelServiceIPC = new ModelServiceIPC(modelService);
+  modelServiceIPC.start(mainWindow.webContents);
+
+  // Handle IPC communication for the ParamFinderService
+  paramFinderServiceIPC = new ParamFinderServiceIPC(paramFinderService);
+  paramFinderServiceIPC.start(mainWindow.webContents);
 });

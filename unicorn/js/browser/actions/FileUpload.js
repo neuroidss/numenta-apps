@@ -1,249 +1,99 @@
-// Copyright © 2015, Numenta, Inc. Unless you have purchased from
+// Copyright © 2016, Numenta, Inc.  Unless you have purchased from
 // Numenta, Inc. a separate commercial license for this software code, the
 // following terms and conditions apply:
 //
 // This program is free software: you can redistribute it and/or modify it under
-// the terms of the GNU Affero Public License version 3 as published by the
-// Free Software Foundation.
+// the terms of the GNU Affero Public License version 3 as published by the Free
+// Software Foundation.
 //
 // This program is distributed in the hope that it will be useful, but WITHOUT
 // ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 // FOR A PARTICULAR PURPOSE. See the GNU Affero Public License for more details.
 //
 // You should have received a copy of the GNU Affero Public License along with
-// this program. If not, see http://www.gnu.org/licenses.
+// this program.  If not, see http://www.gnu.org/licenses.
 //
 // http://numenta.org/licenses/
 
-
-import csp from 'js-csp';
+import moment from 'moment';
 
 import {ACTIONS} from '../lib/Constants';
-import Utils from '../../main/Utils';
+import {promiseMetricsFromFiles} from '../lib/Unicorn/FileClient';
 import {
-  DatabaseGetError, DatabasePutError, FilesystemGetError
-} from '../../main/UserError';
+  promiseSaveFilesIntoDB, promiseSaveMetricsToDB
+} from '../lib/Unicorn/DatabaseClient';
+import {TIMESTAMP_FORMATS} from '../../config/timestamp';
+import Utils from '../../main/Utils';
 
-
-// FUNCTIONS
 
 /**
- * CSP channel wrapper around method to Get File Upload via File Client.
- * @param {Object} options - Options passed as properties to this method
- * @param {Object} options.actionContext - Fluxible ActionContext
- * @param {Object} options.file - File info to use to lookup from FS
- * @return {Object} - CSP Channel async=>sync `yield csp.take(chan)`
- * @throws {FilesystemGetError}
+ * Upload File Action.
+ *  1. Save file metadata {@link FileStore.File}
+ *  2. Load metrics from file {@link MetricStore.Metric}
+ *  3. Save metrics to DB {@link MetricStore.Metric}
+ *
+ * @param {FluxibleContext} actionContext FluxibleContext
+ * @param {Object} payload  Action payload object
+ * @param {string} payload.name File name
+ * @param {string} payload.path File full path
+ * @emits {UPLOADED_FILE}
+ * @emits {LIST_METRICS}
+ * @return {Promise}  Promise
  */
-function getFileFromUpload(options) {
-  let {actionContext, file} = options;
-  let channel = csp.chan();
-  let fileClient = actionContext.getFileClient();
+export default function (actionContext, payload) {
+  let db = actionContext.getDatabaseClient();
+  let fs = actionContext.getFileClient();
 
-  fileClient.getUploadedFiles(file, (error, formattedFile) => {
-    if (error) {
-      csp.putAsync(channel, new FilesystemGetError(error));
-    } else {
-      csp.putAsync(channel, formattedFile);
-    }
-    channel.close();
-  });
-
-  return channel;
-}
-
-/**
- * CSP channel wrapper around method to Get File via DB Client.
- * @param {Object} options - Options passed as properties to this method
- * @param {Object} options.actionContext - Fluxible ActionContext
- * @param {Object} options.file - File info to use to lookup from DB
- * @return {Object} - CSP Channel async=>sync `yield csp.take(chan)`
- * @throws {DatabaseGetError}
- */
-function getFileFromDB(options) {
-  let {actionContext, file} = options;
-  let channel = csp.chan();
-  let databaseClient = actionContext.getDatabaseClient();
-  let fileId = Utils.generateFileId(file.path);
-
-  databaseClient.getFile(fileId, (error, results) => {
-    if (error && (!('notFound' in error))) {
-      csp.putAsync(channel, new DatabaseGetError(error));
-    } else {
-      csp.putAsync(channel, results);
-    }
-    channel.close();
-  });
-
-  return channel;
-}
-
-/**
- * CSP channel wrapper around method to Get Metrics via DB Client.
- * @param {Object} options - Options passed as properties to this method
- * @param {Object} options.actionContext - Fluxible ActionContext
- * @param {Object} options.file - File info to use to lookup from DB
- * @return {Object} - CSP Channel async=>sync `yield csp.take(chan)`
- * @throws {DatabaseGetError}
- */
-function getMetricsFromDB(options) {
-  let {actionContext, file} = options;
-  let channel = csp.chan();
-  let databaseClient = actionContext.getDatabaseClient();
-  let fileId = Utils.generateFileId(file.path);
-
-  databaseClient.getMetricsByFile(fileId, (error, results) => {
-    if (error && (!('notFound' in error))) {
-      csp.putAsync(channel, new DatabaseGetError(error));
-    } else {
-      csp.putAsync(channel, results);
-    }
-    channel.close();
-  });
-
-  return channel;
-}
-
-/**
- * CSP channel wrapper around method to Put File via DB Client.
- * @param {Object} options - Options passed as properties to this method
- * @param {Object} options.actionContext - Fluxible ActionContext
- * @param {Object} options.file - File data to put into DB
- * @return {Object} - CSP Channel async=>sync `yield csp.take(chan)`
- * @throws {DatabasePutError}
- */
-function putFileIntoDB(options) {
-  let {actionContext, file} = options;
-  let channel = csp.chan();
-  let databaseClient = actionContext.getDatabaseClient();
-  let payload = {
-    uid: Utils.generateFileId(file.filename),
-    name: file.name,
-    filename: file.filename,
-    type: file.type
-  };
-
-  databaseClient.putFile(payload, (error) => {
-    if (error) {
-      csp.putAsync(channel, new DatabasePutError(error));
-    } else {
-      csp.putAsync(channel, true);
-    }
-    channel.close();
-  });
-
-  return channel;
-}
-
-/**
- * CSP channel wrapper around method to Put Metrics via DB Client.
- * @param {Object} options - Options passed as properties to this method
- * @param {Object} options.actionContext - Fluxible ActionContext
- * @param {Object} options.file - File data to put into DB
- * @return {Object} - CSP Channel async=>sync `yield csp.take(chan)`
- * @throws {DatabasePutError}
- */
-function putMetricsIntoDB(options) {
-  let {actionContext, file} = options;
-  let channel = csp.chan();
-  let databaseClient = actionContext.getDatabaseClient();
-  let payload = file.metrics.map((metric) => {
-    return {
-      uid: Utils.generateMetricId(file.filename, metric.name),
-      file_uid: Utils.generateFileId(file.filename),
-      name: metric.name,
-      type: metric.type
+  return new Promise((resolve, reject) => {
+    let file = {
+      filename: payload.path,
+      name: payload.name,
+      type: 'uploaded',
+      uid: Utils.generateFileId(payload.path)
     };
-  });
 
-  databaseClient.putMetricBatch(payload, (error) => {
-    if (error) {
-      csp.putAsync(channel, new DatabasePutError(error));
-    } else {
-      csp.putAsync(channel, true);
-    }
-    channel.close();
-  });
+    // Save file metadata
+    promiseSaveFilesIntoDB(db, [file])
+      .then((file) => {
+        // Load metrics from file
+        return promiseMetricsFromFiles(fs, file)
+      }, reject)
+      .then((metrics) => {
+        // Save metric to database
+        return promiseSaveMetricsToDB(db, metrics);
+      }, reject)
+      .then((metrics) => {
+        let tsField = metrics.find((metric) => metric.type === 'date').name;
+        fs.getData(file.filename, {limit: 1}, (error, buffer) => {
+          let datum = null;
+          if (error) {
+            throw new Error(error);
+          }
+          if (buffer) {
+            datum = JSON.parse(buffer);
+            // Infer timestamp format based the first rows
+            if (tsField && datum) {
+              file.timestampFormat = TIMESTAMP_FORMATS.find((format) => {
+                return moment(datum[tsField], format, true).isValid();
+              });
+              if (!(file.timestampFormat)) {
+                throw new Error(Utils.trims`The file that you are trying to
+                                  upload has a timestamp format that is not
+                                  supported: ${datum[tsField]}`);
+              }
+            } else if (!tsField) {
+              throw new Error(Utils.trims`This file does not have a column with
+                                datetime values.`);
+            } else if (!datum) {
+              throw new Error('This file does not have data.');
+            }
 
-  return channel;
+            // Update stores
+            actionContext.dispatch(ACTIONS.UPLOADED_FILE, file);
+            actionContext.dispatch(ACTIONS.LIST_METRICS, metrics);
+            resolve(file);
+          } // if (buffer)
+        }); // fs.getData()
+      }, reject);
+  });
 }
-
-
-// MAIN
-
-/**
- * Get uploaded file
- */
-export default function (actionContext, file) {
-  return csp.go(function* () {
-    let fileFormatted, fileHandle, fileMetrics, result;
-    let log = actionContext.getLoggerClient();
-    let opts = {actionContext, file};
-
-    log.debug('see if uploaded file is already in DB');
-    fileHandle = yield csp.take(getFileFromDB(opts));
-    if (fileHandle instanceof Error) {
-      actionContext.dispatch(ACTIONS.UPLOADED_FILE_FAILED, {
-        error: fileHandle,
-        filename: file.name
-      });
-      return fileHandle;
-    }
-    if (fileHandle && ('uid' in fileHandle)) {
-      log.debug('yes file is already in DB, load metrics');
-      fileMetrics = yield csp.take(getMetricsFromDB(opts));
-      if (fileMetrics instanceof Error) {
-        actionContext.dispatch(ACTIONS.UPLOADED_FILE_FAILED, {
-          error: fileMetrics,
-          filename: file.name
-        });
-        return fileMetrics;
-      }
-      fileFormatted = {
-        uid: Utils.generateFileId(file.path),
-        name: file.name,
-        filename: file.path,
-        type: 'uploaded',
-        metrics: fileMetrics
-      };
-
-      log.debug('on to UI');
-      actionContext.dispatch(ACTIONS.UPLOADED_FILE, fileFormatted);
-      return fileFormatted;
-    }
-
-    log.debug('NO file is not already in DB, get from upload');
-    fileFormatted = yield csp.take(getFileFromUpload(opts));
-    if (fileFormatted instanceof Error) {
-      console.error(fileFormatted);
-      actionContext.dispatch(ACTIONS.UPLOADED_FILE_FAILED, {
-        error: fileFormatted,
-        filename: file.name
-      });
-      return fileFormatted;
-    }
-
-    log.debug('save new File+Metrics to DB');
-    opts.file = fileFormatted;
-    result = yield csp.take(putFileIntoDB(opts));
-    if (result instanceof Error) {
-      actionContext.dispatch(ACTIONS.UPLOADED_FILE_FAILED, {
-        error: result,
-        filename: file.name
-      });
-      return result;
-    }
-    result = yield csp.take(putMetricsIntoDB(opts));
-    if (result instanceof Error) {
-      actionContext.dispatch(ACTIONS.UPLOADED_FILE_FAILED, {
-        error: result,
-        filename: file.name
-      });
-      return result;
-    }
-
-    log.debug('on to UI');
-    actionContext.dispatch(ACTIONS.UPLOADED_FILE, fileFormatted);
-    return fileFormatted;
-  }); // csp.go
-} // export

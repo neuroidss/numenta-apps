@@ -111,3 +111,6 @@ support for custom metrics.
 Shared library used in taurus-mobile and htm-it-mobile mobile applications.
 
 **Languages**: Java
+
+## Need Help?
+File an issue in the main numenta-apps repository.

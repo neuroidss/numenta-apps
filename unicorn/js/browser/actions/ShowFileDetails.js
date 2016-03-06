@@ -1,4 +1,4 @@
-// Copyright © 2015, Numenta, Inc. Unless you have purchased from
+// Copyright © 2016, Numenta, Inc. Unless you have purchased from
 // Numenta, Inc. a separate commercial license for this software code, the
 // following terms and conditions apply:
 //
@@ -20,10 +20,11 @@ import {ACTIONS} from '../lib/Constants';
 
 
 /**
- * Show {FileDetails} page for the given file
+ * Show {@link FileDetails} page for the given file
  * @param  {FluxibleContext} actionContext - The action context
  * @param  {string} filename - The name of the file to show.
  *                             Must be in the {@link FileStore}
+ * @emits {SHOW_FILE_DETAILS}
  */
 export default function (actionContext, filename) {
   actionContext.dispatch(ACTIONS.SHOW_FILE_DETAILS, filename);

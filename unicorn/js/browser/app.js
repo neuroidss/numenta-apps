@@ -1,4 +1,4 @@
-// Copyright © 2015, Numenta, Inc.  Unless you have purchased from
+// Copyright © 2016, Numenta, Inc.  Unless you have purchased from
 // Numenta, Inc. a separate commercial license for this software code, the
 // following terms and conditions apply:
 //
@@ -28,34 +28,32 @@
 import bunyan from 'bunyan';
 import Fluxible from 'fluxible';
 import FluxibleReact from 'fluxible-addons-react';
-import React from 'react';
 import ReactDOM from 'react-dom';
 import remote from 'remote';
 import tapEventInject from 'react-tap-event-plugin';
 
-import ConfigClient from './lib/Unicorn/ConfigClient';
-import DatabaseClient from './lib/Unicorn/DatabaseClient';
-import FileClient from './lib/Unicorn/FileClient';
+import config from './lib/Unicorn/ConfigClient';
+import databaseClient from './lib/Unicorn/DatabaseClient';
+import fileClient from './lib/Unicorn/FileClient';
 import FileDetailsStore from './stores/FileDetailsStore';
+import MetricStore from './stores/MetricStore';
 import FileStore from './stores/FileStore';
-import ListFilesAction from './actions/ListFiles';
-import ListMetricsAction from './actions/ListMetrics';
+import StartApplicationAction from './actions/StartApplication';
 import loggerConfig from '../config/logger';
 import MainComponent from './components/Main';
 import MetricDataStore from './stores/MetricDataStore';
 import ModelClient from './lib/Unicorn/ModelClient';
+import ParamFinderClient from './lib/Unicorn/ParamFinderClient';
 import ModelDataStore from './stores/ModelDataStore';
 import ModelStore from './stores/ModelStore';
-import UnicornPlugin from './lib/Fluxible/Plugins/Unicorn';
+import UnicornPlugin from './lib/Fluxible/UnicornPlugin';
 import Utils from '../main/Utils';
 
-const config = new ConfigClient();
 const dialog = remote.require('dialog');
 const logger = bunyan.createLogger(loggerConfig);
 
-let databaseClient = new DatabaseClient();
-let fileClient = new FileClient();
 let modelClient = new ModelClient();
+let paramFinderClient = new ParamFinderClient();
 
 
 /**
@@ -76,19 +74,14 @@ document.addEventListener('DOMContentLoaded', () => {
     dialog.showErrorBox('Document Error', 'No document body found');
   }
 
-  // expose React to dev tools
-  if (config.get('NODE_ENV') !== 'production') {
-    window.React = React; // expose dev tools to browser
-  }
-
   tapEventInject(); // @TODO remove when >= React 1.0
 
   // init GUI flux/ible app
   app = new Fluxible({
     component: MainComponent,
     stores: [
-      FileStore, ModelStore, ModelDataStore, MetricDataStore, FileDetailsStore
-    ]
+      FileStore, ModelStore, ModelDataStore, MetricDataStore, FileDetailsStore,
+      MetricStore]
   });
 
   // Plug Unicorn plugin giving access to Unicorn clients
@@ -100,11 +93,15 @@ document.addEventListener('DOMContentLoaded', () => {
     loggerClient: logger,
     databaseClient,
     fileClient,
-    modelClient
+    modelClient,
+    paramFinderClient
   });
 
   // Start listening for model events
   modelClient.start(context.getActionContext());
+
+  // Start listening for paramFinder events
+  paramFinderClient.start(context.getActionContext());
 
   // app exit handler
   window.onbeforeunload = (event) => {
@@ -134,16 +131,14 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   // fire initial app action to load all files
-  context.executeAction(ListFilesAction, {})
-    .then((files) => {
-      return context.executeAction(ListMetricsAction, files);
-    })
+  context.executeAction(StartApplicationAction)
     .then(() => {
       let contextEl = FluxibleReact.createElementWithContext(context);
       let container = document.getElementById('main');
       ReactDOM.render(contextEl, container);
     })
     .catch((error) => {
+      console.log(error); // eslint-disable-line
       dialog.showErrorBox('Startup Error', `Startup Error: ${error}`);
     });
 }); // DOMContentLoaded

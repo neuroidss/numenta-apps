@@ -1,4 +1,4 @@
-// Copyright © 2015, Numenta, Inc. Unless you have purchased from
+// Copyright © 2016, Numenta, Inc. Unless you have purchased from
 // Numenta, Inc. a separate commercial license for this software code, the
 // following terms and conditions apply:
 //
@@ -23,13 +23,15 @@ import {ACTIONS} from '../lib/Constants';
  * Delete model
  * @param {FluxibleContext} actionContext -
  * @param {string} modelId - Model ID
+ * @emits {DELETE_MODEL}
+ * @emits {DELETE_MODEL_FAILED}
  * @return {Promise}
  */
 export default function (actionContext, modelId) {
   return new Promise((resolve, reject) => {
     let database = actionContext.getDatabaseClient();
     // Delete model data
-    database.deleteMetricData(modelId, (error) => {
+    database.deleteModelData(modelId, (error) => {
       if (error) {
         actionContext.dispatch(ACTIONS.DELETE_MODEL_FAILED, {modelId, error});
         reject(error);

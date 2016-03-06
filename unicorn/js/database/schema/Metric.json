@@ -1,36 +1,44 @@
 {
   "$schema": "http://json-schema.org/schema#",
-  "id": "/Metric",
+  "id": "/db/Metric",
   "type": "object",
   "properties": {
     "uid": {
       "type": "string",
       "maxLength": 50,
-      "minLength": 1
+      "minLength": 1,
+      "required": true
     },
     "file_uid": {
       "type": "string",
-      "maxLength": 40,
-      "minLength": 1
-    },
-    "model_uid": {
-      "type": ["string", "null"],
-      "maxLength": 40
+      "maxLength": 50,
+      "minLength": 1,
+      "required": true
     },
     "name": {
       "type": "string",
-      "maxLength": 255
+      "maxLength": 255,
+      "required": true
     },
     "type": {
       "enum": ["date", "number", "string"],
-      "type": "string"
+      "type": "string",
+      "default": "string",
+      "required": true
     },
-    "min": {
-      "type": "number"
+    "format": {
+      "type": "string",
+      "description": "Optional field format string. Usually used by 'date' fields to validate datetime format"
     },
-    "max": {
-      "type": "number"
+    "input_options": {
+      "$ref": "/py/input_opt_schema_param_finder"
+    },
+    "aggregation_options": {
+      "$ref": "/py/agg_opt_schema"
+    },
+    "model_options": {
+      "$ref": "/py/model_opt_schema"
     }
   },
-  "required": ["uid", "file_uid", "name", "type"]
+  "additionalProperties": false
 }

@@ -1,4 +1,4 @@
-// Copyright © 2015, Numenta, Inc. Unless you have purchased from
+// Copyright © 2016, Numenta, Inc. Unless you have purchased from
 // Numenta, Inc. a separate commercial license for this software code, the
 // following terms and conditions apply:
 //
@@ -15,8 +15,8 @@
 //
 // http://numenta.org/licenses/
 
-
 import connectToStores from 'fluxible-addons-react/connectToStores';
+import IconCheckbox from 'material-ui/lib/svg-icons/toggle/check-box';
 import Paper from 'material-ui/lib/paper';
 import React from 'react';
 
@@ -35,7 +35,9 @@ export default class ModelList extends React.Component {
   static get contextTypes() {
     return {
       executeAction: React.PropTypes.func,
-      getStore: React.PropTypes.func
+      getConfigClient: React.PropTypes.func,
+      getStore: React.PropTypes.func,
+      muiTheme: React.PropTypes.object
     };
   }
 
@@ -53,19 +55,50 @@ export default class ModelList extends React.Component {
 
   constructor(props, context) {
     super(props, context);
-  }
 
-  _getStyles() {
-    return {
+    this._config = this.context.getConfigClient();
+
+    let muiTheme = this.context.muiTheme;
+    this._styles = {
       root: {
         backgroundColor: 'transparent',
         boxShadow: 'none',
         width: '100%'
+      },
+      empty: {
+        marginLeft: (0 - (muiTheme.leftNav.width / 2)) - 33,
+        position: 'fixed',
+        textAlign: 'center',
+        top: '43%',
+        transform: 'translateY(-43%)',
+        width: '100%'
+      },
+      emptyMessage: {
+        color: muiTheme.rawTheme.palette.accent4Color,
+        fontWeight: muiTheme.rawTheme.font.weight.normal,
+        left: 8,
+        position: 'relative',
+        top: -5
       }
     };
   }
 
   _renderModels() {
+    let visibleModels = this.props.models.find((model) => model.visible);
+    let checkboxColor, emptyMessage;
+
+    if (! visibleModels) {
+      emptyMessage = this._config.get('heading:chart:empty');
+      checkboxColor = this.context.muiTheme.rawTheme.palette.primary1Color;
+
+      return (
+        <div style={this._styles.empty}>
+          <IconCheckbox color={checkboxColor} />
+          <span style={this._styles.emptyMessage}>{emptyMessage}</span>
+        </div>
+      );
+    }
+
     return this.props.models
       .filter((model) => model.visible)
       .map((model) => {
@@ -76,9 +109,8 @@ export default class ModelList extends React.Component {
   }
 
   render() {
-    let styles = this._getStyles();
     return (
-      <Paper style={styles.root} zDepth={this.props.zDepth}>
+      <Paper style={this._styles.root} zDepth={this.props.zDepth}>
         {this._renderModels()}
       </Paper>
     );

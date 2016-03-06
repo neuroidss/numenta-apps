@@ -294,10 +294,13 @@ class LoggingSupport(object):
     :returns: application-specific logging root directory path
     :rtype: string
     """
-    loggingRootDir = _LOG_DIR
+    if _LOG_DIR is None:
+      raise ValueError("Logging directory not configured by application; see "
+                       "logging_support_raw.setLogDir")
+
     return os.path.abspath(
       os.path.expanduser(
-        os.path.expandvars(loggingRootDir)))
+        os.path.expandvars(_LOG_DIR)))
 
 
 

@@ -86,7 +86,7 @@ class FluentWrapper(object):
   def query(self, model, text):
     """
     Queries the model and returns an ordered list of matching samples.
-    :param str model: Name of the model to use. Possible values are mapped to 
+    :param str model: Name of the model to use. Possible values are mapped to
         classes in the NLP model factory.
 
     :param str text: The text to match.
@@ -145,6 +145,7 @@ class FluentAPIHandler(object):
     response = {}
 
     data = web.data()
+
     if data:
       if isinstance(data, basestring):
         response = g_fluent.query(modelName, data)

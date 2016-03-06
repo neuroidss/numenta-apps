@@ -1,31 +1,28 @@
-// Copyright © 2015, Numenta, Inc.  Unless you have purchased from
+// Copyright © 2016, Numenta, Inc. Unless you have purchased from
 // Numenta, Inc. a separate commercial license for this software code, the
 // following terms and conditions apply:
 //
 // This program is free software: you can redistribute it and/or modify it under
-// the terms of the GNU Affero Public License version 3 as published by the Free
-// Software Foundation.
+// the terms of the GNU Affero Public License version 3 as published by the
+// Free Software Foundation.
 //
 // This program is distributed in the hope that it will be useful, but WITHOUT
 // ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 // FOR A PARTICULAR PURPOSE. See the GNU Affero Public License for more details.
 //
 // You should have received a copy of the GNU Affero Public License along with
-// this program.  If not, see http://www.gnu.org/licenses.
+// this program. If not, see http://www.gnu.org/licenses.
 //
 // http://numenta.org/licenses/
 
 import childProcess from 'child_process';
 import EventEmitter from 'events';
-import path from 'path';
 import system from 'os';
+
+import getPortablePython from './PortablePython';
 import UserError from './UserError';
 
-// @todo https://bitbucket.org/anthony_tuininga/cx_freeze/issues/161
-const MODEL_RUNNER_PATH = path.join(
-  //  __dirname, '..', '..', 'dist', 'model_runner'
-  __dirname, '..', '..', 'py', 'unicorn_backend', 'model_runner.py'
-);
+const PYTHON_EXECUTABLE = getPortablePython();
 
 
 /**
@@ -88,11 +85,15 @@ export class ModelService extends EventEmitter {
 
   /**
    * Creates new HTM model.
-   * @param  {string} modelId - Unique identifier for the model
-   * @param  {Object} stats - HTM Model parameters. See model_runner.py
+   * @param  {String} modelId - Unique identifier for the model.
+   *  Updates modelOpt.modelId property.
+   * @param  {Object} inputOpt - Input options. See 'input_opt_schema.json'
+   * @param  {Object} aggregationOpt - Aggregation options.
+   *  See 'agg_opt_schema.json'
+   * @param  {Object} modelOpt - Model options. See 'model_opt_schema.json'
    * @throws {@link MaximumConcurrencyError}, {@link DuplicateIDError}
    */
-  createModel(modelId, stats) {
+  createModel(modelId, inputOpt, aggregationOpt, modelOpt) {
     if (this.availableSlots() <= 0) {
       throw new MaximumConcurrencyError();
     }
@@ -100,13 +101,17 @@ export class ModelService extends EventEmitter {
       throw new DuplicateIDError();
     }
 
-    // const params = [MODEL_RUNNER_PATH, '--model', modelId, '--stats', stats];
-    // const child = childProcess.spawn('python', params);
-    const params = ['--model', modelId, '--stats', stats];
-    const child = childProcess.spawn(MODEL_RUNNER_PATH, params);
+    let params = [
+      '-m', 'unicorn_backend.model_runner_2',
+      '--input', JSON.stringify(inputOpt),
+      '--model', JSON.stringify(modelOpt)
+    ];
+    if (Object.keys(aggregationOpt).length >= 1) {
+      params = params.concat('--agg', JSON.stringify(aggregationOpt));
+    }
 
+    const child = childProcess.spawn(PYTHON_EXECUTABLE, params);
     child.stdout.setEncoding('utf8');
-    child.stdin.setDefaultEncoding('utf8');
     child.stderr.setEncoding('utf8');
 
     child.on('error', (error) => {
@@ -118,7 +123,12 @@ export class ModelService extends EventEmitter {
     });
 
     child.stdout.on('data', (data) => {
-      this.emit(modelId, 'data', data);
+      // Model data chunks are separated by '\n', see 'model_runner_2' for details
+      data.split('\n').forEach((line) => {
+        if (line && line.length > 0) {
+          this.emit(modelId, 'data', line)
+        }
+      });
     });
 
     child.once('close', (code) => {
@@ -126,24 +136,9 @@ export class ModelService extends EventEmitter {
       this.emit(modelId, 'close', code);
     });
 
-    this._models.set(modelId, {modelId, stats, child});
-  }
-
-  /**
-   * Sends data to the model.
-   * @param {string} modelId - The model to send data
-   * @param {Array} inputData - The data values to be sent to the model, usually
-   *  in the following format: '[timestamp, value]'
-   * @throws {@link ModelNotFoundError}
-   */
-  sendData(modelId, inputData) {
-    if (!this._models.has(modelId)) {
-      throw new ModelNotFoundError();
-    }
-
-    const model = this._models.get(modelId);
-    const value = [JSON.stringify(inputData), '\n'].join('');
-    model.child.stdin.write(value);
+    this._models.set(modelId, {
+      inputOpt, aggregationOpt, modelOpt, child
+    });
   }
 
   /**
@@ -169,3 +164,5 @@ export class ModelService extends EventEmitter {
     this.removeAllListeners(modelId);
   }
 }
+const INSTANCE = new ModelService();
+export default INSTANCE;

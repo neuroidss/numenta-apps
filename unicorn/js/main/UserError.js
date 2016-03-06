@@ -1,4 +1,4 @@
-// Copyright © 2015, Numenta, Inc. Unless you have purchased from
+// Copyright © 2016, Numenta, Inc. Unless you have purchased from
 // Numenta, Inc. a separate commercial license for this software code, the
 // following terms and conditions apply:
 //
@@ -19,7 +19,7 @@
 /**
  * Base UserError class
  * Overcomes the fact babel have problems inheriting from builtin objects:
- * @todo http://stackoverflow.com/questions/3108980
+ * @TODO http://stackoverflow.com/questions/3108980
  */
 export default class UserError extends Error {
   /**

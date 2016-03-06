@@ -1,4 +1,4 @@
-// Copyright © 2015, Numenta, Inc. Unless you have purchased from
+// Copyright © 2016, Numenta, Inc. Unless you have purchased from
 // Numenta, Inc. a separate commercial license for this software code, the
 // following terms and conditions apply:
 //
@@ -22,14 +22,17 @@ import {ACTIONS} from '../lib/Constants';
 /**
  * Update file properties
  * @param  {FluxContext} actionContext The context to use
- * @param  {File} file File Object
+ * @param  {FileStore.File} file File Object
+ * @emits {UPDATE_FILE}
+ * @emits {UPDATE_FILE_FAILED}
  * @return {Promise}
  */
 export default function (actionContext, file) {
-  let db = actionContext.getDatabaseClient();
   return new Promise((resolve, reject) => {
+    let db = actionContext.getDatabaseClient();
     db.putFile(file, (error, results) => {
       if (error) {
+        actionContext.dispatch(ACTIONS.UPDATE_FILE_FAILED, file);
         reject(error);
       } else {
         actionContext.dispatch(ACTIONS.UPDATE_FILE, file);

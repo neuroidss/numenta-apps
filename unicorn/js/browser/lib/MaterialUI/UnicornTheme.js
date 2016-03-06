@@ -1,4 +1,4 @@
-// Copyright © 2015, Numenta, Inc. Unless you have purchased from
+// Copyright © 2016, Numenta, Inc. Unless you have purchased from
 // Numenta, Inc. a separate commercial license for this software code, the
 // following terms and conditions apply:
 //
@@ -16,23 +16,42 @@
 // http://numenta.org/licenses/
 
 import Colors from 'material-ui/lib/styles/colors';
-import ColorManipulator from 'material-ui/lib/utils/color-manipulator';
 import Spacing from 'material-ui/lib/styles/spacing';
+import Typography from 'material-ui/lib/styles/typography';
+import zIndex from 'material-ui/lib/styles/zIndex';
 
+
+/**
+ * Unicorn Material-UI Theme
+ *
+ */
 export default {
-  spacing: Spacing,
   fontFamily: 'Roboto, sans-serif',
+  spacing: Spacing,
+  zIndex,
   palette: {
-    primary1Color: Colors.lightBlue700,
-    primary2Color: Colors.cyan700,
+    primary1Color: '#29aae2', // numenta blue : actions
+    primary1FadeColor: '#b7d5e2', // faded numenta blue
+    primary2Color: '#095c80', // darkened numenta blue : header
     primary3Color: Colors.lightBlack,
-    accent1Color: Colors.lightBlue400,
+    accent1Color: '#29aae2', // numenta blue : actions
     accent2Color: Colors.lightBlue800,
-    accent3Color: Colors.grey500,
-    textColor: Colors.darkBlack,
+    accent3Color: Colors.grey500, // neutral gray for small menu headings
+    accent4Color: Colors.grey700, // slightly less dark than textColor Black
+    textColor: Colors.darkBlack, // main text color
     alternateTextColor: Colors.white,
     canvasColor: Colors.white,
     borderColor: Colors.grey300,
-    disabledColor: ColorManipulator.fade(Colors.darkBlack, 0.3)
+    disabledColor: Colors.grey300, // disabled light gray
+    dangerColor: '#cb0000',  // Numenta Anomaly Red
+    warnColor: '#d6ce03',  // Numenta Anomaly Yellow
+    safeColor: '#0f8300'  // Numenta Anomaly Green
+  },
+  font: {
+    weight: {
+      light: Typography.fontWeightLight,
+      normal: Typography.fontWeightNormal,
+      medium: Typography.fontWeightMedium
+    }
   }
 };

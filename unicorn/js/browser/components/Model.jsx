@@ -1,4 +1,4 @@
-// Copyright © 2015, Numenta, Inc.  Unless you have purchased from
+// Copyright © 2016, Numenta, Inc.  Unless you have purchased from
 // Numenta, Inc. a separate commercial license for this software code, the
 // following terms and conditions apply:
 //
@@ -15,47 +15,45 @@
 //
 // http://numenta.org/licenses/
 
-import connectToStores from 'fluxible-addons-react/connectToStores';
-import path from 'path';
-import React from 'react';
-import remote from 'remote';
-
-import Avatar from 'material-ui/lib/avatar';
 import Card from 'material-ui/lib/card/card';
 import CardActions from 'material-ui/lib/card/card-actions';
 import CardHeader from 'material-ui/lib/card/card-header';
 import CardText from 'material-ui/lib/card/card-text';
 import Colors from 'material-ui/lib/styles/colors';
+import connectToStores from 'fluxible-addons-react/connectToStores';
 import Dialog from 'material-ui/lib/dialog';
 import FlatButton from 'material-ui/lib/flat-button';
+import path from 'path';
+import React from 'react';
+import {remote} from 'electron';
 
+import CreateModelDialog from '../components/CreateModelDialog'
 import DeleteModelAction from '../actions/DeleteModel';
 import ExportModelResultsAction from '../actions/ExportModelResults';
+import FileStore from '../stores/FileStore';
+import MetricStore from '../stores/MetricStore';
 import ModelData from '../components/ModelData';
 import ModelStore from '../stores/ModelStore';
-import StartModelAction from '../actions/StartModel';
-import StopModelAction from '../actions/StopModel';
+import ShowCreateModelDialogAction from '../actions/ShowCreateModelDialog';
+import StartParamFinderAction from '../actions/StartParamFinder';
 
 const dialog = remote.require('dialog');
-
-const DIALOG_STRINGS = {
-  model: {
-    title: 'Delete Model',
-    message: 'Deleting this model will delete the associated model results.' +
-              ' Are you sure you want to delete this model?'
-  }
-};
+const MOMENTS_TO_DATETIME =
+  require('../../config/momentjs_to_datetime_strptime.json');
 
 
 /**
  * Model component, contains Chart details, actions, and Chart Graph itself.
  */
-@connectToStores([ModelStore], () => ({}))
+@connectToStores([ModelStore, FileStore, MetricStore], (context) => ({
+  files: context.getStore(FileStore).getFiles()
+}))
 export default class Model extends React.Component {
 
   static get contextTypes() {
     return {
       executeAction: React.PropTypes.func,
+      getConfigClient: React.PropTypes.func,
       getStore: React.PropTypes.func,
       muiTheme: React.PropTypes.object
     };
@@ -73,15 +71,15 @@ export default class Model extends React.Component {
     let store = this.context.getStore(ModelStore);
     let model = store.getModel(this.props.modelId);
 
+    this._config = this.context.getConfigClient();
+
     this._styles = {
       root: {
         marginBottom: '1rem',
         width: '100%'
       },
-      avatar: {
-        textTransform: 'capitalize'
-      },
       title: {
+        marginTop: -3,
         overflow: 'hidden',
         textOverflow: 'ellipsis',
         whiteSpace: 'nowrap',
@@ -89,8 +87,8 @@ export default class Model extends React.Component {
       },
       actions: {
         textAlign: 'right',
-        marginRight: '2rem',
-        marginTop: '-5rem'
+        marginRight: 0,
+        marginTop: '-5.5rem'
       }
     };
 
@@ -124,18 +122,24 @@ export default class Model extends React.Component {
     });
   }
 
-  _onStopButtonClick(modelId) {
-    this.context.executeAction(StopModelAction, modelId);
-  }
+  _createModel(metricName, metricId, csvPath, rowOffset, timestampIndex,
+                valueIndex, datetimeFormat) {
+    let inputOpts = {
+      csv: csvPath, rowOffset, timestampIndex, valueIndex, datetimeFormat
+    };
 
-  _createModel(modelId) {
-    this.context.executeAction(StartModelAction, modelId);
+    this.context.executeAction(ShowCreateModelDialogAction, {
+      fileName: path.basename(csvPath),
+      metricName
+    });
+
+    this.context.executeAction(StartParamFinderAction, {metricId, inputOpts});
   }
 
   _deleteModel(modelId) {
     this._showDeleteConfirmDialog(
-      DIALOG_STRINGS.model.title,
-      DIALOG_STRINGS.model.message,
+      this._config.get('dialog:model:delete:title'),
+      this._config.get('dialog:model:delete:message'),
       () => {
         this.context.executeAction(DeleteModelAction, modelId);
         this._dismissDeleteConfirmDialog();
@@ -145,8 +149,8 @@ export default class Model extends React.Component {
 
   _exportModelResults(modelId) {
     dialog.showSaveDialog({
-      title: 'Export Model Results',
-      defaultPath: 'Untitled.csv'
+      title: this._config.get('dialog:model:export:title'),
+      defaultPath: this._config.get('dialog:model:export:path')
     }, (filename) => {
       if (filename) {
         this.context.executeAction(
@@ -159,56 +163,93 @@ export default class Model extends React.Component {
   }
 
   render() {
-    let titleColor;
+    let metric, timestampIndex, titleColor, valueIndex;
     let model = this.state;
     let modelId = model.modelId;
     let filename = path.basename(model.filename);
     let title = model.metric;
-    let avatarColor = Colors.red400;
-    let avatarContents = model.metric.charAt(0);
-    let isModelActive = (model && ('active' in model) && model.active);
     let hasModelRun = (model && ('ran' in model) && model.ran);
     let deleteConfirmDialog = this.state.deleteConfirmDialog || {};
     let dialogOpen = false;
+
+    let file = this.props.files.find((file) => {
+      return file.name === path.basename(this.state.filename);
+    });
+    let tsFormat = file.timestampFormat;
+
+    let datetimeFormatCategory = MOMENTS_TO_DATETIME.find((category) => {
+      return category.mappings[tsFormat];
+    });
+
+    let datetimeFormat = datetimeFormatCategory.mappings[tsFormat];
+
+    let mStore = this.context.getStore(MetricStore);
+    let metrics = mStore.getMetricsByFileId(file.uid);
+
+    for (let [index, value] of metrics.entries()) {
+      if (value.type === 'date') {
+        timestampIndex = index;
+      }
+      if (value.name === this.state.metric) {
+        valueIndex = index;
+        metric = value
+      }
+    }
+
+    // @FIXME - UNI-324
+    valueIndex = 1;
+    timestampIndex = 0;
+
+    let csvPath = file.filename;
+    let metricName = metric.name;
+    let rowOffset = 1; // @TODO; should be replaced by user defined selection (if check use first row as headers) at file upload time
+
     let dialogActions = [
-       {text: 'Cancel'},
-       {text: 'Delete', onTouchTap: deleteConfirmDialog.callback, ref: 'submit'}
+      <FlatButton
+        label={this._config.get('button:cancel')}
+        onTouchTap={this._dismissDeleteConfirmDialog.bind(this)}
+        />,
+      <FlatButton
+        keyboardFocused={true}
+        label={this._config.get('button:delete')}
+        onTouchTap={deleteConfirmDialog.callback}
+        primary={true}
+        ref="submit"
+        />
     ];
     let actions = (
       <CardActions style={this._styles.actions}>
         <FlatButton
           disabled={hasModelRun}
-          label="Create Model"
+          label={this._config.get('button:model:create')}
           labelPosition="after"
-          onTouchTap={this._createModel.bind(this, modelId)}
-          />
-        <FlatButton
-          disabled={!isModelActive}
-          label="Stop Model"
-          labelPosition="after"
-          onTouchTap={this._onStopButtonClick.bind(this, modelId)}
+          onTouchTap={
+            this._createModel.bind(this, metricName, metric.uid, csvPath,
+                                    rowOffset, timestampIndex, valueIndex,
+                                    datetimeFormat)
+          }
+          primary={!hasModelRun}
           />
         <FlatButton
           disabled={!hasModelRun}
-          label="Delete Model"
+          label={this._config.get('button:model:delete')}
           labelPosition="after"
           onTouchTap={this._deleteModel.bind(this, modelId)}
+          primary={hasModelRun}
           />
         <FlatButton
           disabled={!hasModelRun}
-          label="Export Results"
+          label={this._config.get('button:model:export')}
           labelPosition="after"
           onTouchTap={this._exportModelResults.bind(this, modelId)}
+          primary={hasModelRun}
           />
       </CardActions>
     );
 
     if (model.error) {
       titleColor = Colors.red400;
-      avatarContents = '!';
       title = `${model.metric} | ${model.error.message}`;
-    } else if (model.ran) {
-      avatarColor = Colors.green400;
     }
 
     if (this.state.deleteConfirmDialog) {
@@ -218,22 +259,16 @@ export default class Model extends React.Component {
     return (
       <Card initiallyExpanded={true} style={this._styles.root}>
         <CardHeader
-          avatar={
-            <Avatar backgroundColor={avatarColor} style={this._styles.avatar}>
-              {avatarContents}
-            </Avatar>
-          }
-          showExpandableButton={true}
+          showExpandableButton={false}
           subtitle={<div style={this._styles.title}>{filename}</div>}
           title={<div style={this._styles.title}>{title}</div>}
           titleColor={titleColor}
           />
-        <CardText expandable={true}>
+        <CardText expandable={false}>
           {actions}
-          <ModelData modelId={modelId} />
+          <ModelData modelId={modelId}/>
         </CardText>
         <Dialog
-          actionFocus="submit"
           actions={dialogActions}
           onRequestClose={this._dismissDeleteConfirmDialog.bind(this)}
           open={dialogOpen}
@@ -242,8 +277,8 @@ export default class Model extends React.Component {
           >
             {deleteConfirmDialog.message}
         </Dialog>
+        <CreateModelDialog ref="createModelWindow" initialOpenState={false}/>
       </Card>
     );
   }
-
 }

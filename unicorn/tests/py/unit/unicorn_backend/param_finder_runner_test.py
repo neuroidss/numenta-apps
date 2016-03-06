@@ -21,20 +21,21 @@
 
 """Unit test of the unicorn_backend.param_finder_runner module"""
 
+# Disable pylint warnings concerning access to protected members
+# pylint: disable=W0212
 import csv
-from datetime import datetime
+import datetime
+import StringIO
 import json
 import logging
-from mock import patch
 import os
 import sys
 import tempfile
 import unittest
+from mock import patch
 
 from nta.utils.logging_support_raw import LoggingSupport
 from unicorn_backend import param_finder_runner
-
-
 
 _LOGGER = logging.getLogger("unicorn_param_finder_runner_test")
 
@@ -46,30 +47,28 @@ def setUpModule():
 
 
 class ParamFinderRunnerTestCase(unittest.TestCase):
-
   def testParseArgs(self):
-    """ Invalid CLI arguments are rejected
-    """
+    """ Invalid CLI arguments are rejected """
+
 
     def _assertArgumentPatternFails(argumentPattern=None):
       if argumentPattern is None:
         argumentPattern = []
 
       argumentPattern = ["unicorn_backend/param_finder_runner.py"
-                         ] + argumentPattern
+                        ] + argumentPattern
       with patch.object(sys, "argv", argumentPattern):
-        # pylint: disable=W0212)
         with self.assertRaises(param_finder_runner._CommandLineArgError):
           param_finder_runner._parseArgs()
+
 
     def _assertArgumentPatternPasses(argumentPattern=None):
       if argumentPattern is None:
         argumentPattern = []
 
       argumentPattern = ["unicorn_backend/param_finder_runner.py"
-                         ] + argumentPattern
+                        ] + argumentPattern
       with patch.object(sys, "argv", argumentPattern):
-        # pylint: disable=W0212)
         param_finder_runner._parseArgs()
 
 
@@ -77,37 +76,75 @@ class ParamFinderRunnerTestCase(unittest.TestCase):
     _assertArgumentPatternFails(["--input="])
 
     inputInfo = {
-       'csv': "file.csv",
-       'rowOffset': 4,
-       'timestampIndex': 0,
-       'valueIndex': 1,
-       'datetimeFormat': "%m/%d/%y %H:%M"}
-    inputInfo = json.dumps(inputInfo)
+      "csv": "file.csv",
+      "rowOffset": 4,
+      "timestampIndex": 0,
+      "valueIndex": 1,
+      "datetimeFormat": "%m/%d/%y %H:%M"}
 
-    _assertArgumentPatternPasses(['--input='+inputInfo])
+    _assertArgumentPatternPasses(["--input=" + json.dumps(inputInfo)])
 
 
   def testReadCSVFile(self):
     """
     Verify CSV file can be correctly read via  _readCSVFile function
     """
-    tmpfilepath = os.path.join(tempfile.gettempdir(), "tmp-testfile.csv")
-    with open(tmpfilepath, "wb") as file:
-      fileWriter = csv.writer(file)
-      fileWriter.writerow(['timeStamps', 'values'])
-      fileWriter.writerow(['2014-04-01 00:00:00', 20.0])
+    csvFd, csvPath = tempfile.mkstemp()
+    self.addCleanup(os.unlink, csvPath)
 
-    (timeStamps, values) = param_finder_runner._readCSVFile(
-      fileName=tmpfilepath,
+    with os.fdopen(csvFd, "wb") as csvFile:
+      csvWriter = csv.writer(csvFile)
+      csvWriter.writerow(["timeStamps", "values"])
+      csvWriter.writerow(["2014-04-01 00:00:00", 20.0])
+
+    samples = param_finder_runner._readCSVFile(
+      fileName=csvPath,
       rowOffset=1,
       timestampIndex=0,
       valueIndex=1,
       datetimeFormat="%Y-%m-%d %H:%M:%S"
     )
-    self.assertAlmostEqual(values[0], 20.0)
-    self.assertAlmostEqual(str(timeStamps[0]),
-                           '2014-04-01 00:00:00+00:00')
-    os.remove(tmpfilepath)
 
-if __name__ == "__main__":
-  unittest.main()
+    (timestamps, values) = zip(*samples)
+    self.assertEqual(values[0], 20.0)
+    self.assertEqual(str(timestamps[0]), "2014-04-01 00:00:00+00:00")
+
+
+  def testParamFinderRunner(self):
+    """
+    End-to-end test that calls param finder runner"s main with appropriate
+    sys.argv, and then validate the value written to stdout
+    """
+    # Create a temp csv file containing the test dataset
+    csvFd, csvPath = tempfile.mkstemp()
+    self.addCleanup(os.unlink, csvPath)
+    startTime = datetime.datetime(2016, 1, 1, 0, 0, 0)
+    timeStep = datetime.timedelta(seconds=300)
+
+    with os.fdopen(csvFd, "wb") as csvFile:
+      csvWriter = csv.writer(csvFile)
+      csvWriter.writerow(["timeStamps", "values"])
+      for i in xrange(20):
+        csvWriter.writerow([startTime + timeStep * i, 10.0])
+
+    inputInfo = {"datetimeFormat": "%Y-%m-%d %H:%M:%S",
+                 "timestampIndex": 0,
+                 "valueIndex": 1,
+                 "rowOffset": 1,
+                 "csv": csvPath}
+    argumentPattern = ["unicorn_backend/param_finder_runner.py"] + \
+                      ["--input=" + json.dumps(inputInfo)]
+
+    with patch.object(sys, "argv", argumentPattern):
+      with patch("sys.stdout", new=StringIO.StringIO()) as fakeOut:
+        param_finder_runner.main()
+        outputInfo = json.loads(fakeOut.getvalue())
+
+        # since we used a flat line as test data, there should be no aggregation
+        self.assertIsNone(outputInfo["aggInfo"], None)
+        self.assertIsNotNone(outputInfo["modelInfo"]
+                             ["modelConfig"]["modelParams"]
+                             ["sensorParams"]["encoders"]["c0_timeOfDay"])
+        self.assertIsNone(outputInfo["modelInfo"]["modelConfig"]["modelParams"]
+                          ["sensorParams"]["encoders"]["c0_dayOfWeek"])
+

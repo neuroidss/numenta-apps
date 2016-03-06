@@ -1,4 +1,6 @@
 {
+  "$schema": "http://json-schema.org/schema#",
+  "id": "/py/model_opt_schema",
   "description": "--model command-line option object passed to model runner",
   "type": "object",
   "additionalProperties": false,
@@ -7,7 +9,7 @@
     "modelId": {
       "description": "The model id; ModelRunner uses the model id for logging",
       "type": "string",
-      "required": true
+      "required": false
     },
     "modelConfig": {
       "description": "OPF Model Configuration parameters (JSON object) for passing to the OPF `ModelFactory.create()` method as the `modelConfig` parameter.",

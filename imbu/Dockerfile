@@ -18,14 +18,18 @@
 # http://numenta.org/licenses/
 # ----------------------------------------------------------------------
 
+# See https://hub.docker.com/r/numenta/nupic for details of official public
+# build of image from https://github.com/numenta/nupic/blob/master/Dockerfile
 FROM numenta/nupic:latest
 
+# OS-level dependencies
 RUN apt-get update && apt-get -y install  apt-transport-https \
                                           build-essential \
                                           nginx \
                                           python-matplotlib \
                                           python-software-properties \
                                           software-properties-common
+
 # Install latest Node JS
 RUN apt-key adv --keyserver keyserver.ubuntu.com --recv 68576280 && \
     apt-add-repository 'deb https://deb.nodesource.com/node_4.x precise main' && \
@@ -40,27 +44,45 @@ ENV MODEL_CACHE_DIR=/opt/numenta/imbu/cache
 # Enable development-mode htmresearch (optional)
 ENV PYTHONPATH=/opt/numenta/nupic.research:${PYTHONPATH}
 
+# Listen on container port 80
 EXPOSE 80
 
+# Copy directory contents to /opt/numenta/imbu.  Changes to files anchored
+# here will trigger cascading creation of dependent file-system layers during
+# `docker build`
+COPY . /opt/numenta/imbu
+
+# Set working directory to /opt/numenta/imbu for subsequent build instructions
 WORKDIR /opt/numenta/imbu
 
-# Install python packages
-COPY requirements.txt /opt/numenta/imbu/requirements.txt
-COPY setup.py /opt/numenta/imbu/setup.py
+# Install python package and dependencies
 RUN python setup.py develop
 
 # Install javascript packages
 COPY package.json /opt/numenta/imbu/package.json
 RUN npm install
 
-# Build javascript app
-COPY . /opt/numenta/imbu
+# Build javascript app using npm
 RUN npm run build
 
-# Setup persistent model cache
+# Setup persistent model cache. In order to specify a cache-dir outside of the
+# container, use `-v <path to cache>:/opt/numenta/imbu/cache` arguments to
+# `docker run`, where `<path to cache>` is a location on the docker host.  In
+# practice, this is `/imbu/cache`, which resides on an EBS volume attached to
+# the production EC2 instance.
 RUN mkdir -p cache
 VOLUME cache
 
+# Imbu startup command.  This will re-install htmresearch (if necessary), start
+# nginx and supervisor.
 CMD ./start_imbu.sh
 
+# User may map nupic.research to a local dir to run a specific version of
+# htmresearch as opposed to installing master from
+# https://github.com/numenta/nupic.research.git by default as specified in
+# requirements.txt
 VOLUME /opt/numenta/nupic.research
+
+# User may map /opt/numenta/imbu/gui to a local dir for development purposes,
+# allowing for modification of gui files without requiring rebuild of image
+VOLUME /opt/numenta/imbu/gui

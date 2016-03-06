@@ -1,4 +1,4 @@
-// Copyright © 2015, Numenta, Inc.  Unless you have purchased from
+// Copyright © 2016, Numenta, Inc.  Unless you have purchased from
 // Numenta, Inc. a separate commercial license for this software code, the
 // following terms and conditions apply:
 //
@@ -16,9 +16,10 @@
 // http://numenta.org/licenses/
 
 import Checkbox from 'material-ui/lib/checkbox';
-import Colors from 'material-ui/lib/styles/colors';
+import CheckboxOutline from 'material-ui/lib/svg-icons/toggle/check-box-outline-blank';
 import connectToStores from 'fluxible-addons-react/connectToStores';
 import Dialog from 'material-ui/lib/dialog';
+import FlatButton from 'material-ui/lib/flat-button';
 import IconButton from 'material-ui/lib/icon-button';
 import IconClose from 'material-ui/lib/svg-icons/hardware/keyboard-arrow-down';
 import IconMenu from 'material-ui/lib/menus/icon-menu';
@@ -30,28 +31,21 @@ import ListItem from 'material-ui/lib/lists/list-item';
 import MenuItem from 'material-ui/lib/menus/menu-item';
 import React from 'react';
 
-import CreateModelAction from '../actions/CreateModel';
+import AddModelAction from '../actions/AddModel';
 import DeleteFileAction from '../actions/DeleteFile';
 import FileStore from '../stores/FileStore';
 import HideModelAction from '../actions/HideModel';
 import ModelStore from '../stores/ModelStore';
+import MetricStore from '../stores/MetricStore';
 import ShowFileDetailsAction from '../actions/ShowFileDetails';
 import ShowModelAction from '../actions/ShowModel';
 import Utils from '../../main/Utils';
-
-const DIALOG_STRINGS = {
-  file: {
-    title: 'Delete File',
-    message: 'Deleting this dataset will delete the associated models.' +
-              ' Are you sure you want to delete this file?'
-  }
-};
 
 
 /**
  * Component used to display a list of files
  */
-@connectToStores([FileStore, ModelStore], (context) => ({
+@connectToStores([FileStore, ModelStore, MetricStore], (context) => ({
   files: context.getStore(FileStore).getFiles(),
   models: context.getStore(ModelStore).getModels()
 }))
@@ -60,6 +54,7 @@ export default class FileList extends React.Component {
   static get contextTypes() {
     return {
       executeAction: React.PropTypes.func,
+      getConfigClient: React.PropTypes.func,
       getStore: React.PropTypes.func,
       muiTheme: React.PropTypes.object
     };
@@ -70,6 +65,8 @@ export default class FileList extends React.Component {
 
     let showNested = {};
     let muiTheme = this.context.muiTheme;
+
+    this._config = this.context.getConfigClient();
 
     // prep visibility toggle nested file contents
     props.files.forEach((file) => {
@@ -83,30 +80,44 @@ export default class FileList extends React.Component {
     }, props);
 
     this._styles = {
+      root: {
+        paddingTop: '0.5rem'
+      },
       list: {
-        color: muiTheme.rawTheme.palette.primary1Color
+        color: muiTheme.rawTheme.palette.accent3Color,
+        fontWeight: muiTheme.rawTheme.font.weight.normal
       },
       file: {
+        marginLeft: '-1.4rem',
         overflow: 'hidden',
         textOverflow: 'ellipsis',
         textTransform: 'capitalize',
         whiteSpace: 'nowrap'
+      },
+      fileToggle: {
+        margin: 0
       },
       more: {
         width: 40
       },
       metric: {
+        marginLeft: '-1.4rem',
         overflow: 'hidden',
         textOverflow: 'ellipsis',
         textTransform: 'capitalize',
         whiteSpace: 'nowrap'
       },
+      empty: {
+        color: muiTheme.rawTheme.palette.primary2Color,
+        fontSize: '82.5%',
+        marginLeft: 3
+      },
       status: {
-        height: 15,
+        height: 12,
+        margin: 0,
+        marginRight: '0.5rem',
         padding: 0,
-        right: 13,
-        top: 16,
-        width: 15
+        width: 12
       }
     };
   }
@@ -138,7 +149,7 @@ export default class FileList extends React.Component {
       this.context.executeAction(ShowModelAction, modelId);
     } else if (checked) {
       // show: unknown, so know it first
-      this.context.executeAction(CreateModelAction, {
+      this.context.executeAction(AddModelAction, {
         modelId, filename, timestampField, metric
       });
       this.context.executeAction(ShowModelAction, modelId);
@@ -170,8 +181,8 @@ export default class FileList extends React.Component {
       this.context.executeAction(ShowFileDetailsAction, filename);
     } else if (action === 'delete') {
       this._showDeleteConfirmDialog(
-        DIALOG_STRINGS.file.title,
-        DIALOG_STRINGS.file.message,
+        this._config.get('dialog:file:delete:title'),
+        this._config.get('dialog:file:delete:message'),
         () => {
           this.context.executeAction(DeleteFileAction, filename);
           this._dismissDeleteConfirmDialog();
@@ -181,24 +192,29 @@ export default class FileList extends React.Component {
   }
 
   _renderMetrics(file) {
-    let timestampField = file.metrics.find((metric) => {
+    let metricStore = this.context.getStore(MetricStore);
+
+    let fileMetrics = metricStore.getMetricsByFileId(file.uid);
+    let timestampField = fileMetrics.find((metric) => {
       return metric.type === 'date';
     });
     if (timestampField) {
-      return file.metrics.map((metric) => {
+      return fileMetrics.map((metric) => {
         if (metric.type !== 'date') {
+          let muiTheme = this.context.muiTheme;
           let modelId = Utils.generateMetricId(file.filename, metric.name);
           let models = this.props.models;
           let model = models.find((m) => m.modelId === modelId);
           let isModelVisible = false;
-          let statusColor = Colors.red400;
+          let checkboxColor = muiTheme.rawTheme.palette.primary1Color;
+          let statusColor = muiTheme.rawTheme.palette.disabledColor;
 
           if (model) {
             if (model.visible) {
               isModelVisible = true;
             }
             if (model.ran) {
-              statusColor = Colors.green400;
+              statusColor = muiTheme.rawTheme.palette.primary2Color;
             }
           }
 
@@ -217,11 +233,14 @@ export default class FileList extends React.Component {
                       metric.name
                     )
                   }
+                  unCheckedIcon={<CheckboxOutline color={checkboxColor} />}
                   />
               }
-              primaryText={<div style={this._styles.metric}>{metric.name}</div>}
-              rightIcon={
-                <IconStatus color={statusColor} style={this._styles.status} />
+              primaryText={
+                <div style={this._styles.metric}>
+                  <IconStatus color={statusColor} style={this._styles.status} />
+                  {metric.name}
+                </div>
               }
               />
           );
@@ -231,48 +250,65 @@ export default class FileList extends React.Component {
   }
 
   _renderFiles(filetype) {
+    let uploaded = this.props.files.filter((file) => file.type === 'uploaded');
+    let uploadCount = uploaded.length || 0;
+    let emptyMessage = this._config.get('heading:data:empty');
+
+    if ((filetype === 'uploaded') && (uploadCount <= 0)) {
+      return (
+        <ListItem
+          initiallyOpen={true}
+          primaryText={<div style={this._styles.empty}>{emptyMessage}</div>}
+          />
+      );
+    }
+
     return this.props.files.map((file) => {
       if (file.type === filetype) {
+        let color = this.context.muiTheme.rawTheme.palette.primary1Color;
         let fileId = file.uid;
         let filename = file.filename;
-        let toggleIcon;
         let contextMenu = (
           <IconMenu
             iconButtonElement={
-              <IconButton><IconMore color={Colors.grey500} /></IconButton>
+              <IconButton><IconMore color={color} /></IconButton>
             }
             onChange={this._handleFileContextMenu.bind(this, filename)}
             style={this._styles.more}
             >
               <MenuItem index={1}
-                primaryText="File Details"
+                primaryText={this._config.get('menu:file:details')}
                 value="detail"
                 />
               <MenuItem index={2}
                 disabled={filetype === 'sample'}
-                primaryText="Delete File"
+                primaryText={this._config.get('menu:file:delete')}
                 value="delete"
                 />
           </IconMenu>
         );
+        let leftIconButton, toggleIcon;
 
         // choose file visibility toggle icon
         if (this.state.showNested[fileId]) {
-          toggleIcon = (<IconOpen />);
+          toggleIcon = (<IconOpen color={color} />);
         } else {
-          toggleIcon = (<IconClose />);
+          toggleIcon = (<IconClose color={color} />);
         }
+        leftIconButton = (
+          <IconButton
+            onTouchTap={this._handleFileToggle.bind(this, fileId)}
+            style={this._styles.fileToggle}
+            >
+              {toggleIcon}
+          </IconButton>
+        );
 
         return (
           <ListItem
             initiallyOpen={true}
             key={file.name}
-            leftIcon={
-              <IconButton
-                onTouchTap={this._handleFileToggle.bind(this, fileId)}>
-                  {toggleIcon}
-              </IconButton>
-            }
+            leftIcon={leftIconButton}
             nestedItems={this._renderMetrics(file)}
             primaryText={<div style={this._styles.file}>{file.name}</div>}
             ref={`file-toggle-${fileId}`}
@@ -287,15 +323,22 @@ export default class FileList extends React.Component {
     let deleteConfirmDialog = this.state.deleteConfirmDialog || {};
     let dialogOpen = this.state.deleteConfirmDialog !== null;
     let dialogActions = [
-       {text: 'Cancel'},
-       {text: 'Delete', onTouchTap: deleteConfirmDialog.callback, ref: 'submit'}
+      <FlatButton
+        label={this._config.get('button:cancel')}
+        onTouchTap={this._dismissDeleteConfirmDialog.bind(this)}
+        />,
+      <FlatButton
+        label={this._config.get('button:delete')}
+        keyboardFocused={true}
+        onTouchTap={deleteConfirmDialog.callback}
+        primary={true}
+        ref="submit"
+        />
     ];
-    let uploaded = this.props.files.filter((file) => file.type === 'uploaded');
-    let uploadCount = uploaded.length || 0;
     let userFiles = (
       <List
         key="uploaded"
-        subheader="Your Data"
+        subheader={this._config.get('heading:data:user')}
         subheaderStyle={this._styles.list}
         >
           {this._renderFiles('uploaded')}
@@ -304,23 +347,18 @@ export default class FileList extends React.Component {
     let sampleFiles = (
       <List
         key="sample"
-        subheader="Sample Data"
+        subheader={this._config.get('heading:data:sample')}
         subheaderStyle={this._styles.list}
         >
           {this._renderFiles('sample')}
       </List>
     );
-    let filesList = [sampleFiles];
-
-    if (uploadCount > 0) {
-      filesList.unshift(userFiles);
-    }
+    let filesList = [userFiles, sampleFiles];
 
     return (
-      <nav>
+      <nav style={this._styles.root}>
         {filesList}
         <Dialog
-          actionFocus="submit"
           actions={dialogActions}
           onRequestClose={this._dismissDeleteConfirmDialog.bind(this)}
           open={dialogOpen}

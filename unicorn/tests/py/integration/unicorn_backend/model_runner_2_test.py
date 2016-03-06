@@ -34,6 +34,7 @@ import unittest
 import uuid
 
 import dateutil.parser
+import dateutil.tz
 
 from nupic.frameworks.opf.common_models.cluster_params import (
   getScalarMetricWithTimeOfDayAnomalyParams)
@@ -625,7 +626,7 @@ class ModelRunnerTestCase(unittest.TestCase):
       self.assertEqual(mrProcess.returncode, 0)
 
 
-  def testInputViaFilePathWithHeaderGetOutputWithReducingMeanAggregation(self):
+  def testInputPathGetOutputWithHeaderAndReducingMeanAggregation(self):
     modelId = uuid.uuid1().hex
 
     csvFd, csvPath = tempfile.mkstemp()
@@ -659,6 +660,89 @@ class ModelRunnerTestCase(unittest.TestCase):
       timestampIndex=0,
       valueIndex=1,
       datetimeFormat="%Y-%m-%dT%H:%M:%S.%f"
+    )
+
+    modelOpt = dict(
+      modelId=modelId,
+      modelConfig=self.modelConfig,
+      inferenceArgs=self.inferenceArgs,
+      timestampFieldName=self.timestampFieldName,
+      valueFieldName=self.valueFieldName
+    )
+
+    aggOpt = dict(
+      windowSize=300,
+      func="mean"
+    )
+
+
+    with self._startModelRunnerSubprocess(inputOpt=inputOpt,
+                                          modelOpt=modelOpt,
+                                          aggOpt=aggOpt) as mrProcess:
+      # Validate aggregations
+      for i in xrange((len(inputRows) + 2) // 3):
+        # Read output row and validate
+        outputRecord = mrProcess.stdout.readline()
+
+        _LOGGER.debug("Got result=%r", outputRecord)
+
+        outTimestamp, outValue, anomalyLikelihood = json.loads(outputRecord)
+
+        aggSlice = inputRows[i*3:i*3+3]
+
+        self.assertEqual(dateutil.parser.parse(outTimestamp), aggSlice[0][0])
+
+        self.assertEqual(outValue,
+                         sum(row[1] for row in aggSlice) / len(aggSlice))
+
+        self.assertIsInstance(anomalyLikelihood, float)
+
+
+      # Wait for subprocess to terminate
+      mrProcess.wait()
+      stdoutData = mrProcess.stdout.read()
+      stderrData = mrProcess.stderr.read()
+
+      self.assertEqual(stdoutData, "")
+      self.assertEqual(stderrData, "")
+
+      self.assertEqual(mrProcess.returncode, 0)
+
+
+  def testInputPathGetOutputWithTimezoneAndReducingMeanAggregation(self):
+    modelId = uuid.uuid1().hex
+
+    csvFd, csvPath = tempfile.mkstemp()
+    self.addCleanup(os.unlink, csvPath)
+
+    # Populate CSV file
+    now = datetime.utcnow().replace(tzinfo=dateutil.tz.tzutc())
+
+    # Set up timestamps such that aggregation will reduce number of samples
+    inputRows = [
+      (now + timedelta(seconds=100 * i), i + 0.599)
+      for i in xrange(10)
+    ]
+
+    with os.fdopen(csvFd, "wb") as csvFile:
+      inputString = "\n".join(
+        "{},{}".format(col1, col2) for col1, col2 in
+        [(inTimestamp.isoformat(), inValue)
+         for inTimestamp, inValue in inputRows]
+      )
+
+      _LOGGER.debug("Writing to csv file %s: %r", csvPath, inputString)
+
+      csvFile.write(inputString)
+
+
+    # Start ModelRunner
+    inputOpt = dict(
+      csv=csvPath,
+      rowOffset=0,
+      timestampIndex=0,
+      valueIndex=1,
+      datetimeFormat="%Y-%m-%dT%H:%M:%S.%f%z"
     )
 
     modelOpt = dict(

@@ -1,6 +1,5 @@
-cx_freeze==4.3.4
 python-dateutil==2.1
 validictory==0.9.1
 
-# NuPIC HTM
-nupic==0.3.4
+# NuPIC HTM. Use version installed with 'portable_python'
+nupic

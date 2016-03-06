@@ -17,14 +17,14 @@
 //
 // http://numenta.org/licenses/
 
-
-import ipc from 'ipc';
+import {ipcRenderer as ipc} from 'electron';
 
 import ModelErrorAction from '../../actions/ModelError';
 import ReceiveModelDataAction from '../../actions/ReceiveModelData';
 import StopModelAction from '../../actions/StopModel';
 
 const MODEL_SERVER_IPC_CHANNEL = 'MODEL_SERVER_IPC_CHANNEL';
+
 
 /**
  * Unicorn: ModelClient - Talk to a ModelService over IPC, gaining
@@ -41,11 +41,13 @@ export default class ModelClient {
     ipc.on(MODEL_SERVER_IPC_CHANNEL, this._handleIPCEvent.bind(this));
   }
 
-  createModel(modelId, params) {
+  createModel(modelId, inputOpts, aggOpts, modelOpts) {
     ipc.send(MODEL_SERVER_IPC_CHANNEL, {
       modelId,
       command: 'create',
-      params: JSON.stringify(params)
+      inputOpts: JSON.stringify(inputOpts),
+      aggOpts: JSON.stringify(aggOpts),
+      modelOpts: JSON.stringify(modelOpts)
     });
   }
 
@@ -56,15 +58,7 @@ export default class ModelClient {
     });
   }
 
-  sendData(modelId, data) {
-    ipc.send(MODEL_SERVER_IPC_CHANNEL, {
-      modelId,
-      command: 'sendData',
-      params: JSON.stringify(data)
-    });
-  }
-
-  _handleIPCEvent(modelId, command, payload) {
+  _handleIPCEvent(event, modelId, command, payload) {
     if (this._context) {
       if (command === 'data') {
         setTimeout(() => this._handleModelData(modelId, payload));
@@ -110,7 +104,9 @@ export default class ModelClient {
     // Multiple data records are separated by `\n`
     let data = payload.trim().split('\n').map((row) => {
       if (row) {
-        return JSON.parse(row);
+        row = JSON.parse(row);
+        row[0] = new Date(row[0]); // timestamp => js date
+        return row;
       }
     });
     this._context.executeAction(ReceiveModelDataAction, {modelId, data});

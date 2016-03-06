@@ -1,4 +1,4 @@
-// Copyright © 2015, Numenta, Inc. Unless you have purchased from
+// Copyright © 2016, Numenta, Inc. Unless you have purchased from
 // Numenta, Inc. a separate commercial license for this software code, the
 // following terms and conditions apply:
 //
@@ -18,24 +18,32 @@
 
 import {ACTIONS} from '../lib/Constants';
 
-
+/**
+ * Dispatches `model_runner` errors
+ * @param {FluxActionContext} actionContext FluxibleContext
+ * @param {object} payload       Error payload
+ * @param {string} payload.modelId The model that generate the error
+ * @param {string} payload.command The command that generate the error
+ * @param {string} payload.error The error description
+ * @emits {START_MODEL_FAILED}
+ * @emits {STOP_MODEL_FAILED}
+ * @emits {UNKNOWN_MODEL_FAILURE}
+ */
 export default function (actionContext, payload) {
   let {command, modelId, error} = payload;
 
   if (command === 'create') {
-    return actionContext.dispatch(ACTIONS.START_MODEL_FAILED, {
+    actionContext.dispatch(ACTIONS.START_MODEL_FAILED, {
       modelId, error
     });
+    return;
   } else if (command === 'remove') {
-    return actionContext.dispatch(ACTIONS.STOP_MODEL_FAILED, {
+    actionContext.dispatch(ACTIONS.STOP_MODEL_FAILED, {
       modelId, error
     });
-  } else if (command === 'sendData') {
-    return actionContext.dispatch(ACTIONS.SEND_METRIC_DATA_FAILED, {
-      modelId, error
-    });
+    return;
   }
-  return actionContext.dispatch(ACTIONS.UNKNOWN_MODEL_FAILURE, {
+  actionContext.dispatch(ACTIONS.UNKNOWN_MODEL_FAILURE, {
     modelId, error
   });
 }

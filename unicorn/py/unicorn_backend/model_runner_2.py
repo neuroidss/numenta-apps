@@ -35,7 +35,6 @@ released)
 """
 from argparse import ArgumentParser
 import csv
-from datetime import datetime
 import json
 import logging
 import os
@@ -50,6 +49,8 @@ from nupic.data import aggregator
 from nupic.data import fieldmeta
 from nupic.data import record_stream
 from nupic.frameworks.opf.modelfactory import ModelFactory
+
+from unicorn_backend import date_time_utils
 
 
 
@@ -191,7 +192,7 @@ class _ModelRunner(object):
     :param inputFileObj: A file-like object that contains input metric data
     :param dict inputSpec: Input data specification per input_opt_schema.json
     :param dict aggSpec: Optional aggregation specification per
-      agg_otp_schema.json or None if no aggregation is requested
+      agg_opt_schema.json or None if no aggregation is requested
     :param dict modelSpec: Model specification per model_opt_schema.json
     """
     self._inputSpec = inputSpec
@@ -199,7 +200,11 @@ class _ModelRunner(object):
     self._aggSpec = aggSpec
 
     self._modelSpec = modelSpec
-    self._modelId = modelSpec["modelId"]
+
+    if "modelId" in modelSpec:
+      self._modelId = modelSpec["modelId"]
+    else:
+      self._modelId = "Unknown"
 
 
     inputRecordSchema = (
@@ -265,8 +270,8 @@ class _ModelRunner(object):
       the float scalar value
     :param float anomalyProbability: computed anomaly probability value
     """
-    message = "{}\n".format(
-      json.dumps([dataRow[0].isoformat(), dataRow[1], anomalyProbability]))
+
+    message = "%s\n" % (json.dumps([dataRow[0].isoformat(), dataRow[1], anomalyProbability]),)
 
     sys.stdout.write(message)
     sys.stdout.flush()
@@ -319,7 +324,8 @@ class _ModelRunner(object):
       # NOTE: the order must match the `inputFields` that we passed to the
       # Aggregator constructor
       fields = [
-        datetime.strptime(inputRow[inputRowTimestampIndex], datetimeFormat),
+        date_time_utils.parseDatetime(inputRow[inputRowTimestampIndex],
+                                      datetimeFormat),
         float(inputRow[inputRowValueIndex])
       ]
 

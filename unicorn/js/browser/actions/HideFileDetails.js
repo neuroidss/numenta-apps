@@ -1,4 +1,4 @@
-// Copyright © 2015, Numenta, Inc. Unless you have purchased from
+// Copyright © 2016, Numenta, Inc. Unless you have purchased from
 // Numenta, Inc. a separate commercial license for this software code, the
 // following terms and conditions apply:
 //
@@ -20,8 +20,9 @@ import {ACTIONS} from '../lib/Constants';
 
 
 /**
- * Hide {FileDetails} page
+ * Hide {@link FileDetails} page
  * @param  {FluxibleContext} actionContext The action context
+ * @emits {HIDE_FILE_DETAILS}
  */
 export default function (actionContext) {
   actionContext.dispatch(ACTIONS.HIDE_FILE_DETAILS);

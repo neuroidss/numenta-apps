@@ -1,4 +1,4 @@
-// Copyright © 2015, Numenta, Inc. Unless you have purchased from
+// Copyright © 2016, Numenta, Inc. Unless you have purchased from
 // Numenta, Inc. a separate commercial license for this software code, the
 // following terms and conditions apply:
 //
@@ -26,6 +26,12 @@ export default class FileDetailsStore extends BaseStore {
   static get storeName() {
     return 'FileDetailsStore';
   }
+
+  /**
+   * @listens {SHOW_FILE_DETAILS}
+   * @listens {HIDE_FILE_DETAILS}
+   * @listens {UPLOADED_FILE}
+   */
   static get handlers() {
     return {
       SHOW_FILE_DETAILS: '_showFileDetails',

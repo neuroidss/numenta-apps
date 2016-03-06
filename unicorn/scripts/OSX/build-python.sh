@@ -32,12 +32,14 @@ OSX_VERSION=$(sw_vers -productVersion | awk -F '.' '{print $1 "." $2}')
 echo "==> System version: $OSX_VERSION"
 PYTHON_SH="Miniconda-latest-MacOSX-x86_64.sh"
 CAPNP="capnproto-c++-0.5.3"
-NUPIC_CORE=${PWD}/nupic.core
-NUPIC=${PWD}/nupic
-PREFIX=${PWD}/miniconda
+WORKING_DIR=${PWD}
+SCRIPT_PATH=$(cd "$(dirname "$0")"; pwd)
+NUPIC_CORE=${WORKING_DIR}/nupic.core
+NUPIC=${WORKING_DIR}/nupic
+PREFIX=${WORKING_DIR}/portable_python
 PATH_VALUE=${PREFIX}/bin:${PREFIX}/include
 
-echo "==> Current working directory: $PWD"
+echo "==> Current working directory: $WORKING_DIR"
 echo "==> Python will be installed in: $PREFIX"
 echo "==> Setting up environment variables ..."
 # The env variable PATH has to be extended otherwise
@@ -66,7 +68,7 @@ echo "==> Installing Miniconda ..."
 bash $PYTHON_SH -b -p $PREFIX
 
 echo "--> Updating 'libpython' shared library search path"
-install_name_tool -id  @executable_path/../lib/libpython2.7.dylib $PREFIX/lib/libpython2.7.dylib 
+install_name_tool -id  @executable_path/../lib/libpython2.7.dylib $PREFIX/lib/libpython2.7.dylib
 
 
 echo "==> Downloading Capnp ..."
@@ -85,12 +87,12 @@ git clone https://github.com/numenta/nupic.core.git
 echo "==> Installing nupic.core requirements ..."
 rm -rf $NUPIC_CORE/build
 mkdir -p $NUPIC_CORE/build/scripts
-$PREFIX/bin/pip install -r $NUPIC_CORE/bindings/py/requirements.txt
+$PREFIX/bin/pip install -r $NUPIC_CORE/bindings/py/requirements.txt --no-cache-dir
 # Install pycapnp since it is not in nupic.core requirements.txt.
 # Note: to install pycapnpn on Yosemite you have to set MACOSX_DEPLOYMENT_TARGET.
 # More on this issue: https://github.com/numenta/nupic/issues/2061
 export MACOSX_DEPLOYMENT_TARGET=$OSX_VERSION
-$PREFIX/bin/pip install pycapnp
+$PREFIX/bin/pip install pycapnp --no-cache-dir
 
 echo "==> Building nupic.core ..."
 pushd $NUPIC_CORE/build/scripts
@@ -113,7 +115,7 @@ git clone https://github.com/numenta/nupic.git
 
 echo "==> Installing nupic ..."
 pushd $NUPIC
-$PREFIX/bin/pip install -r external/common/requirements.txt
+$PREFIX/bin/pip install -r external/common/requirements.txt --no-cache-dir
 $PREFIX/bin/python setup.py install
 popd
 
@@ -132,4 +134,21 @@ $PREFIX/bin/python -c "import nupic.algorithms.anomaly_likelihood"
 $PREFIX/bin/python -c "import nupic.bindings.math"
 
 # Create the artifact
-zip -r ${PREFIX}.zip $PREFIX
+echo "--> Creating artifact: ${WORKING_DIR}/portable_python.tar.gz"
+
+# Package for NPM consumption. Just call 'npm install portable_python.tar.gz'
+
+# Remove symbolic links. NPM does not support symbolic links
+cp -RL $PREFIX $PREFIX.npm
+rm -rf $PREFIX
+
+pushd $PREFIX.npm
+# Copy NPM package information
+cp ${SCRIPT_PATH}/index.js .
+cp ${SCRIPT_PATH}/package.json .
+
+tar -chzf ${WORKING_DIR}/portable_python.tar.gz .
+popd
+
+# Clean up
+rm -rf $PREFIX.npm

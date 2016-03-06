@@ -29,9 +29,10 @@ $ python mock_data_generator.py | python model_runner.py
 """
 import json
 import sys
+import argparse
+
 message = [1438649711, 835.93679]
 data = "%s\n" % (json.dumps(message))
 
-while 1:
-    sys.stdout.write(data)
-    sys.stdout.flush()
+sys.stdout.write(data)
+sys.stdout.flush()

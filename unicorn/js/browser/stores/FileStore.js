@@ -1,4 +1,4 @@
-// Copyright © 2015, Numenta, Inc. Unless you have purchased from
+// Copyright © 2016, Numenta, Inc. Unless you have purchased from
 // Numenta, Inc. a separate commercial license for this software code, the
 // following terms and conditions apply:
 //
@@ -18,9 +18,19 @@
 
 import BaseStore from 'fluxible/addons/BaseStore';
 
+/**
+ * File type stored in the {@link FileStore}
+ * @see ../database/schema/File.json
+ *
+ * @typedef {Object} FileStore.File
+ * @property {string} name Short File Name
+ * @property {string} filename Full file path
+ * @property {string} type File type ('upoaded' | 'sample')
+ */
 
 /**
- * Unicorn File Datasource Store
+ * File Store,
+ * it maintains a collection of {@link FileStore.File}
  */
 export default class FileStore extends BaseStore {
 
@@ -28,13 +38,18 @@ export default class FileStore extends BaseStore {
     return 'FileStore';
   }
 
+  /**
+   * @listens {DELETE_FILE}
+   * @listens {UPDATE_FILE}
+   * @listens {UPLOADED_FILE}
+   * @listens {LIST_FILES}
+   */
   static get handlers() {
     return {
       DELETE_FILE: '_handleDeleteFile',
       UPDATE_FILE: '_handleSetFile',
       UPLOADED_FILE: '_handleSetFile',
-      LIST_FILES: '_handleListFiles',
-      LIST_METRICS: '_handleListMetrics'
+      LIST_FILES: '_handleListFiles'
     }
   }
 
@@ -46,7 +61,6 @@ export default class FileStore extends BaseStore {
   getFiles() {
     return Array.from(this._files.values());
   }
-
 
   /**
    * Get file from store
@@ -67,7 +81,6 @@ export default class FileStore extends BaseStore {
   _handleListFiles(files) {
     if (files) {
       files.forEach((file) => {
-        file.metrics = [];
         this._files.set(file.filename, Object.assign({},file));
       });
       this.emitChange();
@@ -78,42 +91,4 @@ export default class FileStore extends BaseStore {
     this._files.set(file.filename, Object.assign({},file));
     this.emitChange();
   }
-
-  _handleListMetrics(payloads) {
-    let changed = false;
-
-    payloads.forEach((payload) => {
-      let file = this._files.get(payload.filename);
-      if (file) {
-        file.metrics = payload.metrics.map((m) => Object.assign({}, m));
-        changed = true;
-      }
-    });
-
-    if (changed) {
-      this.emitChange();
-    }
-  }
-
-  /**
-   * Metric type stored in the {@link FileStore.File}
-   * @see ../database/schema/Metric.json
-   *
-   * @typedef {Object} FileStore.Metric
-   * @property {string} uid: Metric ID
-   * @property {string} file_uid: File ID
-   * @property {string} name: Metric Name
-   * @property {string} type: Metric type ('string' | 'number' | 'date')
-   */
-
-   /**
-    * Metric type stored in the {@link FileStore}
-    * @see ../database/schema/File.json
-    *
-    * @typedef {Object} FileStore.File
-    * @property {string} name Short File Name
-    * @property {string} filename Full file path
-    * @property {string} type File type ('upoaded' | 'sample')
-    * @property {FileStore.Metric[]} metrics
-    */
 }

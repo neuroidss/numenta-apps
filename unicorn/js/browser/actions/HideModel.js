@@ -1,4 +1,4 @@
-// Copyright © 2015, Numenta, Inc. Unless you have purchased from
+// Copyright © 2016, Numenta, Inc. Unless you have purchased from
 // Numenta, Inc. a separate commercial license for this software code, the
 // following terms and conditions apply:
 //
@@ -16,7 +16,6 @@
 // http://numenta.org/licenses/
 
 import {ACTIONS} from '../lib/Constants';
-import UnloadMetricDataAction from './UnloadMetricData';
 
 
 /**
@@ -24,10 +23,9 @@ import UnloadMetricDataAction from './UnloadMetricData';
  * @param  {FluxibleContext} actionContext - The action context
  * @param  {string} modelId - The model to hide.
  *                            Must be in the {@link ModelStore}
- * @returns {Promise} - Fluxible resolves with return value
+ * @emits {HIDE_MODEL}
  * @see http://fluxible.io/api/actions.html#api-code-actions-code-
  */
 export default function (actionContext, modelId) {
   actionContext.dispatch(ACTIONS.HIDE_MODEL, modelId);
-  return actionContext.executeAction(UnloadMetricDataAction, modelId);
 }

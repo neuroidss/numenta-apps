@@ -3,8 +3,7 @@
 > Cross-platform Desktop Application to demonstrate basic HTM functionality to
 > users using their own data files.
 
-
-## WARNING! CURRENTLY UNDER HEAVY DEVELOPMENT
+**WARNING! UNDER HEAVY DEVELOPMENT.**
 
 
 ## License
@@ -25,53 +24,49 @@ The `py/` directory contains Unicorn ModelRunner and supporting code
 (Python / C++), which drives the main functionality of the app, which it is our
 goal to demo to the user.
 
+### Filesystem Tree
+
+`tree` output last updated `Sun Feb 28 13:47:32 PST 2016`:
+
 ```shell
-DEPENDENCIES.md     # Module dependency overview file
-LICENSE.txt         # Dual: Commercial and AGPLv3
-README.md           # This file, a project overview
-gulpfile.babel.js   # Babel.js ES6 Config file for the Gulp build tool
-npm-debug.log       # NPM/node run output logs, not in source control
-package.json        # Node.js `npm` packages, dependencies, and App config
-py/                 # Unicorn ModelRunner and support Python/C++ code here!
-  README.md         # Overview for HTM/NuPIC part of project
-  requirements.txt  # Python pip package dependencies
-  setup.py          # Backend Python project initialization tooling
-  build/            # Backend build working output
-  dist/             # Packaging and distribution output
-  unicorn_backend/  # Unicorn Backend code, Model Runner, etc.
-js/                 # Frontend+GUI that exposes NuPIC HTM functionality to the User
-  README.md         # Overview for Frontend+GUI part of project
-  assets/           # App assets
-    icons/          # App icons (Electron app packaging, etc)
-  browser/          # Javascript, HTML, CSS act as GUI inside electron's "Renderer Process"
-    app.js          # Fluxible GUI Browser Web App entry, compiles to bundle.js
-    index.html      # App main startup browser window contents
-    actions/        # Fluxible Actions JS
-    assets/         # Browser assets
-      bundle/       # Auto-generated WebPack output compiled Web+Map bundle
-      images/       # Browser images for display in UI (logos, etc)
-    components/     # React view components JSX
-    lib/            # Custom JS libs for inside the browser (engine clients)
-      Fluxible/     # Fluxible lib helper code
-        Plugins/    # Fluxbile plugins
-      MaterialUI/   # Material UI lib helper code
-      Unicorn/      # Unicorn lib helper code = Client libraries
-    stores/         # Fluxible Stores JS
-  config/           # JS Config files loaded by nconf
-  database/         # File-based database storage (levelup + leveldown)
-    schema/         # Database definition schemas in JSON
-  docs/             # Output dir for generated JS docs (not saved in src)
-  main/             # JS from electron's "Main Process" (i.e. engine services)
-    loader.js       # Electron App entry point loader for main.js ES5 => ES6
-    index.js        # ES6 Electron App main entry, creates browser GUI window and model runner engine
-  samples/          # Sample .CSV data files to pre-load for user in GUI
-logs/               # Logfile output of all kinds should end up here
-node_modules/       # Where `npm` installs packages to, not in source control
-tests/              # Unicorn project tests
-  js/               # Javascript tests
-    unit/           # Javascript unit tests
-  py/               # Python tests
-    integration/    # Python integration tests
+./                          # Git Repo Root
+├── .babelrc                # ES7 ES6 => JS transpiler global settings
+├── .eslintrc               # JS/ES lint settings
+├── .pylintrc               # Python lint settings
+├── DEPENDENCIES.md         # Module dependency overview file
+├── LICENSE.txt             # Dual: Commercial and AGPLv3
+├── README.md               # This file. A project overview.
+├── js/                     # Frontend+GUI that exposes NuPIC HTM models to User
+│   ├── assets/             # System/native-level assets, images, icons, etc.
+│   ├── browser/            # JS+HTML+CSS as GUI in electron's Renderer Process
+│   │   ├── actions/        # FLUX Fluxible Actions JS
+│   │   ├── app.js          # Fluxible Web GUI App entry, compiles to bundle.js  
+│   │   ├── assets/         # Browser/GUI images, icons, and other assets
+│   │   │   ├── bundle/     # Auto-generated WebPack output bundle target dir
+│   │   │   ├── images/     # GUI imagery
+│   │   │   └── styles/     # CSS for GUI (global-like styles, overrides, etc).
+│   │   ├── components/     # FLUX React view components JSX
+│   │   ├── index.html      # App main startup browser window contents
+│   │   ├── lib/            # Library code for the browser, extensions, plugins
+│   │   └── stores/         # FLUX Fluxible Stores JS
+│   ├── config/             # JS Config files, both auto-init with nconf, more.
+│   ├── database/           # File-based database storage (levelup + leveldown)
+│   │   └── schema/         # Database definition schemas in JSONSchema Draft-3
+│   ├── docs/               # Output dir for generated JS docs (not in git)
+│   └── main/               # JS for Electron's "Main Process", App init startup
+│       ├── index.js        # ES6 Electron App main entry, init GUI, run models
+│       └── loader.js       # Electron App entry loader for main.js ES5 => ES6
+├── node_modules/           # Where `npm` installs packages to (not in git)
+├── package.json            # Node.js `npm` packages, dependencies, and config
+├── py/                     # Unicorn ModelRunner and support Python/C++ code
+│   └── README.md           # Python Backend instructions
+├── samples/                # Sample .CSV data files to pre-load for user in GUI
+├── scripts/                # Building and cross-platform Portability scripts
+├── tests/                  # All tests, javascript, python, unit, integration
+│   ├── data/               # Data tests, bad formats, etc.
+│   ├── js/                 # JS tests, config,  unit and integration
+│   └── py/                 # Python tests, config, unit and integration
+└── webpack.config.babel.js # JS build tooling config
 ```
 
 
@@ -109,12 +104,10 @@ on streams of data, predicting future values, and detecting pattern anomalies.
     * Also a few [ECMAScript 7](https://babeljs.io/docs/usage/experimental/)
       features.
     * Some [ECMAScript 5.1](https://es5.github.io/), the Web compile target.
-    * Flow Control for A/Synchronous code:
-      [js-csp](https://github.com/ubolonton/js-csp),
-      [Learn More!](http://jlongster.com/Taming-the-Asynchronous-Beast-with-CSP-in-JavaScript)
-    * Facebook [Flow](http://flowtype.org/) JS Typing
   * [HTML5](https://developer.mozilla.org/en-US/docs/Web/Guide/HTML/HTML5)
   * [CSS3](https://developer.mozilla.org/en-US/docs/Web/CSS)
+  * [JSONSchema](https://github.com/tdegrunt/jsonschema), Database definition
+    schemas in `JSONSchema Draft-3`.
 * Framework: [Electron](https://github.com/atom/electron)
   * Engines: [Chromium](https://www.chromium.org/Home),
       [Node.js](https://github.com/joyent/node)
@@ -136,11 +129,8 @@ on streams of data, predicting future values, and detecting pattern anomalies.
     * Graphing and Charting: [DyGraphs](http://dygraphs.com/)
       * @TODO Alternatives? [react-chartjs](https://github.com/jhudson8/react-chartjs)
         Canvas, [react-d3](https://github.com/esbullington/react-d3) SVG
-* Testing:
-  * Test Runner, Unit Tests: [Mocha](https://github.com/mochajs/mocha)
-* Tooling:
-  * Streaming task runner: [Gulp](https://github.com/gulpjs/gulp)
-  * Linting: [eslint](http://eslint.org/)
+* Testing: [Mocha](https://github.com/mochajs/mocha)
+* Linting: [eslint](http://eslint.org/)
 
 #### Description
 
@@ -151,9 +141,7 @@ own data.
 The GUI for this application is web code. `Javascript`, `HTML`, and `CSS` are
 loaded into a browser. For Desktop, this browser is a bare-bones Chrome window
 opened by the Electron framework. Electron also runs Node.js to connect with the
-host Operating System, allowing for cross-platform native controls. Since web
-code is notoriously asynchronous, we use `js-csp` to handle a/synchronous
-data flow.
+host Operating System, allowing for cross-platform native controls.
 
 In the browser, we run a one-way Uni-directional data flow, an Architecture
 known as "Flux".
@@ -175,7 +163,7 @@ loop run, and GUI loop continuation:
 #### Guidelines
 
 * ECMAScript Styleguide: `npm run lint`, Rules: `.eslintrc`
-* HTML5 @TODO
+* HTML5 and JSX @TODO
 * CSS3 @TODO
 
 
@@ -194,60 +182,92 @@ git clone https://github.com/numenta/numenta-apps
 cd numenta-apps/unicorn
 pip install -r py/requirements.txt
 npm install
-npm run prepare:python # to freeze model_runner.py so that it can be used in Unicorn.
-export APPLICATION_LOG_DIR=logs  # to change to model_runner.py param?
+unset PYTHONPATH  # force usage of our custom internal Python
 ```
 
 
 ## Develop
 
-### Desktop App
+### Lightweight Install
 
-Important note: when running `npm run desktop` the application will fail to find
-`dist/model_runner` if `model_runner.py` was never frozen before. Make sure
-to run `npm run prepare:python` beforehand, if any of the following applies:
-* The script `model_runner.py` has never been frozen (i.e. neither
-  `npm run build` nor `npm run prepare:python` have been run before).
-* Changes were made to the the code under `unicon/py`.
-* Changes to NuPIC were made.
-
-Start code via Electron as a Desktop App:
+To install without the lengthy python bundle, assuming the desired python bundle
+is already installed:
 
 ```shell
-# Freeze the model runner if:
-# - It was never frozen before
-# - Changes were made to the the code under unicon/py
-# - Changes to NuPIC were made.
-npm run prepare:python
-
-# desktop dev
-npm run desktop
-NODE_ENV=development npm run desktop  # same
-npm run desktop | `npm bin`/bunyan    # pretty logs
-
-# desktop prod
-NODE_ENV=production npm run desktop
+npm install --no-optional
 ```
 
-### Code Documentation
+### Unicorn backend install
+
+Execute the following command after making changes to `unicorn_backend` code:
+```shell
+npm run install:backend
+```
+
+### Run
+
+```shell
+npm run dev
+
+# see pretty logs
+npm run dev | `npm bin`/bunyan
+
+# same thing, but explicit
+NODE_ENV=development npm run dev
+```
+
+### Code Docs
 
 Frontend code documentation can be generated and viewed by following the
 directions below. Comments are in [JSDoc](http://usejsdoc.org/) format, with
 output generated by [ESDoc](https://esdoc.org/).
 
 ```shell
-# generate documentation
-npm run docs
-
-# view documentation (mac os/x)
-open js/docs/index.html
+npm run docs  # generate and open documentation
 ```
 
-### Development Problems?
+### `npm` tooling scripts
 
-* Maybe the DB stored bad data? `npm run clean:db`
+Here are the `npm` scripts available via `npm run <script-name>`. Please see
+`package.json` for more info.
+
+* `build`: Run all steps required to build the application
+* `clean`: Clean all Unicorn build an runtime artifacts
+  * `clean:build`: Delete Unicorn build artifacts
+  * `clean:db:osx`: Delete Unicorn database files (OSX)
+  * `clean:docs`: Delete Unicorn documentation
+  * `clean:npm`: Delete `npm` installed packages installed locally
+  * `clean:webpack`: Clean compiled/packaged JS code
+* `dev`: Launch Unicorn Desktop application
+* `dev:debug`: Launch Unicorn in debug mode. See
+  [Electron Documentation]( https://github.com/atom/electron/blob/master/docs/tutorial/debugging-main-process.md)
+  for instructions on how to use the debugger
+* `dev:inspect`: Launch `node-inspector` used to debug Electron application.
+  See [Electron Documentation]( https://github.com/atom/electron/blob/master/docs/tutorial/debugging-main-process.md)
+  for detailed instructions on how to use the debugger
+* `docs`: Build Unicorn documentation (esdoc)
+* `electron`: Launch Electron
+* `electron:debug`: Launch Electron in debug mode. See
+  [Electron Documentation]( https://github.com/atom/electron/blob/master/docs/tutorial/debugging-main-process.md)
+  for instructions on how to use the debugger
+* `electron:packager`: Build Unicorn installable packages
+* `esfmt`: Format JS code (esformatter)
+* `lint`: Lint JS code (eslint)
+* `prepare`: Prepare Unicorn code for packaging
+* `test`: Run all JS tests using developer options. See
+  [mocha.opts](tests/js/mocha.opts)
+  * `test:integration`: Run all JS integration tests
+  * `test:unit`: Run all JS unit tests
+* `test:pipeline`:Run all JS tests using pipeline options. See
+  [mocha.opts](tests/js/mocha.pipeline.opts)
+  * `test:pipeline:integration`:  Run all JS integration tests
+  * `test:pipeline:unit`: Run all JS unit tests
+
+### Problems?
+
+* Maybe the DB stored bad data? `npm run clean:db:osx`.
 * Sometimes `node_modules/` directory can become corrupted, try cleaning and
-  reinstalling: `npm run clean ; npm run check`
+  reinstalling (*slow*): `npm run clean ; npm install`.
 * Local Git repo can get stuck with out-of-date JS somehow, so back up your
   current repo, and try again on a fresh repo clone.
 
@@ -255,25 +275,19 @@ open js/docs/index.html
 
 * Do not upgrade the following node/npm packages without syncing with the
   rest of the team first. The Mac build box is dependent on these versions,
-  and must be upgraded in parallel.
-  * `npm`
-  * `node`
-  * `electron-packager`
-  * `electron-prebuilt`
-  * `is-electron-renderer`
+  and must be upgraded in parallel:
+  * `node`, `npm`, `electron-packager`, `electron-prebuilt`
 * Make sure to update packages often, especially after pulling an update into
   your branch:
-  * `npm run check`
+  * `npm oudated -depth 0`
   * `pip list --outdated`
-* Lint your code before creating pull requests:
-  * `npm run lint`
+* Lint your code before creating pull requests: `npm run lint`
 * Manual access to LevelDB file database from
   [Lev](https://github.com/hij1nx/lev) command-line tool (Mac OS/X):
   * `` `npm bin`/lev $HOME/Library/Application\ Support/unicorn/database/ ``
 * Remember, this is cross-platform. We need to support all main operating
-  systems! Windows has no environment variables, etc. Paths should not be
+  systems. Windows has no environment variables, etc. Paths should not be
   defined manually, but use the `path` library helper instead.
-* Awesome Node.js Links: https://github.com/sindresorhus/awesome-nodejs
 
 
 ## Test
@@ -282,22 +296,9 @@ Write **Unit** and **Integration** tests using
 [mocha](https://github.com/mochajs/mocha) test framework.
 
 ```shell
-# All tests
-npm run test
-```
-
-### Unit
-
-```shell
-# Unit tests only
-npm run test:unit
-```
-
-### Integration
-
-```shell
-# Integration tests only
-npm run test:integration
+npm run test              # all
+npm run test:unit         # unit tests only
+npm run test:integration  # integration tests only
 ```
 
 ### Pipeline
@@ -307,14 +308,9 @@ with a different set of options
 (see [mocha.pipeline.opts](tests/js/mocha.pipeline.opts)).
 
 ```shell
-# Pipeline: All tests
-npm run test:pipeline
-
-# Pipeline: Unit tests only
-npm run test:pipeline:unit
-
-# Pipeline: Integration tests only
-npm run test:pipeline:integration
+npm run test:pipeline               # pipeline all
+npm run test:pipeline:unit          # pipeline unit tests only
+npm run test:pipeline:integration   # pipeline integration tests only
 ```
 
 
@@ -326,26 +322,29 @@ Build the electron app with:
 
 ```shell
 npm run build
+
+# same thing, but explicit
+NODE_ENV=production npm run build
 ```
+
 The resulting `.app` can be found in `unicorn/Unicorn-darwin-x64/`
 
 ### Windows
 
-TODO
+@TODO
 
 
 ## Release
 
 ### Signing
 
-* You need a certificate type of “Developer ID Application” from Apple. This certificate usually has a common name in the form of `Developer ID Application: YourCompany, Inc. (ABCDEFGHIJK)`.
+* You need a certificate type of “Developer ID Application” from Apple. This
+  certificate usually has a common name in the form of
+  `Developer ID Application: YourCompany, Inc. (ABCDEFGHIJK)`.
 * Set the environment variable `UNICORN_CERT_DEV_APPLE` and sign the app:
-```
-export UNICORN_CERT_DEV_APPLE="Developer ID Application: Numenta, Inc. (ABCDEFGHIJK)"
-```
-* Now when you package Unicorn with `npm run electron:packager`, the app will be signed.
-
-
+  `export UNICORN_CERT_DEV_APPLE="Developer ID Application: Numenta, Inc. (ABCDEFGHIJK)"`
+* Now when you package Unicorn with `npm run electron:packager`, the app will
+  be signed.
 * Useful blog post about signing Electron apps:
   http://jbavari.github.io/blog/2015/08/14/codesigning-electron-applications
 
@@ -358,7 +357,9 @@ export UNICORN_CERT_DEV_APPLE="Developer ID Application: Numenta, Inc. (ABCDEFGH
 
 ## Debug
 
-NEED `npm run blah` examples here @TODO
+```shell
+npm run dev:debug  # open http://localhost:5858 in browser
+```
 
 ### Backend
 
@@ -380,19 +381,12 @@ NEED `npm run blah` examples here @TODO
 
 ### Frontend + Browser
 
+***Warning***: [React Chrome DevTools](http://electron.atom.io/docs/v0.31.0/tutorial/devtools-extension/)
+does [not yet work with Electron](https://github.com/atom/electron/issues/915).
+
 * [Electron + Chrome debug shortcuts](https://github.com/sindresorhus/electron-debug)
-* [React Chrome browser plugin](http://electron.atom.io/docs/v0.31.0/tutorial/devtools-extension/)
 * [Chrome DevTools plugin](http://electron.atom.io/docs/v0.31.0/tutorial/devtools-extension/)
 
 ### Other
 
 * [Electron and Windows Debug Symbol Server](http://electron.atom.io/docs/v0.31.0/development/setting-up-symbol-server/)
-
-
-## @TODO
-
-* Spread global config around! `nconf` work
-* New Electron/Node4 doesn't need babel bundle anymore? (node5 for sure)
-* Add in Flow type checking
-* i18n l10n setup (es6 template strings? react intl? es6/7 solution?)
-* Electron integration test skeleton
