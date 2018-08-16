@@ -1,4 +1,7 @@
 
+## This project is in Maintenance Mode
+We have no plans to further develop this codebase or release new versions of applications contained within this repository. 
+
 Numenta HTM Engine
 ==================
 
@@ -178,7 +181,7 @@ Create a `conf/` directory, and use the following files as templates for your ow
 ```
 CREATE TABLE instance_status_history (
     server VARCHAR(100) DEFAULT '' NOT NULL,
-    timestamp DATETIME NOT NULL DEFAULT '0000-00-00 00:00:00',
+    timestamp DATETIME NOT NULL,
     status VARCHAR(32) DEFAULT '' NOT NULL,
     PRIMARY KEY (server, timestamp)
 );

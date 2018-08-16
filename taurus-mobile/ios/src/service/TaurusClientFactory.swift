@@ -21,7 +21,7 @@
 /**
 * Factory used to create {@link TaurusClient} instances.
 */
-public class TaurusClientFactory : GrokClientFactory {
+open class TaurusClientFactory : HTMITClientFactory {
     
     // Reuse client object
     var client: TaurusClient!
@@ -43,11 +43,11 @@ public class TaurusClientFactory : GrokClientFactory {
         - parameter password : ignored
         - returns: Clienty
     */
-    public func createClient( serverUrl: String!, pass: String!)  ->GrokClient! {
+    open func createClient( _ serverUrl: String!, pass: String!)  ->HTMITClient! {
         if (client == nil) {
             client = TaurusClient(provider: provider, region : region)
         }
-        return client as GrokClient;
+        return client as HTMITClient;
     }
 
 }

@@ -15,25 +15,25 @@
           "required": true,
           "type": "string"
         },
-    
+
         "name": {
           "description" : "Name of the metric; for custom metrics, also servers the role of alternate unique identifier",
           "required": true,
           "type": ["string", "null"]
         },
-    
+
         "description": {
           "description" : "Human-readable description of the metric",
           "required": true,
           "type": ["string", "null"]
         },
-    
+
         "resource": {
           "description" : "Identifier of resource that this metric applies to",
           "required": true,
           "type": ["string", "null"]
         },
-    
+
         "location": {
           "description" : "Location of the metric; metric-specific",
           "required": true,
@@ -90,6 +90,12 @@
             "description": "Anomaly score computed by anomaly-likelihood algorithm",
             "required": true,
             "type": "number"
+          },
+
+          "multiStepBestPredictions": {
+            "description": "Best multi-step predictions from model's associated classifier. A dict (or None) of predicted value(s) stored by key(s) equal to the number of steps in the future for which the prediction is made. The temporal anomaly model default steps is [1], however, user-specified model params can specify additional steps",
+            "required": true,
+            "type": ["object", "null"]
           }
 
         }

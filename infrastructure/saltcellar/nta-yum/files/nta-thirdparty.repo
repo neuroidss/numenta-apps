@@ -1,5 +1,0 @@
-[nta-thirdparty]
-name=Numenta Thirdparty repository
-baseurl=http://public.numenta.com/yum/thirdparty
-gpgcheck=0
-priority=1

@@ -135,7 +135,7 @@ class LoggingSupport(object):
 
   @classmethod
   def initService(cls, loggingLevel=None):
-    """ Initialize python logging for a Service (e.g., htm-it metric_collector,
+    """ Initialize python logging for a Service (e.g., taurus_metric_collector,
     model_scheduler) to output log messages to stderr only (and not to a file).
 
     This is useful when running as a service under SupervisorD, which redirects

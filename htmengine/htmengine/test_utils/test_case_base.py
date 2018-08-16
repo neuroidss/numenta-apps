@@ -19,7 +19,7 @@
 # http://numenta.org/licenses/
 # ----------------------------------------------------------------------
 
-# This script implements an extension of the unittest2.TestCase class to be
+# This script implements an extension of the unittest.TestCase class to be
 # used as a base class unit tests
 
 import sys
@@ -96,8 +96,7 @@ class TestCaseBase(unittest.TestCase):
   @property
   def __config(self):
     if self.config is None:
-      raise ValueError("Did %r forget to set config member variable " % (
-                       self,))
+      raise ValueError("Did %r forget to set config member variable " % (self,))
     return self.config
 
 
@@ -348,6 +347,7 @@ class TestCaseBase(unittest.TestCase):
       self.assertIsNone(row.raw_anomaly_score)
       self.assertIsNone(row.anomaly_score)
       self.assertIsNone(row.display_value)
+      self.assertIsNone(row.multi_step_best_predictions)
 
 
   @retry(duration=25)

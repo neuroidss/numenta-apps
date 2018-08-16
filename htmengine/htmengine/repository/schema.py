@@ -50,7 +50,7 @@ instance_status_history = Table(  # pylint: disable=C0103
                                        DATETIME(),
                                        primary_key=True,
                                        nullable=False,
-                                       server_default="0000-00-00 00:00:00"),
+                                       server_default=None),
                                 Column("status",
                                        VARCHAR(length=32),
                                        nullable=False,
@@ -135,6 +135,8 @@ metric_data = Table(  # pylint: disable=C0103
     Column("display_value",
            INTEGER(),
            autoincrement=False),
+    Column("multi_step_best_predictions",
+           TEXT()),
     schema=None,
 )
 

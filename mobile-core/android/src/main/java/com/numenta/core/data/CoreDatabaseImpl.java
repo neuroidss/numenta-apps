@@ -185,7 +185,7 @@ public class CoreDatabaseImpl implements CoreDatabase {
      */
     @Override
     public String getFileName() {
-        return "grok.db";
+        return "htmit.db";
     }
 
     /**

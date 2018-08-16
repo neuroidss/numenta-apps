@@ -15,23 +15,25 @@
 //
 // http://numenta.org/licenses/
 
-import path from 'path';
+/* eslint-disable no-process-env */
 
-import config from './js/main/ConfigService';
+const webpack = require('webpack');
 
-
-let destination = path.join(__dirname, config.get('bundle:destination'));
-let publics = path.join(__dirname, config.get('bundle:public'));
-let source = path.join(__dirname, config.get('bundle:source'));
-
+// Get current environment ('development' or 'production')
+const DEVELOPMENT = process.env.NODE_ENV === 'development';
 
 /**
  * WebPack ES6 Config File
  */
 export default {
   bail: true,
-  devtool: 'source-map',
-  entry: ['babel-polyfill', source],
+  plugins: [
+    new webpack.EnvironmentPlugin([
+      'NODE_ENV', 'GA_TRACKING_ID'
+    ])
+  ],
+  devtool: DEVELOPMENT ? 'source-map' : null,
+  entry: ['babel-polyfill', './app/browser/entry'],
   module: {
     loaders: [
       // fonts
@@ -64,8 +66,8 @@ export default {
   },
   output: {
     filename: 'bundle.js',
-    path: destination,
-    publicPath: publics
+    path: './app/browser/assets/bundle',
+    publicPath: './assets/bundle/'
   },
   resolve: {
     extensions: [

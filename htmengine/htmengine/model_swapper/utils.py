@@ -30,7 +30,7 @@ import signal
 import threading
 
 
-from nupic.support.decorators import logExceptions
+from nta.utils.error_handling import logExceptions
 
 from htmengine.model_swapper.model_swapper_interface import (
   ModelSwapperInterface)
@@ -136,7 +136,7 @@ class ChildProcessReaper(object):
       self._callbacks.remove(cb)
 
 
-  @logExceptions(_getLogger)
+  @logExceptions(_getLogger())
   def _runReaperThread(self):
     while True:
       try:

@@ -41,8 +41,8 @@ class ConfigAttributePatch(object):
   Context Manager Example::
 
       with ConfigAttributePatch(
-          htm.it.app.config.CONFIG_NAME,
-          htm.it.app.config.CONFIG_DIR,
+          <filename>,
+          <directory>,
           (("aws", "aws_access_key_id",
             os.environ["AWS_ACCESS_KEY_ID"]),
            ("aws", "aws_secret_access_key",
@@ -54,8 +54,8 @@ class ConfigAttributePatch(object):
   Function Decorator Example::
 
       @ConfigAttributePatch(
-        htm.it.app.config.CONFIG_NAME,
-        htm.it.app.config.CONFIG_DIR,
+        <filename>,
+        <directory>,
         (("aws", "aws_access_key_id", os.environ["AWS_ACCESS_KEY_ID"]),
          ("aws", "aws_secret_access_key", os.environ["AWS_SECRET_ACCESS_KEY"])))
       def testSomething(self):
@@ -66,8 +66,8 @@ class ConfigAttributePatch(object):
   Class Decorator Example::
 
       @ConfigAttributePatch(
-        htm.it.app.config.CONFIG_NAME,
-        htm.it.app.config.CONFIG_DIR,
+        <filename>,
+        <directory>,
         (("aws", "aws_access_key_id", os.environ["AWS_ACCESS_KEY_ID"]),
          ("aws", "aws_secret_access_key", os.environ["AWS_SECRET_ACCESS_KEY"])))
       class MyTestCase(unittest.TestCase):

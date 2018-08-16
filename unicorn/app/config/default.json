@@ -1,0 +1,127 @@
+{
+  "title": "HTM Studio",
+  "desc": "HTM Studio Desktop Application",
+  "company": "Numenta",
+  "update": {
+    "readyTitle": "Software Update ready",
+    "errorTitle": "Update Error",
+    "detail": "A new version of HTM Studio (%name) is available.\nTo install the update, the application needs to be closed.\nDo you want to close the application now or later?",
+    "message": "",
+    "button": {
+      "yes": "Close and update now",
+      "no": "Wait until I close the app"
+    },
+    "url": "http://public.numenta.com/updates/htmstudio"
+  },
+  "browser": {
+    "entry": "../browser/index.html"
+  },
+  "button": {
+    "add": "Add File",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "model": {
+      "create": "Analyze",
+      "delete": "Delete",
+      "export": "Export",
+      "summary": "Results"
+    },
+    "okay": "OK",
+    "analyze": "Analyze",
+    "yes": "Yes",
+    "no": "No"
+  },
+  "chart": {
+    "showNonAgg": "Show non-aggregated data",
+    "loading": "Loading chart...",
+    "zoom": {
+      "all": "All"
+    }
+  },
+  "dialog": {
+    "close_application": {
+      "singular": "There is still one active model running. The active model will be interrupted upon quitting and it won’t be possible to restart the model. All results obtained so far will be persisted.",
+      "plural": "There are still %modelCount active models running. All models will be interrupted upon quitting and it won’t be possible to restart these models. All results obtained so far will be persisted."
+    },
+    "file": {
+      "add": {
+        "title": "Add new data file"
+      },
+      "delete": {
+        "title": "Remove File",
+        "message": "Removing this file from HTM Studio will delete the associated HTM models. Are you sure you want to remove the file? Your original file will not be touched."
+      }
+    },
+    "model": {
+      "create": {
+        "loading": "Preparing to create an HTM model. This might take a few seconds.",
+        "title": "HTM analysis for %s",
+        "recommendAggregate": "We found the best parameters for the HTM ​and your data will be aggregated​. While you can tweak them in the advanced settings below, we recommend that you proceed with these parameters for the analysis.",
+        "recommendRaw": "We found the best parameters for the HTM​. While you can tweak them in the advanced settings below, we recommend that you proceed with these parameters for the analysis.",
+        "paramFinderError": "We were unable to find parameters for this metric.<br>Please contact support at <a href='mailto:htm-studio@numenta.com'>htm-studio@numenta.com</a>.",
+        "advanced": {
+          "description": "Be aware that changing the settings below will impact the HTM results.",
+          "showAdvanced": "Show advanced settings",
+          "hideAdvanced": "Hide advanced settings",
+          "aggData": {
+            "label": "Aggregate data",
+            "tooltip": "Combines data, which might reduce noise and improve results."
+          },
+          "aggWindow": {
+            "label": "Aggregation window",
+            "tooltip": "The bigger the window, the more the data is aggregated."
+          },
+          "aggMethod": {
+            "label": "Aggregation method",
+            "tooltip": "How the data will be combined in the window."
+          },
+          "daily": "Recognize daily patterns",
+          "weekly": "Recognize weekly patterns"
+        }
+      },
+      "delete": {
+        "title": "Delete Model Results",
+        "message": "Deleting this model will delete the associated model results. Are you sure you want to delete this model?"
+      },
+      "export": {
+        "title": "Export Model Results",
+        "path": "Untitled.csv"
+      },
+      "summary": {
+        "title": "Anomaly results summary"
+      }
+    }
+  },
+  "snackbar": {
+    "completed": {
+      "message": "HTM Model completed for %s"
+    },
+    "exported": {
+      "message": "HTM Model results exported for %s"
+    }
+  },
+  "heading": {
+    "data": {
+      "sample": "Sample Data"
+    },
+    "chart": {
+      "empty": "Select a metric from the left menu."
+    }
+  },
+  "menu": {
+    "file": {
+      "delete": "Remove File",
+      "details": "File Details"
+    }
+  },
+  "status": {
+    "model": {
+      "none": "No model",
+      "active": "Model in progress",
+      "ran": "Model created"
+    }
+  },
+  "samples": {
+    "path": "../samples"
+  }
+}

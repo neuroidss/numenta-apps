@@ -1,3 +1,6 @@
+## This project is in Maintenance Mode
+We have no plans to further develop this codebase or release new versions of applications contained within this repository. 
+
 Mobile Core Libraries
 =====================
 

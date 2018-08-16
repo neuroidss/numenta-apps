@@ -17,24 +17,27 @@
 //
 // http://numenta.org/licenses/
 
-import FileStore from '../../../../js/browser/stores/FileStore';
+import FileStore from '../../../../app/browser/stores/FileStore';
 
 const assert = require('assert');
 
 const EXPECTED_SINGLE_FILE = [{
   name: 'file.csv',
   filename: '../fixtures/file.csv',
-  type: 'uploaded'
+  type: 'uploaded',
+  expanded: true
 }];
 
 const EXPECTED_MULTIPLE_FILES = [{
   name: 'file1.csv',
   filename: 'fixtures/file1.csv',
-  type: 'sample'
+  type: 'sample',
+  expanded: true
 },{
   name: 'file2.csv',
   filename: 'fixtures/file2.csv',
-  type: 'sample'
+  type: 'sample',
+  expanded: true
 }];
 
 describe('FileStore', () => {

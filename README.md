@@ -1,6 +1,8 @@
 This is the umbrella project for all of the components that make up the
 Numenta product-line.
 
+## This project is in Maintenance Mode
+We have no plans to further develop this codebase or release new versions of applications contained within this repository. 
 
 ## Installation
 
@@ -18,7 +20,7 @@ Or, if you prefer pip:
 
 You can see coverage across multiple projects as follows:
 
-    py.test --cov nta.utils --cov htmengine --cov taurus taurus/tests/unit htmengine/tests/unit nta.utils/tests/unit
+    py.test --cov nta.utils --cov htmengine --cov taurus taurus_engine/tests/unit htmengine/tests/unit nta.utils/tests/unit
 
 
 ## Licenses
@@ -30,24 +32,7 @@ defines program dependencies within a `DEPENDENCIES.md` file.
 ## Main Products
 
 
-### HTM-IT
-
-See http://numenta.com/htm-it.
-
-#### [`/htm.it`](htm.it)
-
-AWS/Cloudwatch integration for HTM Engine.
-
-**Languages**: Python, JavaScript, HTML
-
-#### [`/htm-it-mobile`](htm-it-mobile)
-
-HTM-IT mobile client.
-
-**Languages**: Java
-
-
-### HTM-IT for Stocks
+### HTM for Stocks
 
 Code name: _**Taurus**_. Application for tracking company data.
 
@@ -59,19 +44,19 @@ Server-side code for Taurus.
 
 #### [`/taurus-mobile`](taurus-mobile)
 
-HTM-IT for Stocks mobile client.
+HTM for Stocks mobile client.
 
 **Languages**: Java
 
-#### [`/taurus.metric_collectors`](taurus.metric_collectors)
+#### [`/taurus_metric_collectors`](taurus.metric_collectors)
 
-Custom metric collectors for HTM-IT for Stocks data providers.
+Custom metric collectors for HTM for Stocks data providers.
 
 **Languages**: Python
 
-#### [`/taurus.monitoring`](taurus.monitoring)
+#### [`/taurus_monitoring`](taurus_monitoring)
 
-Monitoring scripts and related utilities for monitoring HTM-IT for Stocks
+Monitoring scripts and related utilities for monitoring HTM for Stocks
 (Code name: Taurus).
 
 **Languages**: Python
@@ -100,15 +85,15 @@ configuration, logging, and other common operations.
 
 #### [`/htmengine`](htmengine)
 
-HTM Engine Framework upon which HTM-IT and HTM-IT for Stocks are built.
-Implements basic infrastructure for receiving data and running models, including
-support for custom metrics.
+HTM Engine Framework upon which HTM for Stocks and other applications are
+built.  Implements basic infrastructure for receiving data and running models,
+including support for custom metrics.
 
 **Languages**: Python
 
 #### [`/mobile-core`](mobile-core)
 
-Shared library used in taurus-mobile and htm-it-mobile mobile applications.
+Shared library used in taurus-mobile.
 
 **Languages**: Java
 

@@ -70,19 +70,20 @@ App layer reads results::
 from collections import namedtuple
 import datetime
 import json
-import time
+import numbers
 import types
 import uuid
 import weakref
 
 from htmengine import exceptions as engine_exceptions
+from htmengine import htmengine_logging
 from htmengine.model_swapper import ModelSwapperConfig
 
 from nta.utils.date_time_utils import epochFromNaiveUTCDatetime
 from nta.utils import message_bus_connector
 from nta.utils.message_bus_connector import MessageBusConnector
 
-from htmengine import htmengine_logging
+
 
 _MODULE_NAME = "htmengine.model_swapper.model_swapper_interface"
 
@@ -373,28 +374,49 @@ class ModelInferenceResult(_ModelRequestResultBase):
   """ Model inference result container """
 
   # NOTE: also used by serialization/deserialization in our base class
-  __slots__ = ("rowID", "status", "anomalyScore", "errorMessage")
+  __slots__ = ("rowID", "status", "anomalyScore", "errorMessage",
+               "multiStepBestPredictions")
 
-  __STATE_SIGNATURE__ = "iR"
+  __STATE_SIGNATURE__ = "iRv2"
 
 
-  def __init__(self, rowID, status, anomalyScore=None, errorMessage=None):
-    """ __init__(rowID, status, anomalyScore|errorMessage)
+  def __init__(self, rowID, status, errorMessage=None, anomalyScore=None,
+               multiStepBestPredictions=None):
+    """ A model inference result instance must fall under one of two use cases:
+    1) It encapsulates a standard result in which case it contains an anomaly
+    score and/or multi-step best predictions. Additionally, the error message
+    should be None.
+    2) It wraps an error that occurred while processing the result, and both
+    the anomaly score and multi-step best predictions should be None.
 
     :param rowID: rowID id of the corresponding input record
     :param status: integer; 0 (zero) means success, otherwise it's an error code
       from htmengine.htmengineerno
-    :param anomalyScore: the Anomaly Score floating point value if status is 0
+    :param anomalyScore: the Anomaly Score numerical value if status is 0
       (zero), omit otherwise
+    :param multiStepBestPredictions: The best model predictions according to the
+     model's associated classifier. If the classifier is not enabled the value
+     here will be None. Otherwise, the value will be a dict of predicted
+     value(s) stored by key(s) equal to the number of steps in the future for
+     which the prediction is made. (See nupic.frameworks.opf.clamodel.CLAModel).
+     The default number of steps for temporal anomaly models is 1, that is, a
+     prediction for 1 step in the future, however user-specified model params
+     can dictate a different number of steps. See 'completeModelParams' property
+     of htmengine/adapters/datasource/model_spec_schema.json for details.
+    :type multiStepBestPredictions: dict or None
     :param errorMessage: error message if status is non-zero, omit otherwise
     """
     assert isinstance(status, (int, long)), (
       "Expected int or long as status, but got: " + repr(status))
 
     if status == 0:
-      assert isinstance(anomalyScore, (int, long, float)), (
-        "Expected numeric anomaly score with status=0, but got: " +
-        repr(anomalyScore))
+      assert isinstance(anomalyScore, numbers.Number), (
+        "Expected numeric anomaly score with status=0, but got: {} ({})".format(
+          repr(anomalyScore), type(anomalyScore)))
+      assert (multiStepBestPredictions is None or
+              isinstance(multiStepBestPredictions, dict)), \
+        ("Expected None or dict multi-step best predictions with status=0, but "
+         "got: " + repr(multiStepBestPredictions))
       assert errorMessage is None, (
         "Unexpected errorMessage with status=0: " + repr(errorMessage))
     else:
@@ -403,18 +425,45 @@ class ModelInferenceResult(_ModelRequestResultBase):
         repr(errorMessage))
       assert anomalyScore is None, (
         "Unexpected anomaly score with non-zero status: " + repr(errorMessage))
+      assert multiStepBestPredictions is None, (
+        "Unexpected multiStepBestPredictions with non-zero status: " +
+        repr(errorMessage))
 
     self.rowID = rowID
     self.status = status
-    self.anomalyScore = anomalyScore
+    # Cast to float to work around TypeError during json serialization when
+    # anomaly score is numpy.float16 or numpy.float32
+    self.anomalyScore = (float(anomalyScore)
+                         if anomalyScore is not None else None)
+    self.multiStepBestPredictions = multiStepBestPredictions
     self.errorMessage = errorMessage
 
 
   def __repr__(self):
-    return "%s<rowID=%s, status=%s%s>" % (
-      self.__class__.__name__, self.rowID, self.status,
-      (", anomalyScore=%s" % (self.anomalyScore,) if self.status == 0
-       else ", errorMsg=%s" % (self.errorMessage,)))
+    if self.status == 0:
+      reprBody = ", anomalyScore=%s, multiStepBestPredictions=%s" % (
+        self.anomalyScore, self.multiStepBestPredictions,)
+    else:
+      reprBody = ", errorMsg=%s" % (self.errorMessage,)
+
+    return "%s<rowID=%s, status=%s%s>" % (self.__class__.__name__, self.rowID,
+                                          self.status, reprBody)
+
+
+
+@_ModelRequestResultBase.__register__
+class ModelInferenceResultLegacyV1(ModelInferenceResult):
+  """ Legacy model inference result lacking multi-step best predictions. """
+
+  __STATE_SIGNATURE__ = "iR"
+
+  def __setstate__(self, state):
+    # Convert STATE_SIGNATURE
+    self.__STATE_SIGNATURE__ = ModelInferenceResult.__STATE_SIGNATURE__
+
+    # Convert STATE_SIGNATURE and append None for multiStepBestPredictions value
+    super(ModelInferenceResultLegacyV1, self).__setstate__(
+      [ModelInferenceResult.__STATE_SIGNATURE__] + state[1:] + [None])
 
 
 
@@ -661,8 +710,7 @@ class ModelSwapperInterface(object):
 
   def _getModelIDFromInputQName(self, mqName):
     assert mqName.startswith(self._modelInputQueueNamePrefix), (
-      "mq=%s doesn't start with %s") % (
-      mqName, self._modelInputQueueNamePrefix)
+      "mq=%s doesn't start with %s") % (mqName, self._modelInputQueueNamePrefix)
 
     return mqName[len(self._modelInputQueueNamePrefix):]
 
@@ -866,9 +914,9 @@ class ModelSwapperInterface(object):
     NOTE: This API is intended for Engine Model Runners.
 
     :param modelID: a string that uniquely identifies the target model.
-    :param blocking: if True, the iterable will block until another batch becomes
-      available; if False, the iterable will terminate iteration when no more
-      batches are available in the queue. [defaults to True]
+    :param blocking: if True, the iterable will block until another batch
+      becomes available; if False, the iterable will terminate iteration when
+      no more batches are available in the queue. [defaults to True]
 
     :returns: an instance of model_swapper_interface._MessageConsumer iterable;
       IMPORTANT: the caller is responsible for closing it before closing this

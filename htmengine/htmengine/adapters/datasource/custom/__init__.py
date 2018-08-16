@@ -25,19 +25,17 @@ HTM Engine Metric Datasource Adapter
 
 import copy
 import datetime
+import json
 
+from htmengine import htmengine_logging, repository
 from htmengine.adapters.datasource.datasource_adapter_iface import (
   DatasourceAdapterIface)
-
 import htmengine.exceptions as app_exceptions
-from htmengine import htmengine_logging
-
-from htmengine import repository
+import htmengine.model_swapper.utils as model_swapper_utils
 from htmengine.repository import schema
 from htmengine.repository.queries import MetricStatus
 from htmengine.runtime import scalar_metric_utils
 import htmengine.utils
-import htmengine.model_swapper.utils as model_swapper_utils
 
 
 
@@ -56,7 +54,7 @@ class _CustomDatasourceAdapter(DatasourceAdapterIface):
 
   # Default metric period value to use when it's unknown
   # TODO: Should we use 0 since it's unknown "unknown" or default to 5 min?
-  #   Consider potential impact on web charts, htm-it-mobile
+  #   Consider potential impact on web charts
   _DEFAULT_METRIC_PERIOD = 300  # 300 sec = 5 min
 
 
@@ -189,7 +187,8 @@ class _CustomDatasourceAdapter(DatasourceAdapterIface):
     custom metrics.
 
     Start the model if possible: this will happen if modelParams includes both
-    "min" and "max" or there is enough data to estimate them.
+    "min" and "max" or there is enough data to estimate them. Alternatively,
+    users may pass in a full set of model parameters.
 
     :param modelSpec: model specification for HTM model; per
         ``model_spec_schema.json`` with the ``metricSpec`` property per
@@ -256,7 +255,6 @@ class _CustomDatasourceAdapter(DatasourceAdapterIface):
       already being monitored
     """
     metricSpec = modelSpec["metricSpec"]
-
     with self.connectionFactory() as conn:
       if "uid" in metricSpec:
         # Via metric ID
@@ -270,7 +268,7 @@ class _CustomDatasourceAdapter(DatasourceAdapterIface):
       elif "metric" in metricSpec:
         # Via metric name
         try:
-          # Crete the metric, if needed
+          # Create the metric, if needed
           metricId = repository.retryOnTransientErrors(self._createMetric)(
             conn, metricSpec["metric"])
         except app_exceptions.MetricAlreadyExists as e:
@@ -281,37 +279,46 @@ class _CustomDatasourceAdapter(DatasourceAdapterIface):
           "Neither uid nor metric name present in metricSpec; modelSpec=%r"
           % (modelSpec,))
 
+    if "completeModelParams" in modelSpec:
+      # Attempt to build swarm params from complete model params if present
+      swarmParams = (
+        scalar_metric_utils.generateSwarmParamsFromCompleteModelParams(
+          modelSpec))
+    else:
+      # Generate swarm params from specified metric min and max or estimate them
       modelParams = modelSpec.get("modelParams", dict())
       minVal = modelParams.get("min")
       maxVal = modelParams.get("max")
       minResolution = modelParams.get("minResolution")
+      enableClassifier = modelParams.get("enableClassifier", False)
       if (minVal is None) != (maxVal is None):
         raise ValueError(
           "min and max params must both be None or non-None; metric=%s; "
           "modelSpec=%r" % (metricId, modelSpec,))
 
-    # Start monitoring
-    if minVal is None or maxVal is None:
-      minVal = maxVal = None
+      # Start monitoring
+      if minVal is None or maxVal is None:
+        minVal = maxVal = None
 
-      with self.connectionFactory() as conn:
-        numDataRows = repository.retryOnTransientErrors(
-          repository.getMetricDataCount)(conn, metricId)
+        with self.connectionFactory() as conn:
+          numDataRows = repository.retryOnTransientErrors(
+            repository.getMetricDataCount)(conn, metricId)
 
-      if numDataRows >= scalar_metric_utils.MODEL_CREATION_RECORD_THRESHOLD:
-        try:
-          stats = self._getMetricStatistics(metricId)
-          self._log.info("monitorMetric: trigger numDataRows=%d, stats=%s",
-                         numDataRows, stats)
-          minVal = stats["min"]
-          maxVal = stats["max"]
-        except app_exceptions.MetricStatisticsNotReadyError:
-          pass
+        if numDataRows >= scalar_metric_utils.MODEL_CREATION_RECORD_THRESHOLD:
+          try:
+            stats = self._getMetricStatistics(metricId)
+            self._log.info("monitorMetric: trigger numDataRows=%d, stats=%s",
+                           numDataRows, stats)
+            minVal = stats["min"]
+            maxVal = stats["max"]
+          except app_exceptions.MetricStatisticsNotReadyError:
+            pass
 
-    stats = {"min": minVal, "max": maxVal, "minResolution": minResolution}
-    self._log.debug("monitorMetric: metric=%s, stats=%r", metricId, stats)
+      stats = {"min": minVal, "max": maxVal, "minResolution": minResolution}
+      self._log.debug("monitorMetric: metric=%s, stats=%r", metricId, stats)
 
-    swarmParams = scalar_metric_utils.generateSwarmParams(stats)
+      swarmParams = scalar_metric_utils.generateSwarmParams(stats,
+                                                            enableClassifier)
 
     self._startMonitoringWithRetries(metricId, modelSpec, swarmParams)
 
@@ -394,7 +401,8 @@ class _CustomDatasourceAdapter(DatasourceAdapterIface):
     with self.connectionFactory() as conn:
       metricObj = repository.getMetric(conn,
                                        metricId,
-                                       fields=[schema.metric.c.datasource])
+                                       fields=[schema.metric.c.datasource,
+                                               schema.metric.c.parameters])
 
     if metricObj.datasource != self._DATASOURCE:
       raise TypeError(
@@ -403,7 +411,14 @@ class _CustomDatasourceAdapter(DatasourceAdapterIface):
 
     stats = self._getMetricStatistics(metricId)
 
-    swarmParams = scalar_metric_utils.generateSwarmParams(stats)
+    enableClassifier = False
+    metricParameters = json.loads(metricObj.parameters)
+    if "modelParams" in metricParameters:
+      enableClassifier = metricParameters["modelParams"].get("enableClassifier",
+                                                             False)
+
+    swarmParams = scalar_metric_utils.generateSwarmParams(stats,
+                                                          enableClassifier)
 
     scalar_metric_utils.startModel(metricId,
                                    swarmParams=swarmParams,

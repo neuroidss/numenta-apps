@@ -31,13 +31,15 @@ import Queue
 import threading
 import time
 
-from nupic.support.decorators import logExceptions, logEntryExit
+from nupic.support.decorators import logEntryExit
+
+from nta.utils.error_handling import abortProgramOnAnyException
+from nta.utils.error_handling import logExceptions
 
 from htmengine.model_swapper import ModelSwapperConfig
 from htmengine.model_swapper.model_swapper_interface import (
     ModelSwapperInterface)
 from htmengine.model_swapper.slot_agent import SlotAgent
-from nta.utils.error_handling import abortProgramOnAnyException
 from htmengine import htmengine_logging
 
 
@@ -131,7 +133,7 @@ class SwapController(object):
 
 
   @logEntryExit(_getLogger, logging.INFO)
-  @logExceptions(_getLogger)
+  @logExceptions(_getLogger())
   def run(self):
     """ Run SwapController; blocking """
     # Start our input-reader thread
@@ -376,7 +378,7 @@ class SwapController(object):
     _EXIT_CODE_ON_FAILURE_OF_NOTIFICATION_READER_THREAD,
     logger=_getLogger())
   @logEntryExit(_getLogger, logging.INFO)
-  @logExceptions(_getLogger)
+  @logExceptions(_getLogger())
   def _runNotificationReaderThread(self):
     """ Read model data notifications and pass them to the event loop """
     self._logger.info("Notification Reader thread is running")

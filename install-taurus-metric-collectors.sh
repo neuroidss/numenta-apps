@@ -1,7 +1,7 @@
 #!/bin/bash
 # ----------------------------------------------------------------------
 # Numenta Platform for Intelligent Computing (NuPIC)
-# Copyright (C) 2015, Numenta, Inc.  Unless you have purchased from
+# Copyright (C) 2015-2017, Numenta, Inc.  Unless you have purchased from
 # Numenta, Inc. a separate commercial license for this software code, the
 # following terms and conditions apply:
 #
@@ -20,20 +20,10 @@
 # http://numenta.org/licenses/
 # ----------------------------------------------------------------------
 
-# Install taurus.metric_collectors and its dependencies
-# ARGS:
-# First position arg: installation prefix;
-#   e.g., Linux: /opt/numenta/anaconda
-#   e.g., Mac OS X: ~/Library/Python/2.7
+# Installs taurus collectors and other python dependencies.  Run from root of
+# numenta-apps repository checkout
 
 set -o errexit
 
-function install {
-  pushd $1
-  python setup.py develop --prefix=$2
-  popd
-}
-
-install nta.utils $1
-install infrastructure $1
-install taurus.metric_collectors $1
+pip install -e ./nta.utils \
+            -e ./taurus_metric_collectors

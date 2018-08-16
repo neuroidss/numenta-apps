@@ -1,13 +1,12 @@
+taurus-mobile/*bfg-report/
+.git.*
 *.pyc
 *.sublime-project
 *.sublime-workspace
 .idea
 build/sphinx
-conf/.htm_it_id
 conf/ssl/*.bak
-conf/htm-it-api.conf
 conf/application.conf
-conf/htm-it.conf
 conf/model-checkpoint.conf
 conf/model-swapper.conf
 conf/product.conf
@@ -15,13 +14,6 @@ conf/quota.conf
 conf/rabbitmq.conf
 conf/supervisord.conf
 conf/overrides/
-htm.it.egg-info
-htm-it/engine/utils/logs
-htm-it-api-server/conf/
-htm-it-app/logs
-htm-it-app/static/htm-it-common
-htm-it-supervisor.sock
-htm-it-supervisord.pid
 logs/
 node_modules/
 npm-debug.log
@@ -33,7 +25,6 @@ tests/results
 *.*.un~
 infrastructure/ami-tools/products.sha
 
-### From htm-it-mobile ###
 # Mac OS X
 .DS_Store
 
@@ -62,7 +53,7 @@ android/libs/android-support-v4.jar.properties
 android/libs/achartengine-1.1.0.jar.properties
 android/libs/msgpack-0.6.9.jar.properties
 android/password.properties
-android/grok.keystore
+android/htm-it.keystore
 .metadata
 
 # Idea project files

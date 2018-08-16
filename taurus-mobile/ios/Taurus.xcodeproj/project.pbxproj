@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		00809E261EC1FF8F00709DD4 /* AppConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00809E251EC1FF8F00709DD4 /* AppConfig.swift */; };
 		236016D11BCFDCD200AF82FE /* TwitterHeaderCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 236016D01BCFDCD200AF82FE /* TwitterHeaderCell.swift */; };
 		236016D31BD00A9500AF82FE /* Appearence.swift in Sources */ = {isa = PBXBuildFile; fileRef = 236016D21BD00A9500AF82FE /* Appearence.swift */; };
 		236016D71BD1410100AF82FE /* ShareService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 236016D61BD1410100AF82FE /* ShareService.swift */; };
@@ -21,7 +22,6 @@
 		23AB23031BA75F170091A5E6 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 23AB23011BA75F170091A5E6 /* LaunchScreen.storyboard */; };
 		23AB230E1BA75F170091A5E6 /* TaurusTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23AB230D1BA75F170091A5E6 /* TaurusTests.swift */; };
 		23AB23191BA75F170091A5E6 /* TaurusUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23AB23181BA75F170091A5E6 /* TaurusUITests.swift */; };
-		23AD4EC31BB2FE080041D650 /* AppConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23AD4EC21BB2FE080041D650 /* AppConfig.swift */; };
 		23AD4EC51BB2FEC00041D650 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 23AD4EC41BB2FEC00041D650 /* README.md */; };
 		23AD4F161BB31B8D0041D650 /* InstanceViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23AD4F131BB31B8D0041D650 /* InstanceViewController.swift */; };
 		23AD4F181BB31BDC0041D650 /* TimeSliderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23AD4F171BB31BDC0041D650 /* TimeSliderView.swift */; };
@@ -42,8 +42,8 @@
 		23AD79151BA778B3003FBEF4 /* Notification.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23AD79031BA778B3003FBEF4 /* Notification.swift */; };
 		23AD79161BA778B3003FBEF4 /* SQLiteHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23AD79041BA778B3003FBEF4 /* SQLiteHelper.swift */; };
 		23AD79171BA778B3003FBEF4 /* SwiftyJSON.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23AD79051BA778B3003FBEF4 /* SwiftyJSON.swift */; };
-		23AD79181BA778B3003FBEF4 /* GrokClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23AD79071BA778B3003FBEF4 /* GrokClient.swift */; };
-		23AD79191BA778B3003FBEF4 /* GrokClientFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23AD79081BA778B3003FBEF4 /* GrokClientFactory.swift */; };
+		23AD79181BA778B3003FBEF4 /* HTMITClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23AD79071BA778B3003FBEF4 /* HTMITClient.swift */; };
+		23AD79191BA778B3003FBEF4 /* HTMITClientFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23AD79081BA778B3003FBEF4 /* HTMITClientFactory.swift */; };
 		23AD791A1BA778B3003FBEF4 /* DataUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23AD790A1BA778B3003FBEF4 /* DataUtils.swift */; };
 		23BF792A1BB4C67D0025E996 /* MetricAnomalyChartData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23BF79291BB4C67D0025E996 /* MetricAnomalyChartData.swift */; };
 		23CFAC3D1BB4A1E100B4E882 /* MetricCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23CFAC3C1BB4A1E100B4E882 /* MetricCell.swift */; };
@@ -65,14 +65,12 @@
 		23DF8CEA1BA9CF9C00ECAE98 /* AnomalyChartData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23DF8CE91BA9CF9C00ECAE98 /* AnomalyChartData.swift */; };
 		23DF8CEC1BA9CFA800ECAE98 /* InstanceAnomalyChartData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23DF8CEB1BA9CFA800ECAE98 /* InstanceAnomalyChartData.swift */; };
 		23E477D91BF2AA7400BA3858 /* CustomMenuController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23E477D81BF2AA7400BA3858 /* CustomMenuController.swift */; };
-		23ED58D01BB088D800EEEEC1 /* GrokApplication.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23ED58CF1BB088D800EEEEC1 /* GrokApplication.swift */; };
+		23ED58D01BB088D800EEEEC1 /* HTMITApplication.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23ED58CF1BB088D800EEEEC1 /* HTMITApplication.swift */; };
 		23F58D711BBA287200C7C6B6 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 23F58D701BBA287200C7C6B6 /* Images.xcassets */; };
 		23F58D751BBAC21D00C7C6B6 /* SettingsController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23F58D741BBAC21D00C7C6B6 /* SettingsController.swift */; };
-		9D6590581D077B613D94B220 /* libPods.a in Frameworks */ = {isa = PBXBuildFile; fileRef = D5967E9F3F71FA63EF40469B /* libPods.a */; };
 		B94DA73A1C20CC14004493DE /* Settings.bundle in Resources */ = {isa = PBXBuildFile; fileRef = B94DA7391C20CC14004493DE /* Settings.bundle */; };
 		B9C914E31C1FDD8C004B8DE6 /* NotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B9C914E21C1FDD8C004B8DE6 /* NotificationService.swift */; };
 		B9D941D51C498059006ADE9E /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = B9D941D41C498059006ADE9E /* GoogleService-Info.plist */; };
-		DE8C3C6C96A556CE6C2EB24F /* libPods.a in Frameworks */ = {isa = PBXBuildFile; fileRef = D5967E9F3F71FA63EF40469B /* libPods.a */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -93,6 +91,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		00809E251EC1FF8F00709DD4 /* AppConfig.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AppConfig.swift; sourceTree = "<group>"; };
 		2319D5721BA7798100935447 /* Taurus-Bridging-Header.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "Taurus-Bridging-Header.h"; sourceTree = SOURCE_ROOT; };
 		236016D01BCFDCD200AF82FE /* TwitterHeaderCell.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TwitterHeaderCell.swift; sourceTree = "<group>"; };
 		236016D21BD00A9500AF82FE /* Appearence.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Appearence.swift; sourceTree = "<group>"; };
@@ -114,7 +113,6 @@
 		23AB23141BA75F170091A5E6 /* TaurusUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = TaurusUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		23AB23181BA75F170091A5E6 /* TaurusUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaurusUITests.swift; sourceTree = "<group>"; };
 		23AB231A1BA75F170091A5E6 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		23AD4EC21BB2FE080041D650 /* AppConfig.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AppConfig.swift; sourceTree = "<group>"; };
 		23AD4EC41BB2FEC00041D650 /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = SOURCE_ROOT; };
 		23AD4F131BB31B8D0041D650 /* InstanceViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = InstanceViewController.swift; path = ../src/controllers/InstanceViewController.swift; sourceTree = "<group>"; };
 		23AD4F171BB31BDC0041D650 /* TimeSliderView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TimeSliderView.swift; sourceTree = "<group>"; };
@@ -135,8 +133,8 @@
 		23AD79031BA778B3003FBEF4 /* Notification.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Notification.swift; sourceTree = "<group>"; };
 		23AD79041BA778B3003FBEF4 /* SQLiteHelper.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SQLiteHelper.swift; sourceTree = "<group>"; };
 		23AD79051BA778B3003FBEF4 /* SwiftyJSON.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SwiftyJSON.swift; sourceTree = "<group>"; };
-		23AD79071BA778B3003FBEF4 /* GrokClient.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = GrokClient.swift; sourceTree = "<group>"; };
-		23AD79081BA778B3003FBEF4 /* GrokClientFactory.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = GrokClientFactory.swift; sourceTree = "<group>"; };
+		23AD79071BA778B3003FBEF4 /* HTMITClient.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = HTMITClient.swift; sourceTree = "<group>"; };
+		23AD79081BA778B3003FBEF4 /* HTMITClientFactory.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = HTMITClientFactory.swift; sourceTree = "<group>"; };
 		23AD790A1BA778B3003FBEF4 /* DataUtils.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DataUtils.swift; sourceTree = "<group>"; };
 		23BF79291BB4C67D0025E996 /* MetricAnomalyChartData.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MetricAnomalyChartData.swift; sourceTree = "<group>"; };
 		23CFAC3C1BB4A1E100B4E882 /* MetricCell.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MetricCell.swift; sourceTree = "<group>"; };
@@ -158,15 +156,16 @@
 		23DF8CE91BA9CF9C00ECAE98 /* AnomalyChartData.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AnomalyChartData.swift; sourceTree = "<group>"; };
 		23DF8CEB1BA9CFA800ECAE98 /* InstanceAnomalyChartData.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = InstanceAnomalyChartData.swift; sourceTree = "<group>"; };
 		23E477D81BF2AA7400BA3858 /* CustomMenuController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CustomMenuController.swift; sourceTree = "<group>"; };
-		23ED58CF1BB088D800EEEEC1 /* GrokApplication.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = GrokApplication.swift; path = app/GrokApplication.swift; sourceTree = "<group>"; };
+		23ED58CF1BB088D800EEEEC1 /* HTMITApplication.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = HTMITApplication.swift; path = app/HTMITApplication.swift; sourceTree = "<group>"; };
 		23F58D701BBA287200C7C6B6 /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Images.xcassets; sourceTree = "<group>"; };
 		23F58D741BBAC21D00C7C6B6 /* SettingsController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SettingsController.swift; path = src/controllers/SettingsController.swift; sourceTree = SOURCE_ROOT; };
+		2F0819AE74E8803AA6703C7B /* libPods-Taurus.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-Taurus.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		9B7F624B4EE16DF78C7237DC /* Pods-Taurus.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Taurus.debug.xcconfig"; path = "Pods/Target Support Files/Pods-Taurus/Pods-Taurus.debug.xcconfig"; sourceTree = "<group>"; };
+		9BE72E8D4A92CCE65901FD58 /* Pods-Taurus.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Taurus.release.xcconfig"; path = "Pods/Target Support Files/Pods-Taurus/Pods-Taurus.release.xcconfig"; sourceTree = "<group>"; };
 		B94DA7391C20CC14004493DE /* Settings.bundle */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.plug-in"; path = Settings.bundle; sourceTree = "<group>"; };
 		B9C914E21C1FDD8C004B8DE6 /* NotificationService.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = NotificationService.swift; sourceTree = "<group>"; };
 		B9D941D41C498059006ADE9E /* GoogleService-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
-		CC722459B06198A44AE0D9BF /* Pods.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = Pods.release.xcconfig; path = "Pods/Target Support Files/Pods/Pods.release.xcconfig"; sourceTree = "<group>"; };
 		D5967E9F3F71FA63EF40469B /* libPods.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libPods.a; sourceTree = BUILT_PRODUCTS_DIR; };
-		F04A1F33885B832737DD0D75 /* Pods.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = Pods.debug.xcconfig; path = "Pods/Target Support Files/Pods/Pods.debug.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -174,7 +173,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				DE8C3C6C96A556CE6C2EB24F /* libPods.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -182,7 +180,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				9D6590581D077B613D94B220 /* libPods.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -305,7 +302,7 @@
 			children = (
 				23AD4F191BB31C640041D650 /* AppDelegate.swift */,
 				23AD78F51BA77731003FBEF4 /* TarausApplication.swift */,
-				23AD4EC21BB2FE080041D650 /* AppConfig.swift */,
+				00809E251EC1FF8F00709DD4 /* AppConfig.swift */,
 			);
 			name = app;
 			path = src/app;
@@ -348,8 +345,8 @@
 			isa = PBXGroup;
 			children = (
 				23DF8CB61BA9CEE900ECAE98 /* DataSyncService.swift */,
-				23AD79071BA778B3003FBEF4 /* GrokClient.swift */,
-				23AD79081BA778B3003FBEF4 /* GrokClientFactory.swift */,
+				23AD79071BA778B3003FBEF4 /* HTMITClient.swift */,
+				23AD79081BA778B3003FBEF4 /* HTMITClientFactory.swift */,
 			);
 			path = service;
 			sourceTree = "<group>";
@@ -404,8 +401,8 @@
 		23E2443B8795C70E2D9D1306 /* Pods */ = {
 			isa = PBXGroup;
 			children = (
-				F04A1F33885B832737DD0D75 /* Pods.debug.xcconfig */,
-				CC722459B06198A44AE0D9BF /* Pods.release.xcconfig */,
+				9B7F624B4EE16DF78C7237DC /* Pods-Taurus.debug.xcconfig */,
+				9BE72E8D4A92CCE65901FD58 /* Pods-Taurus.release.xcconfig */,
 			);
 			name = Pods;
 			sourceTree = "<group>";
@@ -413,7 +410,7 @@
 		23ED58D11BB088E100EEEEC1 /* app */ = {
 			isa = PBXGroup;
 			children = (
-				23ED58CF1BB088D800EEEEC1 /* GrokApplication.swift */,
+				23ED58CF1BB088D800EEEEC1 /* HTMITApplication.swift */,
 			);
 			name = app;
 			sourceTree = "<group>";
@@ -422,6 +419,7 @@
 			isa = PBXGroup;
 			children = (
 				D5967E9F3F71FA63EF40469B /* libPods.a */,
+				2F0819AE74E8803AA6703C7B /* libPods-Taurus.a */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -433,12 +431,12 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 23AB231D1BA75F170091A5E6 /* Build configuration list for PBXNativeTarget "Taurus" */;
 			buildPhases = (
-				0DA4D2DC7E0C0883DDACDDD2 /* Check Pods Manifest.lock */,
+				0DA4D2DC7E0C0883DDACDDD2 /* [CP] Check Pods Manifest.lock */,
 				23AB22F11BA75F170091A5E6 /* Sources */,
 				23AB22F21BA75F170091A5E6 /* Frameworks */,
 				23AB22F31BA75F170091A5E6 /* Resources */,
-				08F86FD8AFA025BC52A957B0 /* Copy Pods Resources */,
-				A156F98D492A236FD623E176 /* Embed Pods Frameworks */,
+				08F86FD8AFA025BC52A957B0 /* [CP] Copy Pods Resources */,
+				A156F98D492A236FD623E176 /* [CP] Embed Pods Frameworks */,
 			);
 			buildRules = (
 			);
@@ -453,11 +451,9 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 23AB23201BA75F170091A5E6 /* Build configuration list for PBXNativeTarget "TaurusTests" */;
 			buildPhases = (
-				CE8D5C584C8C123B83F27B40 /* Check Pods Manifest.lock */,
 				23AB23051BA75F170091A5E6 /* Sources */,
 				23AB23061BA75F170091A5E6 /* Frameworks */,
 				23AB23071BA75F170091A5E6 /* Resources */,
-				E8AC60A316FE00A3C3C10904 /* Copy Pods Resources */,
 			);
 			buildRules = (
 			);
@@ -499,6 +495,7 @@
 					23AB22F41BA75F170091A5E6 = {
 						CreatedOnToolsVersion = 7.0;
 						DevelopmentTeam = 2589Z673MU;
+						LastSwiftMigration = 0830;
 						SystemCapabilities = {
 							com.apple.BackgroundModes = {
 								enabled = 1;
@@ -507,10 +504,12 @@
 					};
 					23AB23081BA75F170091A5E6 = {
 						CreatedOnToolsVersion = 7.0;
+						LastSwiftMigration = 0830;
 						TestTargetID = 23AB22F41BA75F170091A5E6;
 					};
 					23AB23131BA75F170091A5E6 = {
 						CreatedOnToolsVersion = 7.0;
+						LastSwiftMigration = 0830;
 						TestTargetID = 23AB22F41BA75F170091A5E6;
 					};
 				};
@@ -568,79 +567,49 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
-		08F86FD8AFA025BC52A957B0 /* Copy Pods Resources */ = {
+		08F86FD8AFA025BC52A957B0 /* [CP] Copy Pods Resources */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			inputPaths = (
 			);
-			name = "Copy Pods Resources";
+			name = "[CP] Copy Pods Resources";
 			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "\"${SRCROOT}/Pods/Target Support Files/Pods/Pods-resources.sh\"\n";
+			shellScript = "\"${SRCROOT}/Pods/Target Support Files/Pods-Taurus/Pods-Taurus-resources.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
-		0DA4D2DC7E0C0883DDACDDD2 /* Check Pods Manifest.lock */ = {
+		0DA4D2DC7E0C0883DDACDDD2 /* [CP] Check Pods Manifest.lock */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			inputPaths = (
 			);
-			name = "Check Pods Manifest.lock";
+			name = "[CP] Check Pods Manifest.lock";
 			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "diff \"${PODS_ROOT}/../Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [[ $? != 0 ]] ; then\n    cat << EOM\nerror: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\nEOM\n    exit 1\nfi\n";
+			shellScript = "diff \"${PODS_ROOT}/../Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n";
 			showEnvVarsInLog = 0;
 		};
-		A156F98D492A236FD623E176 /* Embed Pods Frameworks */ = {
+		A156F98D492A236FD623E176 /* [CP] Embed Pods Frameworks */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			inputPaths = (
 			);
-			name = "Embed Pods Frameworks";
+			name = "[CP] Embed Pods Frameworks";
 			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "\"${SRCROOT}/Pods/Target Support Files/Pods/Pods-frameworks.sh\"\n";
-			showEnvVarsInLog = 0;
-		};
-		CE8D5C584C8C123B83F27B40 /* Check Pods Manifest.lock */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputPaths = (
-			);
-			name = "Check Pods Manifest.lock";
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "diff \"${PODS_ROOT}/../Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [[ $? != 0 ]] ; then\n    cat << EOM\nerror: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\nEOM\n    exit 1\nfi\n";
-			showEnvVarsInLog = 0;
-		};
-		E8AC60A316FE00A3C3C10904 /* Copy Pods Resources */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputPaths = (
-			);
-			name = "Copy Pods Resources";
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "\"${SRCROOT}/Pods/Target Support Files/Pods/Pods-resources.sh\"\n";
+			shellScript = "\"${SRCROOT}/Pods/Target Support Files/Pods-Taurus/Pods-Taurus-frameworks.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
 /* End PBXShellScriptBuildPhase section */
@@ -661,7 +630,7 @@
 				23AD79111BA778B3003FBEF4 /* Instance.swift in Sources */,
 				23BF792A1BB4C67D0025E996 /* MetricAnomalyChartData.swift in Sources */,
 				23AD4F1A1BB31C640041D650 /* AppDelegate.swift in Sources */,
-				23AD79181BA778B3003FBEF4 /* GrokClient.swift in Sources */,
+				23AD79181BA778B3003FBEF4 /* HTMITClient.swift in Sources */,
 				23CFAC3D1BB4A1E100B4E882 /* MetricCell.swift in Sources */,
 				23AD4F1F1BB3AA590041D650 /* InstanceDetailsViewController.swift in Sources */,
 				23DF8CA41BA9CDE500ECAE98 /* TaurusInstanceData.swift in Sources */,
@@ -669,7 +638,7 @@
 				23E477D91BF2AA7400BA3858 /* CustomMenuController.swift in Sources */,
 				23AD79101BA778B3003FBEF4 /* CoreDataFactoryImpl.swift in Sources */,
 				23DF8CA51BA9CDE500ECAE98 /* TaurusNotification.swift in Sources */,
-				23AD79191BA778B3003FBEF4 /* GrokClientFactory.swift in Sources */,
+				23AD79191BA778B3003FBEF4 /* HTMITClientFactory.swift in Sources */,
 				236016D11BCFDCD200AF82FE /* TwitterHeaderCell.swift in Sources */,
 				238055821BBEE88D0048E214 /* TutorialPageController.swift in Sources */,
 				236989821BA919C200EA4FB5 /* MarketCalendar.swift in Sources */,
@@ -677,6 +646,7 @@
 				23F58D751BBAC21D00C7C6B6 /* SettingsController.swift in Sources */,
 				23AD79131BA778B3003FBEF4 /* Metric.swift in Sources */,
 				23DF8CB21BA9CEB700ECAE98 /* TaurusDataSyncService.swift in Sources */,
+				00809E261EC1FF8F00709DD4 /* AppConfig.swift in Sources */,
 				23AD790B1BA778B3003FBEF4 /* AggregationType.swift in Sources */,
 				23DF8CAB1BA9CE9C00ECAE98 /* MetricType.swift in Sources */,
 				23AD790F1BA778B3003FBEF4 /* CoreDataFactory.swift in Sources */,
@@ -696,13 +666,12 @@
 				23DF8CA01BA9CDE500ECAE98 /* AnomalyValue.swift in Sources */,
 				238055C21BBEED020048E214 /* ModelController.swift in Sources */,
 				236016D71BD1410100AF82FE /* ShareService.swift in Sources */,
-				23ED58D01BB088D800EEEEC1 /* GrokApplication.swift in Sources */,
+				23ED58D01BB088D800EEEEC1 /* HTMITApplication.swift in Sources */,
 				23AD4F161BB31B8D0041D650 /* InstanceViewController.swift in Sources */,
 				23AD79171BA778B3003FBEF4 /* SwiftyJSON.swift in Sources */,
 				23AD4F181BB31BDC0041D650 /* TimeSliderView.swift in Sources */,
 				23AD791A1BA778B3003FBEF4 /* DataUtils.swift in Sources */,
 				238055801BBEE7190048E214 /* TutorialController.swift in Sources */,
-				23AD4EC31BB2FE080041D650 /* AppConfig.swift in Sources */,
 				23AD79161BA778B3003FBEF4 /* SQLiteHelper.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -794,7 +763,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 10.3;
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
@@ -833,7 +802,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 10.3;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				SDKROOT = iphoneos;
 				SWIFT_OBJC_BRIDGING_HEADER = "Taurus-Bridging-Header.h";
@@ -843,62 +812,68 @@
 		};
 		23AB231E1BA75F170091A5E6 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = F04A1F33885B832737DD0D75 /* Pods.debug.xcconfig */;
+			baseConfigurationReference = 9B7F624B4EE16DF78C7237DC /* Pods-Taurus.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 2589Z673MU;
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = Taurus/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 10.3;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = com.numenta.taurusmobile;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE = "";
 				SUPPORTED_PLATFORMS = "iphonesimulator iphoneos";
+				SWIFT_VERSION = 3.0;
 			};
 			name = Debug;
 		};
 		23AB231F1BA75F170091A5E6 /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = CC722459B06198A44AE0D9BF /* Pods.release.xcconfig */;
+			baseConfigurationReference = 9BE72E8D4A92CCE65901FD58 /* Pods-Taurus.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 2589Z673MU;
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = Taurus/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 10.3;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = com.numenta.taurusmobile;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE = "";
 				SUPPORTED_PLATFORMS = "iphonesimulator iphoneos";
+				SWIFT_VERSION = 3.0;
 			};
 			name = Release;
 		};
 		23AB23211BA75F170091A5E6 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = F04A1F33885B832737DD0D75 /* Pods.debug.xcconfig */;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				INFOPLIST_FILE = TaurusTests/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = com.numenta.TaurusTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 3.0;
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Taurus.app/Taurus";
 			};
 			name = Debug;
 		};
 		23AB23221BA75F170091A5E6 /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = CC722459B06198A44AE0D9BF /* Pods.release.xcconfig */;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				INFOPLIST_FILE = TaurusTests/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = com.numenta.TaurusTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 3.0;
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Taurus.app/Taurus";
 			};
 			name = Release;
@@ -910,6 +885,7 @@
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = com.numenta.TaurusUITests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 3.0;
 				TEST_TARGET_NAME = Taurus;
 				USES_XCTRUNNER = YES;
 			};
@@ -922,6 +898,7 @@
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = com.numenta.TaurusUITests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 3.0;
 				TEST_TARGET_NAME = Taurus;
 				USES_XCTRUNNER = YES;
 			};

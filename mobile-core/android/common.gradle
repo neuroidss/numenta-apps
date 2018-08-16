@@ -87,12 +87,12 @@ allprojects {
          * Default Keystore file location.
          * Make sure this file exists otherwise the build will fail
          */
-        defaultKeystoreLocation = '/etc/numenta/products/keys/grok.keystore'
+        defaultKeystoreLocation = '/etc/numenta/products/keys/htmit.keystore'
 
         /**
          * The key alias used to sign the release APK,.
          */
-        defaultKeyAlias = 'grok'
+        defaultKeyAlias = 'htmit'
 
         /**
          * Initial version code to use in addition to 'gitCommitCount'

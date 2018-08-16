@@ -9,14 +9,14 @@ param (
 Write-Host "==> Will unzip nupic source to: $nupic_unzip_path"
 $script_path = split-path -parent $MyInvocation.MyCommand.Definition
 
-# Python 
+# Python
 $python_version = "2.7.11"
 $portable_python_dir = "portable_python"
 $python_msi_url = "https://www.python.org/ftp/python/$python_version/python-$python_version.amd64.msi"
 $python_msi = "python-$python_version.amd64.msi"
 
 # Pip
-$get_pip_url = "https://bootstrap.pypa.io/get-pip.py"
+$get_pip_url = "http://releases.numenta.org/pip/1ebd3cb7a5a3073058d0c9552ab074bd/get-pip.py"
 $get_pip = "get-pip.py"
 
 # nupic.bindings

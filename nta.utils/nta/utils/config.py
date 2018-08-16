@@ -315,7 +315,7 @@ class Config(ConfigParser, object):
   def clearAllConfigOverrides(self):
     """ Delete all configuration override objects
     WARNING: this deletes user-provisioned and user-specific information (e.g.,
-    AWS credentials, API key, htm-it server ID, etc.)
+    AWS credentials, API key, etc.)
     """
     configOverrideDir = self._getConfigOverrideDir()
     if os.path.exists(configOverrideDir):
